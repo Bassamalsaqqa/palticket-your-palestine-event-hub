@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/i18n";
 import { PublicLayout } from "@/components/PublicLayout";
 import HomePage from "./pages/HomePage";
 import DiscoverPage from "./pages/DiscoverPage";
+import EventDetailPage from "./pages/EventDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,12 +39,14 @@ const App = () => (
               <Route path="/en" element={<PublicLayout />}>
                 <Route index element={<HomePage />} />
                 <Route path="discover" element={<DiscoverPage />} />
+                <Route path="events/:slug" element={<EventDetailPage />} />
               </Route>
               
               {/* Arabic Routes */}
               <Route path="/ar" element={<PublicLayout />}>
                 <Route index element={<HomePage />} />
                 <Route path="discover" element={<DiscoverPage />} />
+                <Route path="events/:slug" element={<EventDetailPage />} />
               </Route>
 
               {/* Catch-all */}
