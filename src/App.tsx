@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/i18n";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PublicLayout } from "@/components/PublicLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import HomePage from "./pages/HomePage";
 import DiscoverPage from "./pages/DiscoverPage";
 import EventDetailPage from "./pages/EventDetailPage";
@@ -22,6 +23,19 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import AccountPage from "./pages/AccountPage";
 import NotFound from "./pages/NotFound";
+import {
+  AdminDashboard,
+  AdminEvents,
+  AdminTicketTypes,
+  AdminOrders,
+  AdminTickets,
+  AdminUsers,
+  AdminRoles,
+  AdminGates,
+  AdminStaff,
+  AdminExports,
+  AdminAuditLogs,
+} from "./pages/admin";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +78,21 @@ const App = () => (
                   <Route path="signup" element={<SignupPage />} />
                   <Route path="account" element={<AccountPage />} />
                 </Route>
+
+                {/* English Admin Routes */}
+                <Route path="/en/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="events" element={<AdminEvents />} />
+                  <Route path="ticket-types" element={<AdminTicketTypes />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="tickets" element={<AdminTickets />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="roles" element={<AdminRoles />} />
+                  <Route path="gates" element={<AdminGates />} />
+                  <Route path="staff" element={<AdminStaff />} />
+                  <Route path="exports" element={<AdminExports />} />
+                  <Route path="audit-logs" element={<AdminAuditLogs />} />
+                </Route>
                 
                 {/* Arabic Routes */}
                 <Route path="/ar" element={<PublicLayout />}>
@@ -81,6 +110,21 @@ const App = () => (
                   <Route path="login" element={<LoginPage />} />
                   <Route path="signup" element={<SignupPage />} />
                   <Route path="account" element={<AccountPage />} />
+                </Route>
+
+                {/* Arabic Admin Routes */}
+                <Route path="/ar/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="events" element={<AdminEvents />} />
+                  <Route path="ticket-types" element={<AdminTicketTypes />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="tickets" element={<AdminTickets />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="roles" element={<AdminRoles />} />
+                  <Route path="gates" element={<AdminGates />} />
+                  <Route path="staff" element={<AdminStaff />} />
+                  <Route path="exports" element={<AdminExports />} />
+                  <Route path="audit-logs" element={<AdminAuditLogs />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

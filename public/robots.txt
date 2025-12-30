@@ -1,14 +1,32 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /en/admin
+Disallow: /ar/admin
+Disallow: /en/scan
+Disallow: /ar/scan
 
 User-agent: Bingbot
 Allow: /
+Disallow: /en/admin
+Disallow: /ar/admin
+Disallow: /en/scan
+Disallow: /ar/scan
 
 User-agent: Twitterbot
 Allow: /
+Disallow: /en/admin
+Disallow: /ar/admin
 
 User-agent: facebookexternalhit
 Allow: /
+Disallow: /en/admin
+Disallow: /ar/admin
 
 User-agent: *
 Allow: /
+Disallow: /en/admin
+Disallow: /ar/admin
+Disallow: /en/scan
+Disallow: /ar/scan
+
+Sitemap: https://palticket.com/sitemap.xml
