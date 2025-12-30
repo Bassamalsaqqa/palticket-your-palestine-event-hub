@@ -226,6 +226,226 @@ export const translations = {
       free: "Free",
       currency: "ILS",
     },
+
+    // Pages
+    pages: {
+      about: {
+        meta: {
+          title: "About Us - PalTicket",
+          description: "Learn about PalTicket, Palestine's leading event ticketing platform connecting people with unforgettable experiences.",
+        },
+        title: "About PalTicket",
+        subtitle: "Connecting Palestine with unforgettable experiences since 2024",
+        mission: {
+          title: "Our Mission",
+          content: "PalTicket is dedicated to making event discovery and ticketing seamless for everyone in Palestine. We connect event organizers with passionate audiences, creating memorable experiences that bring communities together.",
+        },
+        valuesTitle: "Our Values",
+        values: {
+          passion: "Passion",
+          passionDesc: "We're passionate about bringing people together through events",
+          community: "Community",
+          communityDesc: "Building stronger communities through shared experiences",
+          excellence: "Excellence",
+          excellenceDesc: "Delivering the best ticketing experience possible",
+          accessibility: "Accessibility",
+          accessibilityDesc: "Making events accessible to everyone",
+        },
+        story: {
+          title: "Our Story",
+          p1: "PalTicket was born from a simple idea: make it easier for people in Palestine to discover and attend amazing events. We saw a gap in the market for a modern, user-friendly ticketing platform that truly understands the local culture and needs.",
+          p2: "Today, we're proud to partner with hundreds of event organizers, from small community gatherings to major concerts and festivals. Our platform has helped thousands of people create lasting memories.",
+          p3: "As we continue to grow, our commitment remains the same: to be the bridge that connects people with experiences that move them.",
+        },
+        teamTitle: "Meet Our Team",
+        team: {
+          member1: { name: "Ahmad Hassan", role: "Founder & CEO" },
+          member2: { name: "Sara Khalil", role: "Head of Operations" },
+          member3: { name: "Omar Nasser", role: "Head of Technology" },
+        },
+      },
+      contact: {
+        meta: {
+          title: "Contact Us - PalTicket",
+          description: "Get in touch with PalTicket. We're here to help with your event ticketing needs.",
+        },
+        title: "Contact Us",
+        subtitle: "Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.",
+        form: {
+          title: "Send us a Message",
+          name: "Your Name",
+          email: "Email Address",
+          subject: "Subject",
+          message: "Message",
+          send: "Send Message",
+          success: "Your message has been sent. We'll get back to you soon!",
+        },
+        info: {
+          title: "Get in Touch",
+          email: "Email",
+          phone: "Phone",
+          address: "Address",
+          addressValue: "Ramallah, Palestine",
+          hours: "Business Hours",
+          hoursValue: "Sunday - Thursday, 9AM - 6PM",
+        },
+      },
+      faq: {
+        meta: {
+          title: "FAQ - PalTicket",
+          description: "Find answers to frequently asked questions about PalTicket's event ticketing services.",
+        },
+        title: "Frequently Asked Questions",
+        subtitle: "Find answers to common questions about our ticketing platform",
+        searchPlaceholder: "Search questions...",
+        noResults: "No questions found matching your search",
+        categories: {
+          tickets: {
+            title: "Tickets & Booking",
+            items: [
+              { q: "How do I purchase tickets?", a: "Browse events on our platform, select your preferred event, choose your ticket type and quantity, then complete the checkout process. Your tickets will be sent to your email." },
+              { q: "Can I get a refund on my tickets?", a: "Refund policies vary by event. Check the specific event page for refund information or contact the event organizer directly." },
+              { q: "How do I access my tickets?", a: "Your tickets are sent to your email after purchase. You can also view them in your account under 'My Tickets'. Show the QR code at the event entrance." },
+            ],
+          },
+          payment: {
+            title: "Payment",
+            items: [
+              { q: "What payment methods do you accept?", a: "We accept major credit cards, debit cards, and various local payment methods. All payments are processed securely." },
+              { q: "Is my payment information secure?", a: "Yes, we use industry-standard encryption to protect your payment information. We never store your full card details." },
+            ],
+          },
+          account: {
+            title: "Account",
+            items: [
+              { q: "How do I create an account?", a: "Click 'Sign Up' in the header, enter your details, and verify your email address. You can also sign up using your Google or Facebook account." },
+              { q: "I forgot my password. What should I do?", a: "Click 'Forgot Password' on the login page, enter your email, and follow the instructions sent to reset your password." },
+            ],
+          },
+          organizers: {
+            title: "For Event Organizers",
+            items: [
+              { q: "How can I list my event on PalTicket?", a: "Apply to become a partner through our 'Become a Partner' page. Once approved, you'll have access to our organizer dashboard." },
+              { q: "What are your fees for organizers?", a: "We charge a small service fee per ticket sold. Contact us for detailed pricing information tailored to your event." },
+            ],
+          },
+        },
+      },
+      privacy: {
+        meta: {
+          title: "Privacy Policy - PalTicket",
+          description: "Learn how PalTicket collects, uses, and protects your personal information.",
+        },
+        title: "Privacy Policy",
+        lastUpdated: "Last updated: January 2024",
+        sections: [
+          { title: "Information We Collect", content: "We collect information you provide directly to us, such as when you create an account, make a purchase, or contact us. This includes your name, email address, phone number, and payment information." },
+          { title: "How We Use Your Information", content: "We use the information we collect to process your transactions, send you tickets, communicate with you about events, and improve our services. We may also use your information to personalize your experience and send you marketing communications." },
+          { title: "Information Sharing", content: "We share your information with event organizers when you purchase tickets, with payment processors to complete transactions, and with service providers who assist us in operating our platform. We do not sell your personal information." },
+          { title: "Data Security", content: "We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction." },
+          { title: "Your Rights", content: "You have the right to access, correct, or delete your personal information. You can manage your preferences in your account settings or contact us directly." },
+          { title: "Contact Us", content: "If you have questions about this Privacy Policy, please contact us at privacy@palticket.com." },
+        ],
+      },
+      terms: {
+        meta: {
+          title: "Terms of Service - PalTicket",
+          description: "Read PalTicket's terms and conditions for using our event ticketing platform.",
+        },
+        title: "Terms of Service",
+        lastUpdated: "Last updated: January 2024",
+        sections: [
+          { title: "Acceptance of Terms", content: "By accessing and using PalTicket, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our platform." },
+          { title: "Account Registration", content: "You must provide accurate and complete information when creating an account. You are responsible for maintaining the security of your account and for all activities that occur under your account." },
+          { title: "Ticket Purchases", content: "All ticket sales are final unless otherwise stated by the event organizer. Prices are subject to change. We are not responsible for event cancellations or changes made by organizers." },
+          { title: "User Conduct", content: "You agree not to use our platform for any unlawful purpose, to upload harmful content, or to interfere with the proper functioning of the service." },
+          { title: "Intellectual Property", content: "All content on PalTicket, including logos, text, and graphics, is our property or the property of our licensors and is protected by copyright and trademark laws." },
+          { title: "Limitation of Liability", content: "PalTicket is not liable for any indirect, incidental, or consequential damages arising from your use of our platform. Our total liability is limited to the amount you paid for the specific ticket or service in question." },
+          { title: "Governing Law", content: "These terms are governed by the laws of Palestine. Any disputes will be resolved in the courts of Ramallah." },
+        ],
+      },
+      designGuidelines: {
+        meta: {
+          title: "Design Guidelines - PalTicket",
+          description: "Brand guidelines and design resources for PalTicket partners and media.",
+        },
+        title: "Design Guidelines",
+        subtitle: "Brand resources and guidelines for partners and media",
+        logo: {
+          title: "Logo Usage",
+          usage: "Our logo should always have clear space around it and should not be stretched, rotated, or modified in any way. Use the appropriate version for light and dark backgrounds.",
+        },
+        downloadAssets: "Download Brand Assets",
+        colors: {
+          title: "Color Palette",
+          content: "Our primary colors represent trust, energy, and the vibrant culture of Palestine. Use these colors consistently across all materials.",
+        },
+        typography: {
+          title: "Typography",
+          content: "We use Plus Jakarta Sans for English text and Noto Sans Arabic for Arabic text. These fonts provide excellent readability across all devices.",
+        },
+        imagery: {
+          title: "Imagery",
+          content: "Use high-quality, authentic images that represent the diversity and energy of Palestinian culture and events. Avoid stock photos that feel generic.",
+        },
+        layout: {
+          title: "Layout",
+          content: "Maintain consistent spacing and alignment. Our designs should feel clean, modern, and accessible to all users.",
+        },
+      },
+      partner: {
+        meta: {
+          title: "Become a Partner - PalTicket",
+          description: "Join PalTicket as an event organizer and reach thousands of event-goers across Palestine.",
+        },
+        title: "Become a Partner",
+        subtitle: "Join Palestine's leading ticketing platform and grow your events",
+        benefits: {
+          ticketing: { title: "Easy Ticketing", desc: "Sell tickets online with our user-friendly platform" },
+          analytics: { title: "Real-time Analytics", desc: "Track sales and attendance with detailed reports" },
+          audience: { title: "Wider Audience", desc: "Reach thousands of potential attendees" },
+          support: { title: "Dedicated Support", desc: "Get help from our team whenever you need it" },
+        },
+        featuresTitle: "What You Get",
+        features: [
+          "Custom event pages",
+          "Multiple ticket types",
+          "QR code check-in",
+          "Real-time sales dashboard",
+          "Attendee management",
+          "Marketing tools",
+          "Payout tracking",
+          "24/7 support",
+        ],
+        form: {
+          title: "Apply to Become a Partner",
+          orgName: "Organization Name",
+          contactName: "Contact Person",
+          email: "Email Address",
+          phone: "Phone Number",
+          website: "Website (optional)",
+          about: "Tell us about your events",
+          submit: "Submit Application",
+          success: "Your application has been submitted. We'll contact you within 2-3 business days!",
+        },
+      },
+      pastEvents: {
+        meta: {
+          title: "Past Events - PalTicket",
+          description: "Browse past events hosted on PalTicket and relive memorable moments.",
+        },
+        title: "Past Events",
+        subtitle: "Relive the memories from amazing events we've hosted",
+        stats: {
+          events: "Events Hosted",
+          attendees: "Total Attendees",
+          cities: "Cities Covered",
+          organizers: "Partner Organizers",
+        },
+        completed: "Completed",
+        attendees: "attendees",
+      },
+    },
   },
   
   ar: {
@@ -454,6 +674,226 @@ export const translations = {
       menu: "القائمة",
       free: "مجاني",
       currency: "₪",
+    },
+
+    // Pages
+    pages: {
+      about: {
+        meta: {
+          title: "من نحن - تذاكر فلسطين",
+          description: "تعرف على تذاكر فلسطين، المنصة الرائدة لحجز التذاكر في فلسطين والتي تربط الناس بتجارب لا تُنسى.",
+        },
+        title: "عن تذاكر فلسطين",
+        subtitle: "نربط فلسطين بتجارب لا تُنسى منذ 2024",
+        mission: {
+          title: "مهمتنا",
+          content: "تذاكر فلسطين مكرسة لجعل اكتشاف الفعاليات وحجز التذاكر سهلاً للجميع في فلسطين. نحن نربط منظمي الفعاليات بجمهور شغوف، لخلق تجارب لا تُنسى تجمع المجتمعات معاً.",
+        },
+        valuesTitle: "قيمنا",
+        values: {
+          passion: "الشغف",
+          passionDesc: "نحن شغوفون بجمع الناس معاً من خلال الفعاليات",
+          community: "المجتمع",
+          communityDesc: "بناء مجتمعات أقوى من خلال التجارب المشتركة",
+          excellence: "التميز",
+          excellenceDesc: "تقديم أفضل تجربة حجز تذاكر ممكنة",
+          accessibility: "سهولة الوصول",
+          accessibilityDesc: "جعل الفعاليات متاحة للجميع",
+        },
+        story: {
+          title: "قصتنا",
+          p1: "ولدت تذاكر فلسطين من فكرة بسيطة: جعل اكتشاف وحضور الفعاليات الرائعة أسهل للناس في فلسطين. رأينا فجوة في السوق لمنصة حجز تذاكر حديثة وسهلة الاستخدام تفهم حقاً الثقافة والاحتياجات المحلية.",
+          p2: "اليوم، نحن فخورون بالشراكة مع مئات منظمي الفعاليات، من التجمعات المجتمعية الصغيرة إلى الحفلات والمهرجانات الكبرى. ساعدت منصتنا آلاف الأشخاص على خلق ذكريات دائمة.",
+          p3: "بينما نستمر في النمو، يبقى التزامنا كما هو: أن نكون الجسر الذي يربط الناس بالتجارب التي تحركهم.",
+        },
+        teamTitle: "تعرف على فريقنا",
+        team: {
+          member1: { name: "أحمد حسن", role: "المؤسس والرئيس التنفيذي" },
+          member2: { name: "سارة خليل", role: "رئيسة العمليات" },
+          member3: { name: "عمر ناصر", role: "رئيس التكنولوجيا" },
+        },
+      },
+      contact: {
+        meta: {
+          title: "تواصل معنا - تذاكر فلسطين",
+          description: "تواصل مع تذاكر فلسطين. نحن هنا لمساعدتك في احتياجات حجز التذاكر الخاصة بك.",
+        },
+        title: "تواصل معنا",
+        subtitle: "هل لديك أسئلة؟ نود أن نسمع منك. أرسل لنا رسالة وسنرد في أقرب وقت ممكن.",
+        form: {
+          title: "أرسل لنا رسالة",
+          name: "اسمك",
+          email: "البريد الإلكتروني",
+          subject: "الموضوع",
+          message: "الرسالة",
+          send: "إرسال الرسالة",
+          success: "تم إرسال رسالتك. سنرد عليك قريباً!",
+        },
+        info: {
+          title: "تواصل معنا",
+          email: "البريد الإلكتروني",
+          phone: "الهاتف",
+          address: "العنوان",
+          addressValue: "رام الله، فلسطين",
+          hours: "ساعات العمل",
+          hoursValue: "الأحد - الخميس، 9 صباحاً - 6 مساءً",
+        },
+      },
+      faq: {
+        meta: {
+          title: "الأسئلة الشائعة - تذاكر فلسطين",
+          description: "ابحث عن إجابات للأسئلة المتكررة حول خدمات حجز التذاكر في تذاكر فلسطين.",
+        },
+        title: "الأسئلة الشائعة",
+        subtitle: "ابحث عن إجابات للأسئلة الشائعة حول منصة الحجز الخاصة بنا",
+        searchPlaceholder: "ابحث في الأسئلة...",
+        noResults: "لم يتم العثور على أسئلة تطابق بحثك",
+        categories: {
+          tickets: {
+            title: "التذاكر والحجز",
+            items: [
+              { q: "كيف أشتري التذاكر؟", a: "تصفح الفعاليات على منصتنا، اختر الفعالية المفضلة، اختر نوع التذكرة والكمية، ثم أكمل عملية الدفع. سيتم إرسال التذاكر إلى بريدك الإلكتروني." },
+              { q: "هل يمكنني استرداد المبلغ على تذاكري؟", a: "تختلف سياسات الاسترداد حسب الفعالية. تحقق من صفحة الفعالية المحددة لمعلومات الاسترداد أو تواصل مع منظم الفعالية مباشرة." },
+              { q: "كيف أحصل على تذاكري؟", a: "يتم إرسال تذاكرك إلى بريدك الإلكتروني بعد الشراء. يمكنك أيضاً عرضها في حسابك تحت 'تذاكري'. أظهر رمز QR عند مدخل الفعالية." },
+            ],
+          },
+          payment: {
+            title: "الدفع",
+            items: [
+              { q: "ما طرق الدفع التي تقبلونها؟", a: "نقبل بطاقات الائتمان الرئيسية وبطاقات الخصم وطرق الدفع المحلية المختلفة. جميع المدفوعات تتم بشكل آمن." },
+              { q: "هل معلومات الدفع الخاصة بي آمنة؟", a: "نعم، نستخدم التشفير القياسي في الصناعة لحماية معلومات الدفع الخاصة بك. لا نقوم أبداً بتخزين تفاصيل بطاقتك الكاملة." },
+            ],
+          },
+          account: {
+            title: "الحساب",
+            items: [
+              { q: "كيف أنشئ حساباً؟", a: "انقر على 'إنشاء حساب' في الرأس، أدخل بياناتك، وتحقق من بريدك الإلكتروني. يمكنك أيضاً التسجيل باستخدام حساب جوجل أو فيسبوك." },
+              { q: "نسيت كلمة المرور. ماذا أفعل؟", a: "انقر على 'نسيت كلمة المرور' في صفحة تسجيل الدخول، أدخل بريدك الإلكتروني، واتبع التعليمات المرسلة لإعادة تعيين كلمة المرور." },
+            ],
+          },
+          organizers: {
+            title: "لمنظمي الفعاليات",
+            items: [
+              { q: "كيف يمكنني إدراج فعاليتي على تذاكر فلسطين؟", a: "تقدم لتصبح شريكاً من خلال صفحة 'كن شريكاً'. بمجرد الموافقة، ستحصل على وصول إلى لوحة تحكم المنظم." },
+              { q: "ما هي رسومكم للمنظمين؟", a: "نفرض رسوم خدمة صغيرة لكل تذكرة مباعة. تواصل معنا للحصول على معلومات التسعير المفصلة المناسبة لفعاليتك." },
+            ],
+          },
+        },
+      },
+      privacy: {
+        meta: {
+          title: "سياسة الخصوصية - تذاكر فلسطين",
+          description: "تعرف على كيفية جمع تذاكر فلسطين لمعلوماتك الشخصية واستخدامها وحمايتها.",
+        },
+        title: "سياسة الخصوصية",
+        lastUpdated: "آخر تحديث: يناير 2024",
+        sections: [
+          { title: "المعلومات التي نجمعها", content: "نجمع المعلومات التي تقدمها لنا مباشرة، مثل عند إنشاء حساب أو إجراء عملية شراء أو الاتصال بنا. يشمل ذلك اسمك وعنوان بريدك الإلكتروني ورقم هاتفك ومعلومات الدفع." },
+          { title: "كيف نستخدم معلوماتك", content: "نستخدم المعلومات التي نجمعها لمعالجة معاملاتك وإرسال التذاكر لك والتواصل معك حول الفعاليات وتحسين خدماتنا. قد نستخدم أيضاً معلوماتك لتخصيص تجربتك وإرسال رسائل تسويقية." },
+          { title: "مشاركة المعلومات", content: "نشارك معلوماتك مع منظمي الفعاليات عند شراء التذاكر، ومع معالجي الدفع لإكمال المعاملات، ومع مقدمي الخدمات الذين يساعدوننا في تشغيل منصتنا. لا نبيع معلوماتك الشخصية." },
+          { title: "أمن البيانات", content: "ننفذ التدابير التقنية والتنظيمية المناسبة لحماية معلوماتك الشخصية من الوصول غير المصرح به أو التعديل أو الإفشاء أو التدمير." },
+          { title: "حقوقك", content: "لديك الحق في الوصول إلى معلوماتك الشخصية أو تصحيحها أو حذفها. يمكنك إدارة تفضيلاتك في إعدادات حسابك أو الاتصال بنا مباشرة." },
+          { title: "اتصل بنا", content: "إذا كانت لديك أسئلة حول سياسة الخصوصية هذه، يرجى الاتصال بنا على privacy@palticket.com." },
+        ],
+      },
+      terms: {
+        meta: {
+          title: "شروط الخدمة - تذاكر فلسطين",
+          description: "اقرأ شروط وأحكام تذاكر فلسطين لاستخدام منصة حجز التذاكر الخاصة بنا.",
+        },
+        title: "شروط الخدمة",
+        lastUpdated: "آخر تحديث: يناير 2024",
+        sections: [
+          { title: "قبول الشروط", content: "بالوصول إلى تذاكر فلسطين واستخدامها، فإنك توافق على الالتزام بشروط الخدمة هذه. إذا كنت لا توافق على هذه الشروط، يرجى عدم استخدام منصتنا." },
+          { title: "تسجيل الحساب", content: "يجب عليك تقديم معلومات دقيقة وكاملة عند إنشاء حساب. أنت مسؤول عن الحفاظ على أمان حسابك وعن جميع الأنشطة التي تحدث تحت حسابك." },
+          { title: "شراء التذاكر", content: "جميع مبيعات التذاكر نهائية ما لم ينص منظم الفعالية على خلاف ذلك. الأسعار قابلة للتغيير. لسنا مسؤولين عن إلغاء الفعاليات أو التغييرات التي يجريها المنظمون." },
+          { title: "سلوك المستخدم", content: "توافق على عدم استخدام منصتنا لأي غرض غير قانوني، أو تحميل محتوى ضار، أو التدخل في الأداء السليم للخدمة." },
+          { title: "الملكية الفكرية", content: "جميع المحتوى على تذاكر فلسطين، بما في ذلك الشعارات والنصوص والرسومات، هي ملكنا أو ملك مرخصينا ومحمية بموجب قوانين حقوق النشر والعلامات التجارية." },
+          { title: "تحديد المسؤولية", content: "تذاكر فلسطين ليست مسؤولة عن أي أضرار غير مباشرة أو عرضية أو تبعية ناتجة عن استخدامك لمنصتنا. مسؤوليتنا الإجمالية محدودة بالمبلغ الذي دفعته مقابل التذكرة أو الخدمة المحددة." },
+          { title: "القانون الحاكم", content: "تخضع هذه الشروط لقوانين فلسطين. أي نزاعات ستحل في محاكم رام الله." },
+        ],
+      },
+      designGuidelines: {
+        meta: {
+          title: "إرشادات التصميم - تذاكر فلسطين",
+          description: "إرشادات العلامة التجارية وموارد التصميم لشركاء تذاكر فلسطين والإعلام.",
+        },
+        title: "إرشادات التصميم",
+        subtitle: "موارد العلامة التجارية والإرشادات للشركاء والإعلام",
+        logo: {
+          title: "استخدام الشعار",
+          usage: "يجب أن يكون للشعار دائماً مساحة واضحة حوله ولا يجب تمديده أو تدويره أو تعديله بأي شكل. استخدم النسخة المناسبة للخلفيات الفاتحة والداكنة.",
+        },
+        downloadAssets: "تحميل أصول العلامة التجارية",
+        colors: {
+          title: "لوحة الألوان",
+          content: "ألواننا الأساسية تمثل الثقة والطاقة والثقافة النابضة بالحياة في فلسطين. استخدم هذه الألوان باستمرار في جميع المواد.",
+        },
+        typography: {
+          title: "الخطوط",
+          content: "نستخدم Plus Jakarta Sans للنص الإنجليزي و Noto Sans Arabic للنص العربي. توفر هذه الخطوط وضوحاً ممتازاً عبر جميع الأجهزة.",
+        },
+        imagery: {
+          title: "الصور",
+          content: "استخدم صوراً عالية الجودة وأصيلة تمثل تنوع وطاقة الثقافة والفعاليات الفلسطينية. تجنب صور المخزون التي تبدو عامة.",
+        },
+        layout: {
+          title: "التخطيط",
+          content: "حافظ على تباعد ومحاذاة متسقة. يجب أن تبدو تصميماتنا نظيفة وحديثة وسهلة الوصول لجميع المستخدمين.",
+        },
+      },
+      partner: {
+        meta: {
+          title: "كن شريكاً - تذاكر فلسطين",
+          description: "انضم إلى تذاكر فلسطين كمنظم فعاليات وصل إلى آلاف الحضور في جميع أنحاء فلسطين.",
+        },
+        title: "كن شريكاً",
+        subtitle: "انضم إلى منصة التذاكر الرائدة في فلسطين وطور فعالياتك",
+        benefits: {
+          ticketing: { title: "حجز تذاكر سهل", desc: "بيع التذاكر عبر الإنترنت مع منصتنا سهلة الاستخدام" },
+          analytics: { title: "تحليلات فورية", desc: "تتبع المبيعات والحضور مع تقارير مفصلة" },
+          audience: { title: "جمهور أوسع", desc: "الوصول إلى آلاف الحضور المحتملين" },
+          support: { title: "دعم مخصص", desc: "احصل على المساعدة من فريقنا متى احتجت" },
+        },
+        featuresTitle: "ما تحصل عليه",
+        features: [
+          "صفحات فعاليات مخصصة",
+          "أنواع تذاكر متعددة",
+          "تسجيل دخول برمز QR",
+          "لوحة مبيعات فورية",
+          "إدارة الحضور",
+          "أدوات التسويق",
+          "تتبع المدفوعات",
+          "دعم على مدار الساعة",
+        ],
+        form: {
+          title: "تقدم لتصبح شريكاً",
+          orgName: "اسم المؤسسة",
+          contactName: "الشخص المسؤول",
+          email: "البريد الإلكتروني",
+          phone: "رقم الهاتف",
+          website: "الموقع الإلكتروني (اختياري)",
+          about: "أخبرنا عن فعالياتك",
+          submit: "إرسال الطلب",
+          success: "تم إرسال طلبك. سنتواصل معك خلال 2-3 أيام عمل!",
+        },
+      },
+      pastEvents: {
+        meta: {
+          title: "الفعاليات السابقة - تذاكر فلسطين",
+          description: "تصفح الفعاليات السابقة المستضافة على تذاكر فلسطين وعش اللحظات التي لا تُنسى.",
+        },
+        title: "الفعاليات السابقة",
+        subtitle: "عش الذكريات من الفعاليات الرائعة التي استضفناها",
+        stats: {
+          events: "فعاليات مستضافة",
+          attendees: "إجمالي الحضور",
+          cities: "مدن مغطاة",
+          organizers: "شركاء منظمين",
+        },
+        completed: "مكتملة",
+        attendees: "حاضر",
+      },
     },
   },
 };
