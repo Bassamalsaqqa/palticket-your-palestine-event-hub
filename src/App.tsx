@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/i18n";
 import { PublicLayout } from "@/components/PublicLayout";
 import HomePage from "./pages/HomePage";
+import DiscoverPage from "./pages/DiscoverPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,11 +37,13 @@ const App = () => (
               {/* English Routes */}
               <Route path="/en" element={<PublicLayout />}>
                 <Route index element={<HomePage />} />
+                <Route path="discover" element={<DiscoverPage />} />
               </Route>
               
               {/* Arabic Routes */}
               <Route path="/ar" element={<PublicLayout />}>
                 <Route index element={<HomePage />} />
+                <Route path="discover" element={<DiscoverPage />} />
               </Route>
 
               {/* Catch-all */}
