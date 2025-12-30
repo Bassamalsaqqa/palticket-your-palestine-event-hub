@@ -9,6 +9,14 @@ import { PublicLayout } from "@/components/PublicLayout";
 import HomePage from "./pages/HomePage";
 import DiscoverPage from "./pages/DiscoverPage";
 import EventDetailPage from "./pages/EventDetailPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
+import FAQPage from "./pages/FAQPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
+import DesignGuidelinesPage from "./pages/DesignGuidelinesPage";
+import PartnerPage from "./pages/PartnerPage";
+import PastEventsPage from "./pages/PastEventsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +48,14 @@ const App = () => (
                 <Route index element={<HomePage />} />
                 <Route path="discover" element={<DiscoverPage />} />
                 <Route path="events/:slug" element={<EventDetailPage />} />
+                <Route path="about" element={<AboutPage />} />
+                <Route path="contact" element={<ContactPage />} />
+                <Route path="faq" element={<FAQPage />} />
+                <Route path="privacy" element={<PrivacyPage />} />
+                <Route path="terms" element={<TermsPage />} />
+                <Route path="design-guidelines" element={<DesignGuidelinesPage />} />
+                <Route path="partner" element={<PartnerPage />} />
+                <Route path="past-events" element={<PastEventsPage />} />
               </Route>
               
               {/* Arabic Routes */}
@@ -47,6 +63,14 @@ const App = () => (
                 <Route index element={<HomePage />} />
                 <Route path="discover" element={<DiscoverPage />} />
                 <Route path="events/:slug" element={<EventDetailPage />} />
+                <Route path="about" element={<AboutPage />} />
+                <Route path="contact" element={<ContactPage />} />
+                <Route path="faq" element={<FAQPage />} />
+                <Route path="privacy" element={<PrivacyPage />} />
+                <Route path="terms" element={<TermsPage />} />
+                <Route path="design-guidelines" element={<DesignGuidelinesPage />} />
+                <Route path="partner" element={<PartnerPage />} />
+                <Route path="past-events" element={<PastEventsPage />} />
               </Route>
 
               {/* Catch-all */}
