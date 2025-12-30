@@ -22,6 +22,7 @@ import PastEventsPage from "./pages/PastEventsPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import AccountPage from "./pages/AccountPage";
+import ScannerPage from "./pages/ScannerPage";
 import NotFound from "./pages/NotFound";
 import {
   AdminDashboard,
@@ -79,6 +80,9 @@ const App = () => (
                   <Route path="account" element={<AccountPage />} />
                 </Route>
 
+                {/* English Scanner Route */}
+                <Route path="/en/scan" element={<ScannerPage />} />
+
                 {/* English Admin Routes */}
                 <Route path="/en/admin" element={<AdminLayout />}>
                   <Route index element={<AdminDashboard />} />
@@ -111,6 +115,9 @@ const App = () => (
                   <Route path="signup" element={<SignupPage />} />
                   <Route path="account" element={<AccountPage />} />
                 </Route>
+
+                {/* Arabic Scanner Route */}
+                <Route path="/ar/scan" element={<ScannerPage />} />
 
                 {/* Arabic Admin Routes */}
                 <Route path="/ar/admin" element={<AdminLayout />}>
