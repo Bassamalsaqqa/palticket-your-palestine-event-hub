@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useLanguage } from "@/i18n";
+import { useAuth } from "@/contexts/AuthContext";
 import { BrandLogo } from "./BrandLogo";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { cn } from "@/lib/utils";
 
 export function Header() {
   const { language, t, isRTL } = useLanguage();
+  const { isAdmin, isStaff } = useAuth();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -19,6 +21,14 @@ export function Header() {
     { label: t.nav.about, href: `/${language}/about` },
     { label: t.nav.contact, href: `/${language}/contact` },
   ];
+
+  if (isAdmin) {
+    navLinks.push({ label: t.nav.admin, href: `/${language}/admin` });
+  }
+
+  if (isStaff) {
+    navLinks.push({ label: t.nav.scanner, href: `/${language}/scan` });
+  }
 
   const isActive = (href: string) => {
     if (href === `/${language}`) {

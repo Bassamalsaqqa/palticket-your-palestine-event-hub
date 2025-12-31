@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,7 +13,8 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").max(255),
@@ -26,6 +27,9 @@ export default function LoginPage() {
   const { language, t } = useLanguage();
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as { message?: string } | null;
+  const message = state?.message;
   const [showPassword, setShowPassword] = useState(false);
   const baseUrl = "https://palticket.com";
 
@@ -57,7 +61,13 @@ export default function LoginPage() {
         <link rel="alternate" hrefLang="ar" href={`${baseUrl}/ar/login`} />
       </Helmet>
 
-      <div className="container py-12 md:py-20 flex items-center justify-center min-h-[calc(100vh-200px)]">
+      <div className="container py-12 md:py-20 flex flex-col gap-6 items-center justify-center min-h-[calc(100vh-200px)]">
+        {message && (
+          <Alert variant="destructive" className="w-full max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        )}
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">{t.auth.login}</CardTitle>

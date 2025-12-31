@@ -24,6 +24,7 @@ import SignupPage from "./pages/SignupPage";
 import AccountPage from "./pages/AccountPage";
 import ScannerPage from "./pages/ScannerPage";
 import NotFound from "./pages/NotFound";
+import { RequireAdmin, RequireStaff } from "@/components/RouteGuards";
 import {
   AdminDashboard,
   AdminEvents,
@@ -81,10 +82,13 @@ const App = () => (
                 </Route>
 
                 {/* English Scanner Route */}
-                <Route path="/en/scan" element={<ScannerPage />} />
+                <Route element={<RequireStaff />}>
+                  <Route path="/en/scan" element={<ScannerPage />} />
+                </Route>
 
                 {/* English Admin Routes */}
-                <Route path="/en/admin" element={<AdminLayout />}>
+                <Route element={<RequireAdmin />}>
+                  <Route path="/en/admin" element={<AdminLayout />}>
                   <Route index element={<AdminDashboard />} />
                   <Route path="events" element={<AdminEvents />} />
                   <Route path="ticket-types" element={<AdminTicketTypes />} />
@@ -96,6 +100,7 @@ const App = () => (
                   <Route path="staff" element={<AdminStaff />} />
                   <Route path="exports" element={<AdminExports />} />
                   <Route path="audit-logs" element={<AdminAuditLogs />} />
+                  </Route>
                 </Route>
                 
                 {/* Arabic Routes */}
@@ -117,10 +122,13 @@ const App = () => (
                 </Route>
 
                 {/* Arabic Scanner Route */}
-                <Route path="/ar/scan" element={<ScannerPage />} />
+                <Route element={<RequireStaff />}>
+                  <Route path="/ar/scan" element={<ScannerPage />} />
+                </Route>
 
                 {/* Arabic Admin Routes */}
-                <Route path="/ar/admin" element={<AdminLayout />}>
+                <Route element={<RequireAdmin />}>
+                  <Route path="/ar/admin" element={<AdminLayout />}>
                   <Route index element={<AdminDashboard />} />
                   <Route path="events" element={<AdminEvents />} />
                   <Route path="ticket-types" element={<AdminTicketTypes />} />
@@ -132,6 +140,7 @@ const App = () => (
                   <Route path="staff" element={<AdminStaff />} />
                   <Route path="exports" element={<AdminExports />} />
                   <Route path="audit-logs" element={<AdminAuditLogs />} />
+                  </Route>
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

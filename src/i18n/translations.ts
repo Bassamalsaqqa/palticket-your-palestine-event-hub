@@ -117,6 +117,13 @@ export const translations = {
       goHome: "Back to Home",
     },
     
+    // Access Control
+    access: {
+      adminOnly: "Access restricted: Admins only",
+      staffOnly: "Access restricted: Staff only",
+      loginRequired: "Please login to continue",
+    },
+    
     // Auth
     auth: {
       login: "Login",
@@ -732,6 +739,13 @@ export const translations = {
       downloadQR: "تحميل رمز QR",
       viewTickets: "عرض تذاكري",
       goHome: "العودة للرئيسية",
+    },
+    
+    // Access Control
+    access: {
+      adminOnly: "الوصول مقيد: للمسؤولين فقط",
+      staffOnly: "الوصول مقيد: للموظفين فقط",
+      loginRequired: "يرجى تسجيل الدخول للمتابعة",
     },
     
     // Auth

@@ -35,12 +35,6 @@ export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
-  // For demo purposes, allow access without real auth
-  // In production, you'd check for admin role
-  // if (!isAuthenticated) {
-  //   return <Navigate to={`/${language}/login`} replace />;
-  // }
-
   const navItems = [
     { id: "dashboard", label: t.admin.dashboard, icon: LayoutDashboard, href: `/${language}/admin` },
     { id: "events", label: t.admin.events, icon: Calendar, href: `/${language}/admin/events` },

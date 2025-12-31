@@ -50,6 +50,22 @@ npm run dev
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
+## Authentication & Roles (Mock System)
+
+The application uses a mock authentication system. Access control is determined by the email prefix used during login.
+
+| Role | Access Level | Email Pattern | Example Login |
+|------|-------------|---------------|---------------|
+| **Admin** | Full access to Admin Dashboard, Scanner, and User features. | Starts with `admin` | `admin@palticket.com` |
+| **Staff** | Access to Scanner and User features. | Starts with `staff` | `staff@event.com` |
+| **User** | Access to public events and personal account only. | Any other email | `user@example.com` |
+
+**Password:** Any string with 6+ characters (e.g., `123456`).
+
+## Known Issues & Troubleshooting
+
+*   **Login Page White Screen:** A previous issue causing a white screen on the login page (due to missing `useLocation` import) has been resolved. Ensure you are using the latest version of `src/pages/LoginPage.tsx`.
+
 ## What technologies are used for this project?
 
 This project is built with:
