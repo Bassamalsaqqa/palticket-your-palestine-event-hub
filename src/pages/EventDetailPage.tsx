@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useLanguage } from "@/i18n";
 import { Button } from "@/components/ui/button";
@@ -31,13 +31,17 @@ import {
   Ticket,
   Mail,
   Phone,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from "lucide-react";
-import { getEventBySlug, categories, type TicketTier } from "@/data/mockEvents";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchEventBySlug, fetchCategories } from "@/services/eventsService";
+import { createOrder } from "@/services/ordersService";
+import { useAuth } from "@/contexts";
 
 type CheckoutStep = "browse" | "checkout" | "confirmation";
 
@@ -56,9 +60,38 @@ export default function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { language, t, isRTL } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
   
-  const event = useMemo(() => getEventBySlug(slug || ""), [slug]);
-  const category = useMemo(() => categories.find(c => c.id === event?.category), [event]);
+  const { data: event, isLoading: isEventLoading } = useQuery({
+    queryKey: ["event", slug],
+    queryFn: () => fetchEventBySlug(slug || ""),
+    enabled: !!slug,
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: fetchCategories,
+  });
+
+  const category = useMemo(() => categories.find(c => c.id === event?.category), [event, categories]);
+
+  const createOrderMutation = useMutation({
+    mutationFn: createOrder,
+    onSuccess: (data) => {
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ["orders", user.id] });
+        queryClient.invalidateQueries({ queryKey: ["tickets", user.id] });
+      }
+      setOrderNumber(data.orderNumber);
+      setStep("confirmation");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    onError: () => {
+      toast({ title: t.common.error, variant: "destructive" });
+    }
+  });
 
   // Gallery state
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -69,6 +102,14 @@ export default function EventDetailPage() {
   const [attendeeInfo, setAttendeeInfo] = useState({ name: "", email: "", phone: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [orderNumber, setOrderNumber] = useState("");
+
+  if (isEventLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   if (!event) {
     return (
@@ -116,6 +157,12 @@ export default function EventDetailPage() {
   const grandTotal = calculateTotal() + serviceFee;
 
   const handleCheckout = () => {
+    if (!isAuthenticated) {
+      toast({ title: t.access.loginRequired, variant: "destructive" });
+      navigate(`/${language}/login`, { state: { message: t.access.loginRequired, from: location } });
+      return;
+    }
+
     if (selections.length === 0) {
       toast({ title: t.event.selectTickets, variant: "destructive" });
       return;
@@ -135,11 +182,37 @@ export default function EventDetailPage() {
       return;
     }
     setErrors({});
+
+    if (!user?.id) {
+        toast({ title: t.access.loginRequired, variant: "destructive" });
+        navigate(`/${language}/login`, { state: { message: t.access.loginRequired, from: location } });
+        return;
+    }
     
-    // Generate mock order number
-    setOrderNumber(`PT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
-    setStep("confirmation");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Create order using mutation
+    const orderTickets = selections.map(sel => {
+      const tier = event.ticketTiers.find(t => t.id === sel.tierId);
+      return {
+        tierId: sel.tierId,
+        tierName: tier?.name || { en: "", ar: "" },
+        quantity: sel.quantity,
+        price: tier?.price || 0,
+      };
+    });
+
+    createOrderMutation.mutate({
+      userId: user.id,
+      eventId: event.id,
+      eventSlug: event.slug,
+      eventTitle: event.title,
+      eventDate: event.date,
+      eventTime: event.time,
+      eventVenue: event.venue.name, // Fixed to use {en, ar} object
+      eventImage: event.images[0],
+      attendeeName: attendeeInfo.name,
+      tickets: orderTickets,
+      total: grandTotal,
+    });
   };
 
   const handleDownloadQR = () => {

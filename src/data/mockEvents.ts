@@ -1,81 +1,6 @@
-export interface TicketTier {
-  id: string;
-  name: {
-    en: string;
-    ar: string;
-  };
-  price: number;
-  available: number;
-  total: number;
-  description?: {
-    en: string;
-    ar: string;
-  };
-}
+import { City, Category, Event, EventFilters } from "@/types/domain";
 
-export interface Event {
-  id: string;
-  slug: string;
-  title: {
-    en: string;
-    ar: string;
-  };
-  description: {
-    en: string;
-    ar: string;
-  };
-  category: string;
-  images: string[];
-  date: string;
-  time: string;
-  endDate?: string;
-  venue: {
-    name: {
-      en: string;
-      ar: string;
-    };
-    address: {
-      en: string;
-      ar: string;
-    };
-    city: {
-      en: string;
-      ar: string;
-    };
-    coordinates?: {
-      lat: number;
-      lng: number;
-    };
-  };
-  organizer: {
-    name: {
-      en: string;
-      ar: string;
-    };
-    logo?: string;
-  };
-  ticketTiers: TicketTier[];
-  featured: boolean;
-  status: "upcoming" | "ongoing" | "past" | "cancelled";
-}
-
-export interface Category {
-  id: string;
-  name: {
-    en: string;
-    ar: string;
-  };
-  icon: string;
-  color: string;
-}
-
-export interface City {
-  id: string;
-  name: {
-    en: string;
-    ar: string;
-  };
-}
+export type { City, Category, Event, EventFilters, TicketTier } from "@/types/domain";
 
 export const cities: City[] = [
   { id: "ramallah", name: { en: "Ramallah", ar: "رام الله" } },
@@ -502,17 +427,6 @@ export function getEventBySlug(slug: string): Event | undefined {
 // Helper to get featured events
 export function getFeaturedEvents(): Event[] {
   return mockEvents.filter((event) => event.featured);
-}
-
-// Helper to filter events
-export interface EventFilters {
-  category?: string;
-  city?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  priceMin?: number;
-  priceMax?: number;
-  search?: string;
 }
 
 export function filterEvents(filters: EventFilters): Event[] {

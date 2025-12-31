@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useLanguage } from "@/i18n";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts";
 import { BrandLogo } from "./BrandLogo";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Button } from "@/components/ui/button";

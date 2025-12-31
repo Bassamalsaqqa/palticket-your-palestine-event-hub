@@ -32,13 +32,16 @@ import {
   Briefcase,
   Moon,
   Laugh,
-  GraduationCap
+  GraduationCap,
+  type LucideIcon
 } from "lucide-react";
-import { mockEvents, categories, cities, filterEvents, type EventFilters } from "@/data/mockEvents";
+import { type EventFilters } from "@/types/domain";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useQuery } from "@tanstack/react-query";
+import { filterEvents, fetchCategories, fetchCities } from "@/services/eventsService";
 
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, LucideIcon> = {
   Music, Trophy, Palette, UtensilsCrossed, Users, PartyPopper, Briefcase, Moon, Laugh, GraduationCap,
 };
 
@@ -72,32 +75,47 @@ export default function DiscoverPage() {
     search: search || undefined,
   }), [category, city, dateFrom, dateTo, priceRange, search]);
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: fetchCategories,
+  });
+
+  const { data: cities = [] } = useQuery({
+    queryKey: ["cities"],
+    queryFn: fetchCities,
+  });
+
+  const { data: events = [] } = useQuery({
+    queryKey: ["events", filters],
+    queryFn: () => filterEvents(filters),
+  });
+
   // Filter and sort events
   const filteredEvents = useMemo(() => {
-    let events = filterEvents(filters);
+    const sorted = [...events];
     
     // Apply sorting
     switch (sortBy) {
       case "soonest":
-        events = [...events].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        sorted.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         break;
       case "popularity":
-        events = [...events].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+        sorted.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
         break;
       case "price_asc":
-        events = [...events].sort((a, b) => 
+        sorted.sort((a, b) => 
           Math.min(...a.ticketTiers.map(t => t.price)) - Math.min(...b.ticketTiers.map(t => t.price))
         );
         break;
       case "price_desc":
-        events = [...events].sort((a, b) => 
+        sorted.sort((a, b) => 
           Math.min(...b.ticketTiers.map(t => t.price)) - Math.min(...a.ticketTiers.map(t => t.price))
         );
         break;
     }
     
-    return events;
-  }, [filters, sortBy]);
+    return sorted;
+  }, [events, sortBy]);
 
   // Pagination
   const totalPages = Math.ceil(filteredEvents.length / ITEMS_PER_PAGE);

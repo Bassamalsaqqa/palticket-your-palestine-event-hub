@@ -1,54 +1,22 @@
-# Welcome to your Lovable project
-
-## Project info
+# PalTicket
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
-## How can I edit this code?
+## Overview
+PalTicket is a bilingual event ticketing platform for Palestine.
 
-There are several ways of editing your application.
+## Getting Started
 
-**Use Lovable**
+### Prerequisites
+*   Node.js & npm (or Bun)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
+### Installation
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
 
 ## Authentication & Roles (Mock System)
 
@@ -60,30 +28,38 @@ The application uses a mock authentication system. Access control is determined 
 | **Staff** | Access to Scanner and User features. | Starts with `staff` | `staff@event.com` |
 | **User** | Access to public events and personal account only. | Any other email | `user@example.com` |
 
+**Seed data available for admin@palticket.com.**
+
 **Password:** Any string with 6+ characters (e.g., `123456`).
+
+## Development Architecture
+
+This project uses a **Service Layer** to decouple the UI from the mock data source.
+
+*   **Services:** Located in `src/services/`. All data fetching goes through here.
+*   **Data Fetching:** We use **React Query** (`useQuery`, `useMutation`) for all async operations.
+*   **Mock Data:** `src/data/mockEvents.ts` serves as the initial database.
+*   **Types:** Shared types are in `src/types/domain.ts`.
+
+**Important:** Do not import `mockEvents` directly into UI components. Use the services.
+
+## Technologies
+
+- **Framework:** React + Vite
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS + shadcn/ui
+- **State/Query:** TanStack Query (React Query)
+- **Routing:** React Router DOM v6
+
+## Code Quality
+
+The project adheres to strict **ESLint** rules, including `react-refresh/only-export-components`. Code is structured to separate components from hooks, contexts, and utility functions to ensure Fast Refresh works reliably.
 
 ## Known Issues & Troubleshooting
 
 *   **Login Page White Screen:** A previous issue causing a white screen on the login page (due to missing `useLocation` import) has been resolved. Ensure you are using the latest version of `src/pages/LoginPage.tsx`.
+*   **Data Persistence:** Since there is no real backend, created orders and tickets will disappear if you refresh the browser page.
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
+## Deployment
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)

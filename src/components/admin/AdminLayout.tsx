@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useLanguage } from "@/i18n";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";

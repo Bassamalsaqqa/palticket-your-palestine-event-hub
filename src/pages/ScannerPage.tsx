@@ -30,8 +30,9 @@ import {
   RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
-import { mockEvents } from "@/data/mockEvents";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAllEvents } from "@/services/eventsService";
 
 type ScanStep = "login" | "select-event" | "select-gate" | "scanning" | "result";
 type ScanResult = "allowed" | "denied-used" | "denied-wrong-event" | "denied-invalid" | null;
@@ -56,6 +57,11 @@ export default function ScannerPage() {
   const { language, t } = useLanguage();
   const langPrefix = `/${language}`;
   
+  const { data: events = [] } = useQuery({
+    queryKey: ["scannerEvents"],
+    queryFn: fetchAllEvents,
+  });
+
   const [step, setStep] = useState<ScanStep>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -153,7 +159,7 @@ export default function ScannerPage() {
     }
   };
 
-  const selectedEventData = mockEvents.find(e => e.id === selectedEvent);
+  const selectedEventData = events.find(e => e.id === selectedEvent);
   const selectedGateData = mockGates.find(g => g.id === selectedGate);
 
   return (
@@ -265,7 +271,7 @@ export default function ScannerPage() {
                         <SelectValue placeholder={t.scanner.selectEvent} />
                       </SelectTrigger>
                       <SelectContent>
-                        {mockEvents.map((event) => (
+                        {events.map((event) => (
                           <SelectItem key={event.id} value={event.id}>
                             {language === "ar" ? event.title.ar : event.title.en}
                           </SelectItem>

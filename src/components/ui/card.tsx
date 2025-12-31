@@ -106,5 +106,4 @@ export {
   CardTitle,
   CardDescription,
   CardContent,
-  cardVariants,
 };

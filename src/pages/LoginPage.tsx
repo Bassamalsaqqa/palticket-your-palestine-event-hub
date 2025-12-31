@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/i18n";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,12 +23,17 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
+type LocationState = {
+  message?: string;
+  from?: { pathname: string };
+};
+
 export default function LoginPage() {
   const { language, t } = useLanguage();
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const state = location.state as { message?: string } | null;
+  const state = location.state as LocationState | null;
   const message = state?.message;
   const [showPassword, setShowPassword] = useState(false);
   const baseUrl = "https://palticket.com";
@@ -45,7 +50,8 @@ export default function LoginPage() {
     const result = await login(data.email, data.password);
     if (result.success) {
       toast.success(t.auth.loginSuccess);
-      navigate(`/${language}/account`);
+      const from = state?.from?.pathname || `/${language}/account`;
+      navigate(from, { replace: true });
     } else {
       toast.error(result.error || t.auth.loginError);
     }
@@ -99,7 +105,7 @@ export default function LoginPage() {
                         <div className="relative">
                           <Input
                             type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
+                            placeholder={t.auth.passwordPlaceholder}
                             {...field}
                           />
                           <Button

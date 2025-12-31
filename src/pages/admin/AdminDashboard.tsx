@@ -11,7 +11,8 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { mockEvents } from "@/data/mockEvents";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAllEvents } from "@/services/eventsService";
 
 // Mock KPI data
 const mockStats = {
@@ -35,6 +36,11 @@ const mockRecentOrders = [
 
 export default function AdminDashboard() {
   const { language, t } = useLanguage();
+
+  const { data: events = [] } = useQuery({
+    queryKey: ["adminEvents"],
+    queryFn: fetchAllEvents,
+  });
 
   const stats = [
     {
@@ -160,7 +166,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {mockEvents.slice(0, 5).map((event) => (
+              {events.slice(0, 5).map((event) => (
                 <div key={event.id} className="flex items-center gap-3">
                   <img
                     src={event.images[0]}

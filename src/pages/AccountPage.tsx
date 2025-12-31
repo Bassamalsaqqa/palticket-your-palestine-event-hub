@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Link, useLocation, Navigate } from "react-router-dom";
 import { useLanguage } from "@/i18n";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,9 @@ import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ar, enUS } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import { fetchOrdersByUser } from "@/services/ordersService";
+import { fetchTicketsByUser } from "@/services/ticketsService";
 import {
   User,
   ShoppingBag,
@@ -33,10 +36,22 @@ import {
 
 export default function AccountPage() {
   const { language, t, isRTL } = useLanguage();
-  const { user, isAuthenticated, logout, updateProfile, orders, tickets } = useAuth();
+  const { user, isAuthenticated, logout, updateProfile } = useAuth();
   const location = useLocation();
   const baseUrl = "https://palticket.com";
   const dateLocale = language === "ar" ? ar : enUS;
+
+  const { data: orders = [] } = useQuery({
+    queryKey: ["orders", user?.id],
+    queryFn: () => fetchOrdersByUser(user?.id || ""),
+    enabled: !!user?.id,
+  });
+
+  const { data: tickets = [] } = useQuery({
+    queryKey: ["tickets", user?.id],
+    queryFn: () => fetchTicketsByUser(user?.id || ""),
+    enabled: !!user?.id,
+  });
 
   // Get active tab from URL or default to profile
   const hash = location.hash.replace("#", "") || "profile";

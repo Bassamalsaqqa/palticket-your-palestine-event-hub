@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/i18n";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,10 +29,16 @@ const signupSchema = z.object({
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
+type LocationState = {
+  from?: { pathname: string };
+};
+
 export default function SignupPage() {
   const { language, t } = useLanguage();
   const { signup, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as LocationState | null;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const baseUrl = "https://palticket.com";
@@ -58,7 +64,8 @@ export default function SignupPage() {
     });
     if (result.success) {
       toast.success(t.auth.signupSuccess);
-      navigate(`/${language}/account`);
+      const from = state?.from?.pathname || `/${language}/account`;
+      navigate(from, { replace: true });
     } else {
       toast.error(result.error || t.auth.signupError);
     }
@@ -134,7 +141,7 @@ export default function SignupPage() {
                         <div className="relative">
                           <Input
                             type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
+                            placeholder={t.auth.passwordPlaceholder}
                             {...field}
                           />
                           <Button
@@ -162,7 +169,7 @@ export default function SignupPage() {
                         <div className="relative">
                           <Input
                             type={showConfirmPassword ? "text" : "password"}
-                            placeholder="••••••••"
+                            placeholder={t.auth.passwordPlaceholder}
                             {...field}
                           />
                           <Button

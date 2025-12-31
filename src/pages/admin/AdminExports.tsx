@@ -12,7 +12,8 @@ import {
 import { Download, FileSpreadsheet, FileText, Calendar, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
-import { mockEvents } from "@/data/mockEvents";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAllEvents } from "@/services/eventsService";
 
 const mockExportHistory = [
   { id: "1", type: "Orders", format: "CSV", date: "2025-01-28 14:32", size: "245 KB", records: 342 },
@@ -26,6 +27,11 @@ export default function AdminExports() {
   const { language, t } = useLanguage();
   const [selectedEvent, setSelectedEvent] = useState("all");
   const [exportType, setExportType] = useState("orders");
+
+  const { data: events = [] } = useQuery({
+    queryKey: ["adminEvents"],
+    queryFn: fetchAllEvents,
+  });
 
   const handleExport = (format: string) => {
     toast.success(`${t.admin.exportStarted} (${format.toUpperCase()})`);
@@ -62,7 +68,7 @@ export default function AdminExports() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t.admin.allEvents}</SelectItem>
-                  {mockEvents.map((event) => (
+                  {events.map((event) => (
                     <SelectItem key={event.id} value={event.id}>
                       {language === "ar" ? event.title.ar : event.title.en}
                     </SelectItem>

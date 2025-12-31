@@ -4,17 +4,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Calendar, MapPin, ArrowRight, Music, Trophy, Palette, UtensilsCrossed, Users, PartyPopper } from "lucide-react";
-import { getFeaturedEvents, categories } from "@/data/mockEvents";
+import { Search, Calendar, MapPin, ArrowRight, Music, Trophy, Palette, UtensilsCrossed, Users, PartyPopper, type LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { fetchFeaturedEvents, fetchCategories } from "@/services/eventsService";
 
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, LucideIcon> = {
   Music, Trophy, Palette, UtensilsCrossed, Users, PartyPopper,
 };
 
 export default function HomePage() {
   const { language, t, isRTL } = useLanguage();
-  const featuredEvents = getFeaturedEvents();
+  
+  const { data: featuredEvents = [] } = useQuery({
+    queryKey: ["featuredEvents"],
+    queryFn: fetchFeaturedEvents,
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: fetchCategories,
+  });
 
   return (
     <div className="flex flex-col">

@@ -16,7 +16,7 @@ export default function FAQPage() {
   const baseUrl = "https://palticket.com";
   const [searchQuery, setSearchQuery] = useState("");
 
-  const faqCategories = [
+  const faqCategories = useMemo(() => [
     {
       title: t.pages.faq.categories.tickets.title,
       items: t.pages.faq.categories.tickets.items,
@@ -33,7 +33,7 @@ export default function FAQPage() {
       title: t.pages.faq.categories.organizers.title,
       items: t.pages.faq.categories.organizers.items,
     },
-  ];
+  ], [t]);
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery) return faqCategories;

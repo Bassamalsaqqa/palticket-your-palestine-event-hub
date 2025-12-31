@@ -19,14 +19,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
-import { mockEvents } from "@/data/mockEvents";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAllEvents } from "@/services/eventsService";
 
 export default function AdminEvents() {
   const { language, t } = useLanguage();
   const [search, setSearch] = useState("");
 
-  const filteredEvents = mockEvents.filter((event) => {
+  const { data: events = [] } = useQuery({
+    queryKey: ["adminEvents"],
+    queryFn: fetchAllEvents,
+  });
+
+  const filteredEvents = events.filter((event) => {
     const title = language === "ar" ? event.title.ar : event.title.en;
     return title.toLowerCase().includes(search.toLowerCase());
   });

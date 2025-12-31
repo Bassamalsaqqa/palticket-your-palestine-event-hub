@@ -4,22 +4,28 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import { mockEvents } from "@/data/mockEvents";
 import { format } from "date-fns";
 import { ar, enUS } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAllEvents } from "@/services/eventsService";
 
 export default function PastEventsPage() {
   const { language, t, isRTL } = useLanguage();
   const baseUrl = "https://palticket.com";
   const dateLocale = language === "ar" ? ar : enUS;
 
+  const { data: events = [] } = useQuery({
+    queryKey: ["pastEvents"],
+    queryFn: fetchAllEvents,
+  });
+
   // Filter past events (mock: events with dates before today)
-  const pastEvents = mockEvents
+  const pastEvents = events
     .filter((event) => new Date(event.date) < new Date())
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   // If no past events, show some mock past data
-  const displayEvents = pastEvents.length > 0 ? pastEvents : mockEvents.slice(0, 6);
+  const displayEvents = pastEvents.length > 0 ? pastEvents : events.slice(0, 6);
 
   return (
     <>
