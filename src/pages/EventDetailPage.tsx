@@ -65,14 +65,14 @@ export default function EventDetailPage() {
   const queryClient = useQueryClient();
   
   const { data: event, isLoading: isEventLoading } = useQuery({
-    queryKey: ["event", slug],
-    queryFn: () => fetchEventBySlug(slug || ""),
+    queryKey: ["event", language, slug],
+    queryFn: () => fetchEventBySlug(slug || "", language),
     enabled: !!slug,
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryKey: ["categories", language],
+    queryFn: () => fetchCategories(language),
   });
 
   const category = useMemo(() => categories.find(c => c.id === event?.category), [event, categories]);

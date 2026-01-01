@@ -17,13 +17,13 @@ export default function HomePage() {
   const { language, t, isRTL } = useLanguage();
   
   const { data: featuredEvents = [] } = useQuery({
-    queryKey: ["featuredEvents"],
-    queryFn: fetchFeaturedEvents,
+    queryKey: ["featuredEvents", language],
+    queryFn: () => fetchFeaturedEvents(language),
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryKey: ["categories", language],
+    queryFn: () => fetchCategories(language),
   });
 
   return (
@@ -112,7 +112,7 @@ export default function HomePage() {
                         </span>
                       </div>
                       <p className="mt-3 font-semibold text-primary group-hover:text-primary-foreground">
-                        {t.event.from} {Math.min(...event.ticketTiers.map(t => t.price))} {t.common.currency}
+                        {t.event.from} {event.ticketTiers.length ? Math.min(...event.ticketTiers.map(t => t.price)) : 0} {t.common.currency}
                       </p>
                     </CardContent>
                   </Card>

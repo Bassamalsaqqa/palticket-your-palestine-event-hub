@@ -58,8 +58,8 @@ export default function ScannerPage() {
   const langPrefix = `/${language}`;
   
   const { data: events = [] } = useQuery({
-    queryKey: ["scannerEvents"],
-    queryFn: fetchAllEvents,
+    queryKey: ["scannerEvents", language],
+    queryFn: () => fetchAllEvents(language),
   });
 
   const [step, setStep] = useState<ScanStep>("login");

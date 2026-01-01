@@ -45,6 +45,10 @@ const iconMap: Record<string, LucideIcon> = {
   Music, Trophy, Palette, UtensilsCrossed, Users, PartyPopper, Briefcase, Moon, Laugh, GraduationCap,
 };
 
+const getMinPrice = (tiers: { price: number }[]) => {
+  return tiers.length ? Math.min(...tiers.map((tier) => tier.price)) : 0;
+};
+
 const ITEMS_PER_PAGE = 6;
 
 type SortOption = "soonest" | "popularity" | "price_asc" | "price_desc";
@@ -76,18 +80,18 @@ export default function DiscoverPage() {
   }), [category, city, dateFrom, dateTo, priceRange, search]);
 
   const { data: categories = [] } = useQuery({
-    queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryKey: ["categories", language],
+    queryFn: () => fetchCategories(language),
   });
 
   const { data: cities = [] } = useQuery({
-    queryKey: ["cities"],
-    queryFn: fetchCities,
+    queryKey: ["cities", language],
+    queryFn: () => fetchCities(language),
   });
 
   const { data: events = [] } = useQuery({
-    queryKey: ["events", filters],
-    queryFn: () => filterEvents(filters),
+    queryKey: ["events", language, filters],
+    queryFn: () => filterEvents(filters, language),
   });
 
   // Filter and sort events
@@ -103,14 +107,10 @@ export default function DiscoverPage() {
         sorted.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
         break;
       case "price_asc":
-        sorted.sort((a, b) => 
-          Math.min(...a.ticketTiers.map(t => t.price)) - Math.min(...b.ticketTiers.map(t => t.price))
-        );
+        sorted.sort((a, b) => getMinPrice(a.ticketTiers) - getMinPrice(b.ticketTiers));
         break;
       case "price_desc":
-        sorted.sort((a, b) => 
-          Math.min(...b.ticketTiers.map(t => t.price)) - Math.min(...a.ticketTiers.map(t => t.price))
-        );
+        sorted.sort((a, b) => getMinPrice(b.ticketTiers) - getMinPrice(a.ticketTiers));
         break;
     }
     
@@ -414,7 +414,7 @@ export default function DiscoverPage() {
                                   </span>
                                 </div>
                                 <p className="mt-3 font-semibold text-primary group-hover:text-primary-foreground">
-                                  {t.event.from} {Math.min(...event.ticketTiers.map(t => t.price))} {t.common.currency}
+                                  {t.event.from} {getMinPrice(event.ticketTiers)} {t.common.currency}
                                 </p>
                               </CardContent>
                             </Card>

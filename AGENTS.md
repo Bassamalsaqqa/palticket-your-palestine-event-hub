@@ -35,6 +35,7 @@ Seeded demo data
 
 Service layer (mocked APIs)
 - Service layer wraps mock data in Promise-based functions with simulated latency.
+- Events, categories, and cities now support backend API calls when configured (see API env vars below).
 - Files:
   - src/services/eventsService.ts
   - src/services/ordersService.ts
@@ -77,7 +78,8 @@ Common access for admin panel (mock)
 - Staff access to scanner uses staff@palticket.com with the same password.
 
 Notes
-- The project is still mock-data driven; swapping to real APIs should be done by replacing services to call a backend and keeping React Query intact.
+- The project uses backend APIs for events/categories/cities when API config is provided; otherwise it falls back to mock data.
+- API config (frontend): `VITE_API_BASE_URL`, `VITE_API_TOKEN`, `VITE_ORGANIZATION_ID` (or localStorage overrides).
 
 Backend architecture and rules
 - Backend runtime: http://localhost:3001

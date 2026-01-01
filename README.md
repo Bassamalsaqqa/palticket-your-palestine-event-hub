@@ -20,6 +20,15 @@ npm install
 npm run dev
 ```
 
+### Frontend API (optional)
+To connect the UI to the backend APIs, set the following environment variables before running the frontend:
+
+- `VITE_API_BASE_URL` (e.g. `http://localhost:3001`)
+- `VITE_API_TOKEN` (JWT access token)
+- `VITE_ORGANIZATION_ID` (tenant org UUID)
+
+If these are not provided, the frontend continues to use mock data.
+
 ### Backend Installation
 The backend is located in `/backend`.
 

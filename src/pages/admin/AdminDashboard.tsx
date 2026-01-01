@@ -38,8 +38,8 @@ export default function AdminDashboard() {
   const { language, t } = useLanguage();
 
   const { data: events = [] } = useQuery({
-    queryKey: ["adminEvents"],
-    queryFn: fetchAllEvents,
+    queryKey: ["adminEvents", language],
+    queryFn: () => fetchAllEvents(language),
   });
 
   const stats = [

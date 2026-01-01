@@ -15,8 +15,8 @@ export default function PastEventsPage() {
   const dateLocale = language === "ar" ? ar : enUS;
 
   const { data: events = [] } = useQuery({
-    queryKey: ["pastEvents"],
-    queryFn: fetchAllEvents,
+    queryKey: ["pastEvents", language],
+    queryFn: () => fetchAllEvents(language),
   });
 
   // Filter past events (mock: events with dates before today)

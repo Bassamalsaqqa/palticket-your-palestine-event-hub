@@ -29,8 +29,8 @@ export default function AdminExports() {
   const [exportType, setExportType] = useState("orders");
 
   const { data: events = [] } = useQuery({
-    queryKey: ["adminEvents"],
-    queryFn: fetchAllEvents,
+    queryKey: ["adminEvents", language],
+    queryFn: () => fetchAllEvents(language),
   });
 
   const handleExport = (format: string) => {

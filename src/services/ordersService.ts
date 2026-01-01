@@ -1,5 +1,6 @@
 import { MockOrder } from "@/types/domain";
 import { addTicketsForOrder } from "./ticketsService";
+import { apiFetch, getApiConfig } from "./apiClient";
 
 let orders: MockOrder[] = [
   {
@@ -57,14 +58,43 @@ export const fetchOrdersByUser = async (userId: string): Promise<MockOrder[]> =>
 };
 
 export const createOrder = async (orderData: Omit<MockOrder, "id" | "orderNumber" | "purchaseDate" | "status">): Promise<MockOrder> => {
+  const config = getApiConfig();
+  let orderId = `ord-${Date.now()}`;
+  let status: MockOrder["status"] = "confirmed";
+
+  if (config) {
+    try {
+      const response = await apiFetch<{
+        id: string;
+        totalCents: number;
+        paymentStatus: "PENDING" | "AUTHORIZED" | "PAID" | "FAILED";
+      }>("/orders", {
+        method: "POST",
+        body: JSON.stringify({
+          eventId: orderData.eventId,
+          items: orderData.tickets.map((ticket) => ({
+            ticketTypeId: ticket.tierId,
+            quantity: ticket.quantity,
+          })),
+          attendeeName: orderData.attendeeName,
+        }),
+      });
+
+      orderId = response.id;
+      status = response.paymentStatus === "PAID" ? "confirmed" : "pending";
+    } catch {
+      // Fall back to mock behavior if API is unavailable.
+    }
+  }
+
   const newOrder: MockOrder = {
     ...orderData,
-    id: `ord-${Date.now()}`,
+    id: orderId,
     orderNumber: `PAL-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`,
     purchaseDate: new Date().toISOString().split("T")[0],
-    status: "confirmed",
+    status,
   };
-  
+
   orders = [newOrder, ...orders];
   addTicketsForOrder(newOrder);
   return simulateLatency(newOrder);

@@ -67,4 +67,5 @@ When a translation is missing for the requested locale:
 
 ## 6. Implementation Status & TODOs
 
-- [x] TODO: Implement read-only taxonomy endpoints (`GET /categories`, `GET /cities`) before switching frontend services to backend data.
+- [x] Read-only taxonomy endpoints are implemented (`GET /categories`, `GET /cities`).
+- [ ] Provide frontend API config (base URL, token, org ID) to enable live data.

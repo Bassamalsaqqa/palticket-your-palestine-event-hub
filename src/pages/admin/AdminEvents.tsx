@@ -28,8 +28,8 @@ export default function AdminEvents() {
   const [search, setSearch] = useState("");
 
   const { data: events = [] } = useQuery({
-    queryKey: ["adminEvents"],
-    queryFn: fetchAllEvents,
+    queryKey: ["adminEvents", language],
+    queryFn: () => fetchAllEvents(language),
   });
 
   const filteredEvents = events.filter((event) => {

@@ -18,8 +18,7 @@ export class AuthService {
   ): Promise<Omit<User, 'passwordHash'> | null> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (user && (await bcrypt.compare(pass, user.passwordHash))) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { passwordHash, ...result } = user;
+      const { passwordHash: _passwordHash, ...result } = user;
       return result;
     }
     return null;
