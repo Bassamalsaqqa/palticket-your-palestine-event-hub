@@ -16,8 +16,8 @@ export class ExportsController {
   @Roles(OrganizationRole.ADMIN)
   @Header('Content-Type', 'text/csv')
   @Header('Content-Disposition', 'attachment; filename="orders.csv"')
-  async exportOrders(@Req() req: AuthenticatedRequest, @Res() res: Response) {
-    const csv = await this.exportsService.exportOrders(req.orgId!);
+  async exportOrders(@Req() req: AuthenticatedRequest, @Res() res: Response, @Query("eventId") eventId?: string) {
+    const csv = await this.exportsService.exportOrders(req.orgId!, eventId);
     return res.send(csv);
   }
 
@@ -25,8 +25,8 @@ export class ExportsController {
   @Roles(OrganizationRole.ADMIN)
   @Header('Content-Type', 'text/csv')
   @Header('Content-Disposition', 'attachment; filename="tickets.csv"')
-  async exportTickets(@Req() req: AuthenticatedRequest, @Res() res: Response) {
-    const csv = await this.exportsService.exportTickets(req.orgId!);
+  async exportTickets(@Req() req: AuthenticatedRequest, @Res() res: Response, @Query("eventId") eventId?: string) {
+    const csv = await this.exportsService.exportTickets(req.orgId!, eventId);
     return res.send(csv);
   }
 }

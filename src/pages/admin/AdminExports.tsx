@@ -47,7 +47,8 @@ export default function AdminExports() {
     setIsExporting(true);
     try {
       const endpoint = exportType === "orders" ? "orders.csv" : "tickets.csv";
-      const response = await fetch(`${config.baseUrl}/exports/${endpoint}`, {
+      const eventQuery = selectedEvent && selectedEvent !== "all" ? `?eventId=${selectedEvent}` : "";
+      const response = await fetch(`${config.baseUrl}/exports/${endpoint}${eventQuery}`, {
         headers: {
           "Authorization": `Bearer ${config.token}`,
           "x-organization-id": config.organizationId

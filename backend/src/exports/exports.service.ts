@@ -30,9 +30,9 @@ export class ExportsService {
     return [headers.join(','), ...rows].join('\n');
   }
 
-  async exportOrders(organizationId: string): Promise<string> {
+  async exportOrders(organizationId: string, eventId?: string): Promise<string> {
     const orders = await this.prisma.order.findMany({
-      where: { organizationId },
+      where: { organizationId, ...(eventId ? { eventId } : {}) },
       include: {
         user: { select: { email: true, name: true } },
         event: {
@@ -58,9 +58,9 @@ export class ExportsService {
     return this.toCsv(flatOrders);
   }
 
-  async exportTickets(organizationId: string): Promise<string> {
+  async exportTickets(organizationId: string, eventId?: string): Promise<string> {
     const tickets = await this.prisma.ticket.findMany({
-      where: { organizationId },
+      where: { organizationId, ...(eventId ? { eventId } : {}) },
       include: {
         ticketType: { select: { name: true } },
         event: {
