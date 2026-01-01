@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: palticket
+      POSTGRES_PASSWORD: palticket
+      POSTGRES_DB: palticket
+    ports:
+      - "5432:5432"
+    volumes:
+      - palticket_db:/var/lib/postgresql/data
+
+volumes:
+  palticket_db:
