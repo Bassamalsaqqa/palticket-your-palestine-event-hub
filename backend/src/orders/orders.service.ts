@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { TicketStatus, OrderStatus } from '@prisma/client';
+import { TicketStatus, OrderStatus, PaymentStatus } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { getCurrencySymbol } from '../common/currency';
 
@@ -72,6 +72,7 @@ export class OrdersService {
           totalCents,
           currency: orderCurrency,
           status: OrderStatus.PENDING,
+          paymentStatus: PaymentStatus.PENDING,
           items: {
             create: orderItemsData,
           },
@@ -81,6 +82,9 @@ export class OrdersService {
           totalCents: true,
           currency: true,
           status: true,
+          paymentStatus: true,
+          paymentProvider: true,
+          paymentReference: true,
           createdAt: true,
         },
       });
@@ -140,6 +144,9 @@ export class OrdersService {
         totalCents: true,
         currency: true,
         status: true,
+        paymentStatus: true,
+        paymentProvider: true,
+        paymentReference: true,
         createdAt: true,
         items: {
           select: {
@@ -165,6 +172,9 @@ export class OrdersService {
         totalCents: true,
         currency: true,
         status: true,
+        paymentStatus: true,
+        paymentProvider: true,
+        paymentReference: true,
         createdAt: true,
         items: {
           select: {

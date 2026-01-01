@@ -2,7 +2,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ScansService } from './scans.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
-import { TicketStatus, ScanResult } from '@prisma/client';
+import {
+  OrganizationMember,
+  OrganizationRole,
+  Prisma,
+  ScanResult,
+  TicketStatus,
+} from '@prisma/client';
 
 describe('ScansService', () => {
   let service: ScansService;
@@ -23,7 +29,9 @@ describe('ScansService', () => {
     prisma = module.get(PrismaService);
 
     // Mock transaction to just execute the callback
-    prisma.$transaction.mockImplementation((callback) => callback(prisma));
+    prisma.$transaction.mockImplementation(
+      <T>(callback: (tx: PrismaService) => Promise<T>) => callback(prisma),
+    );
   });
 
   const orgId = 'org-1';
@@ -31,17 +39,30 @@ describe('ScansService', () => {
   const ticketCode = 'TICKET-123';
   const ticketId = 'ticket-id-1';
 
-  const mockTicket: any = {
+  const mockTicket = {
     id: ticketId,
-    code: ticketCode,
     organizationId: orgId,
+    eventId: 'event-1',
+    orderId: 'order-1',
+    ticketTypeId: 'type-1',
+    code: ticketCode,
     status: TicketStatus.ISSUED,
+    scannedAt: null,
+    attendeeName: null,
+    attendeeEmail: null,
+    attendeePhone: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     ticketType: { name: 'General' },
-  };
+  } satisfies Prisma.TicketGetPayload<{ include: { ticketType: true } }>;
 
-  const mockMember: any = {
+  const mockMember: OrganizationMember = {
     id: 'member-1',
-    role: 'STAFF',
+    organizationId: orgId,
+    userId,
+    role: OrganizationRole.STAFF,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   it('should return invalid if ticket not found', async () => {
@@ -51,7 +72,7 @@ describe('ScansService', () => {
 
     expect(result.status).toBe('invalid');
     expect(result.message).toBe('Ticket not found');
-    expect(prisma.scanLog.create).not.toHaveBeenCalled();
+    expect(prisma.scanLog.create.mock.calls.length).toBe(0);
   });
 
   it('should return invalid if ticket exists in different org (findFirst returns null)', async () => {
@@ -63,7 +84,7 @@ describe('ScansService', () => {
 
     expect(result.status).toBe('invalid');
     expect(result.message).toBe('Ticket not found');
-    expect(prisma.scanLog.create).not.toHaveBeenCalled();
+    expect(prisma.scanLog.create.mock.calls.length).toBe(0);
   });
 
   it('should return success and log GRANTED for valid ISSUED ticket', async () => {
@@ -74,15 +95,18 @@ describe('ScansService', () => {
     const result = await service.scan(orgId, userId, { ticketCode });
 
     expect(result.status).toBe('success');
-    expect(prisma.ticket.updateMany).toHaveBeenCalledWith({
-      where: { id: ticketId, status: TicketStatus.ISSUED },
-      data: expect.objectContaining({ status: TicketStatus.SCANNED }),
+    expect(prisma.ticket.updateMany.mock.calls.length).toBe(1);
+    const updateArgs = prisma.ticket.updateMany.mock.calls[0]?.[0];
+    expect(updateArgs?.where).toMatchObject({
+      id: ticketId,
+      status: TicketStatus.ISSUED,
     });
-    expect(prisma.scanLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ result: ScanResult.GRANTED }),
-      }),
-    );
+    expect(updateArgs?.data).toMatchObject({
+      status: TicketStatus.SCANNED,
+    });
+    expect(prisma.scanLog.create.mock.calls.length).toBe(1);
+    const grantedLogArgs = prisma.scanLog.create.mock.calls[0]?.[0];
+    expect(grantedLogArgs?.data?.result).toBe(ScanResult.GRANTED);
   });
 
   it('should return duplicate if ticket already SCANNED (race condition check)', async () => {
@@ -93,52 +117,42 @@ describe('ScansService', () => {
     const result = await service.scan(orgId, userId, { ticketCode });
 
     expect(result.status).toBe('duplicate');
-    expect(prisma.scanLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          result: ScanResult.DENIED_ALREADY_USED,
-        }),
-      }),
-    );
+    expect(prisma.scanLog.create.mock.calls.length).toBe(1);
+    const duplicateLogArgs = prisma.scanLog.create.mock.calls[0]?.[0];
+    expect(duplicateLogArgs?.data?.result).toBe(ScanResult.DENIED_ALREADY_USED);
   });
 
   it('should return duplicate if ticket status is SCANNED initially', async () => {
-    prisma.ticket.findFirst.mockResolvedValue({
+    const scannedTicket: typeof mockTicket = {
       ...mockTicket,
       status: TicketStatus.SCANNED,
-    });
+    };
+    prisma.ticket.findFirst.mockResolvedValue(scannedTicket);
     prisma.organizationMember.findUnique.mockResolvedValue(mockMember);
     prisma.ticket.updateMany.mockResolvedValue({ count: 0 });
 
     const result = await service.scan(orgId, userId, { ticketCode });
 
     expect(result.status).toBe('duplicate');
-    expect(prisma.scanLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          result: ScanResult.DENIED_ALREADY_USED,
-        }),
-      }),
-    );
+    expect(prisma.scanLog.create.mock.calls.length).toBe(1);
+    const duplicateLogArgs = prisma.scanLog.create.mock.calls[0]?.[0];
+    expect(duplicateLogArgs?.data?.result).toBe(ScanResult.DENIED_ALREADY_USED);
   });
 
   it('should return invalid if ticket is VOID', async () => {
-    prisma.ticket.findFirst.mockResolvedValue({
+    const voidTicket: typeof mockTicket = {
       ...mockTicket,
       status: TicketStatus.VOID,
-    });
+    };
+    prisma.ticket.findFirst.mockResolvedValue(voidTicket);
     prisma.organizationMember.findUnique.mockResolvedValue(mockMember);
 
     const result = await service.scan(orgId, userId, { ticketCode });
 
     expect(result.status).toBe('invalid');
     expect(result.message).toBe('Ticket is void');
-    expect(prisma.scanLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          result: ScanResult.DENIED_INVALID_TICKET,
-        }),
-      }),
-    );
+    expect(prisma.scanLog.create.mock.calls.length).toBe(1);
+    const voidLogArgs = prisma.scanLog.create.mock.calls[0]?.[0];
+    expect(voidLogArgs?.data?.result).toBe(ScanResult.DENIED_INVALID_TICKET);
   });
 });
