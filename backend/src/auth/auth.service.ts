@@ -18,8 +18,14 @@ export class AuthService {
   ): Promise<Omit<User, 'passwordHash'> | null> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (user && (await bcrypt.compare(pass, user.passwordHash))) {
-      const { passwordHash: _passwordHash, ...result } = user;
-      return result;
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      };
     }
     return null;
   }

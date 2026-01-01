@@ -10,13 +10,13 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
-import { CreateOrderDto } from './dto/create-order.dto';
 import { ListOrdersQueryDto } from './dto/order.dto';
+import { CreateOrderDto } from './dto/create-order.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { OrganizationRole } from '@prisma/client';
-import { AuthenticatedRequest } from '../common/types';
+import type { AuthenticatedRequest } from '../common/types';
 
 @Controller('orders')
 @UseGuards(AuthGuard('jwt'), RolesGuard)

@@ -1,7 +1,7 @@
 import { Controller, Get, Request, UseGuards } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthenticatedRequest } from '../common/types';
+import type { AuthenticatedRequest } from '../common/types';
 
 @Controller('organizations')
 export class OrganizationsController {

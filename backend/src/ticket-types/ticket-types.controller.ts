@@ -20,7 +20,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { OrganizationRole } from '@prisma/client';
-import { AuthenticatedRequest } from '../common/types';
+import type { AuthenticatedRequest } from '../common/types';
 
 @Controller('ticket-types')
 @UseGuards(AuthGuard('jwt'), RolesGuard)

@@ -15,12 +15,13 @@ import {
   CreateVenueDto,
   UpdateVenueDto,
   ListVenuesQueryDto,
+  GetVenueQueryDto,
 } from './dto/venue.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { OrganizationRole } from '@prisma/client';
-import { AuthenticatedRequest } from '../common/types';
+import type { AuthenticatedRequest } from '../common/types';
 
 @Controller('venues')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -42,7 +43,12 @@ export class VenuesController {
     @Req() req: AuthenticatedRequest,
     @Query() query: ListVenuesQueryDto,
   ) {
-    return this.venuesService.findAll(req.orgId!, query.skip, query.take);
+    return this.venuesService.findAll(
+      req.orgId!,
+      query.lang,
+      query.skip,
+      query.take,
+    );
   }
 
   @Get(':id')
@@ -50,8 +56,9 @@ export class VenuesController {
   findOne(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: GetVenueQueryDto,
   ) {
-    return this.venuesService.findOne(req.orgId!, id);
+    return this.venuesService.findOne(req.orgId!, id, query.lang);
   }
 
   @Put(':id')

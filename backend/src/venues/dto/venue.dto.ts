@@ -1,7 +1,20 @@
-import { IsString, IsNotEmpty, IsOptional, IsInt, Min } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsInt,
+  Min,
+  IsIn,
+  IsArray,
+  ArrayMinSize,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class CreateVenueDto {
+export class VenueTranslationDto {
+  @IsIn(['en', 'ar'])
+  locale: 'en' | 'ar';
+
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -10,6 +23,18 @@ export class CreateVenueDto {
   @IsOptional()
   address?: string;
 
+  @IsString()
+  @IsOptional()
+  city?: string;
+}
+
+export class CreateVenueDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => VenueTranslationDto)
+  translations: VenueTranslationDto[];
+
   @IsInt()
   @Min(0)
   @IsOptional()
@@ -17,13 +42,11 @@ export class CreateVenueDto {
 }
 
 export class UpdateVenueDto {
-  @IsString()
+  @IsArray()
   @IsOptional()
-  name?: string;
-
-  @IsString()
-  @IsOptional()
-  address?: string;
+  @ValidateNested({ each: true })
+  @Type(() => VenueTranslationDto)
+  translations?: VenueTranslationDto[];
 
   @IsInt()
   @Min(0)
@@ -32,6 +55,11 @@ export class UpdateVenueDto {
 }
 
 export class ListVenuesQueryDto {
+  @IsString()
+  @IsOptional()
+  @IsIn(['en', 'ar'])
+  lang?: string = 'en';
+
   @IsInt()
   @Min(0)
   @IsOptional()
@@ -43,4 +71,11 @@ export class ListVenuesQueryDto {
   @IsOptional()
   @Type(() => Number)
   take?: number;
+}
+
+export class GetVenueQueryDto {
+  @IsString()
+  @IsOptional()
+  @IsIn(['en', 'ar'])
+  lang?: string = 'en';
 }

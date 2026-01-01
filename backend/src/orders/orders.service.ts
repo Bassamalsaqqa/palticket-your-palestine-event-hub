@@ -1,7 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { TicketStatus, OrderStatus, PaymentStatus } from '@prisma/client';
+import {
+  TicketStatus,
+  OrderStatus,
+  PaymentStatus,
+  Prisma,
+} from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { getCurrencySymbol } from '../common/currency';
 
@@ -90,7 +95,7 @@ export class OrdersService {
       });
 
       // 5. Generate Tickets
-      const ticketsToCreate = [];
+      const ticketsToCreate: Prisma.TicketCreateManyInput[] = [];
       for (const item of items) {
         for (let i = 0; i < item.quantity; i++) {
           ticketsToCreate.push({
