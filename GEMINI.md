@@ -76,6 +76,7 @@ The frontend services act as a bridge between the UI models and the backend APIs
 *   `ordersService.ts`: Handles order creation and historical retrieval.
 *   `ticketsService.ts`: Manages ticket retrieval and status mapping.
 *   `gatesService.ts`, `ticketTypesService.ts`, `venuesService.ts`: Admin CRUD helpers with API + mock fallback.
+*   `adminService.ts`, `membersService.ts`, `scansService.ts`: Admin dashboards and audit logs.
 *   **Fallback Logic:** Services use `apiClient.ts` to check for configuration. If `VITE_API_BASE_URL` is missing or the request fails, they fall back to in-memory mock data.
 
 ## Building and Running
@@ -105,6 +106,7 @@ The frontend services act as a bridge between the UI models and the backend APIs
 ### UI Notes
 *   **Scanner:** Uses camera access on the scan page, skips login when already authenticated (ADMIN/STAFF).
 *   **Admin Forms:** Events, Ticket Types, and Gates creation are wired to backend APIs.
+*   **Exports:** Admin exports support optional `eventId` filtering.
 
 ### Backend Standards
 *   **DTOs:** Use `@IsIn(['en', 'ar'])` for locale validation.
