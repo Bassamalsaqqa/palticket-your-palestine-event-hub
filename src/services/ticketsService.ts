@@ -1,4 +1,6 @@
 import { MockTicket, MockOrder } from "@/types/domain";
+import { apiFetch, getApiConfig, getLanguage } from "./apiClient";
+import { fetchEventById } from "./eventsService";
 
 let tickets: MockTicket[] = [
   {
@@ -56,6 +58,28 @@ let tickets: MockTicket[] = [
 
 const LATENCY = 300;
 
+type ApiTicket = {
+  id: string;
+  code: string;
+  status: "ISSUED" | "SCANNED" | "VOID";
+  ticketTypeId: string;
+  orderId: string;
+  eventId: string; // From relation if joined, or need to fetch
+  attendeeName?: string | null;
+  ticketType: {
+    name: string;
+  };
+  order: {
+    userId: string;
+  };
+  event?: {
+    id: string;
+    slug: string;
+    startTime: string;
+    translations: { name: string }[];
+  };
+};
+
 const simulateLatency = <T>(data: T): Promise<T> => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -64,8 +88,55 @@ const simulateLatency = <T>(data: T): Promise<T> => {
   });
 };
 
+const mapTicketStatus = (status: ApiTicket["status"]): MockTicket["status"] => {
+  switch (status) {
+    case "ISSUED": return "valid";
+    case "SCANNED": return "used";
+    case "VOID": return "cancelled";
+    default: return "valid";
+  }
+};
+
+const mapTicket = async (apiTicket: ApiTicket, lang: "en" | "ar"): Promise<MockTicket> => {
+  // Fetch event details to fill the gaps
+  const eventId = apiTicket.eventId;
+  const event = await fetchEventById(eventId, lang);
+
+  return {
+    id: apiTicket.id,
+    userId: apiTicket.order.userId,
+    orderId: apiTicket.orderId,
+    ticketNumber: apiTicket.code,
+    eventId: eventId,
+    eventSlug: event?.slug || "",
+    eventTitle: event?.title || { en: "Unknown", ar: "غير معروف" },
+    eventDate: event?.date || "",
+    eventTime: event?.time || "",
+    eventVenue: event?.venue.name || { en: "Unknown", ar: "غير معروف" },
+    eventImage: event?.images[0] || "/placeholder.svg",
+    tierName: { en: apiTicket.ticketType.name, ar: apiTicket.ticketType.name },
+    attendeeName: apiTicket.attendeeName || "Attendee",
+    qrCode: apiTicket.code,
+    status: mapTicketStatus(apiTicket.status),
+  };
+};
+
 export const fetchTicketsByUser = async (userId: string): Promise<MockTicket[]> => {
-  return simulateLatency(tickets.filter(t => t.userId === userId));
+  const config = getApiConfig();
+  if (!config) {
+    return simulateLatency(tickets.filter(t => t.userId === userId));
+  }
+
+  try {
+    const lang = getLanguage();
+    const apiTickets = await apiFetch<ApiTicket[]>(`/tickets?userId=${encodeURIComponent(userId)}&skip=0&take=100`);
+    const mapped = await Promise.all(apiTickets.map(t => mapTicket(t, lang)));
+    // Client-side filtering as safety fallback
+    return mapped.filter(t => t.userId === userId);
+  } catch (error) {
+    console.warn("Failed to fetch tickets from API, falling back to mock", error);
+    return simulateLatency(tickets.filter(t => t.userId === userId));
+  }
 };
 
 export const addTicketsForOrder = (order: MockOrder) => {

@@ -1,6 +1,7 @@
-import { MockOrder } from "@/types/domain";
+import { MockOrder, Event } from "@/types/domain";
 import { addTicketsForOrder } from "./ticketsService";
-import { apiFetch, getApiConfig } from "./apiClient";
+import { apiFetch, getApiConfig, getLanguage } from "./apiClient";
+import { fetchEventById } from "./eventsService";
 
 let orders: MockOrder[] = [
   {
@@ -45,6 +46,23 @@ let orders: MockOrder[] = [
 
 const LATENCY = 300;
 
+type ApiOrder = {
+  id: string;
+  userId: string;
+  totalCents: number;
+  currency: string;
+  status: "PENDING" | "PAID" | "CANCELLED" | "REFUNDED";
+  paymentStatus: "PENDING" | "AUTHORIZED" | "PAID" | "FAILED";
+  attendeeName?: string | null;
+  createdAt: string;
+  eventId: string;
+  items: {
+    ticketTypeId: string;
+    quantity: number;
+    priceCents: number;
+  }[];
+};
+
 const simulateLatency = <T>(data: T): Promise<T> => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -53,14 +71,66 @@ const simulateLatency = <T>(data: T): Promise<T> => {
   });
 };
 
+const mapOrderStatus = (status: ApiOrder["status"]): MockOrder["status"] => {
+  switch (status) {
+    case "PAID": return "confirmed";
+    case "PENDING": return "pending";
+    case "CANCELLED": return "cancelled";
+    case "REFUNDED": return "refunded";
+    default: return "pending";
+  }
+};
+
+const mapOrder = async (apiOrder: ApiOrder, lang: "en" | "ar", event?: Event): Promise<MockOrder> => {
+  const targetEvent = event || await fetchEventById(apiOrder.eventId, lang);
+  
+  return {
+    id: apiOrder.id,
+    userId: apiOrder.userId,
+    orderNumber: `PAL-${apiOrder.id.slice(0, 8).toUpperCase()}`,
+    eventId: apiOrder.eventId,
+    eventSlug: targetEvent?.slug || "",
+    eventTitle: targetEvent?.title || { en: "Unknown Event", ar: "حدث غير معروف" },
+    eventDate: targetEvent?.date || apiOrder.createdAt.split("T")[0],
+    eventTime: targetEvent?.time || apiOrder.createdAt.split("T")[1].slice(0, 5),
+    eventVenue: targetEvent?.venue.name || { en: "Unknown Venue", ar: "مكان غير معروف" },
+    eventImage: targetEvent?.images[0] || "/placeholder.svg",
+    attendeeName: apiOrder.attendeeName ?? "Attendee",
+    tickets: apiOrder.items.map(item => {
+      const tier = targetEvent?.ticketTiers.find(t => t.id === item.ticketTypeId);
+      return {
+        tierId: item.ticketTypeId,
+        tierName: tier?.name || { en: "Ticket", ar: "تذكرة" },
+        quantity: item.quantity,
+        price: Math.round(item.priceCents / 100),
+      };
+    }),
+    total: Math.round(apiOrder.totalCents / 100),
+    purchaseDate: apiOrder.createdAt.split("T")[0],
+    status: mapOrderStatus(apiOrder.status),
+  };
+};
+
 export const fetchOrdersByUser = async (userId: string): Promise<MockOrder[]> => {
-  return simulateLatency(orders.filter(o => o.userId === userId));
+  const config = getApiConfig();
+  if (!config) {
+    return simulateLatency(orders.filter(o => o.userId === userId));
+  }
+
+  try {
+    const lang = getLanguage();
+    const apiOrders = await apiFetch<ApiOrder[]>(`/orders?userId=${encodeURIComponent(userId)}&skip=0&take=100`);
+    const mapped = await Promise.all(apiOrders.map(o => mapOrder(o, lang)));
+    // Client-side filtering as safety fallback
+    return mapped.filter(o => o.userId === userId);
+  } catch (error) {
+    console.warn("Failed to fetch orders from API, falling back to mock", error);
+    return simulateLatency(orders.filter(o => o.userId === userId));
+  }
 };
 
 export const createOrder = async (orderData: Omit<MockOrder, "id" | "orderNumber" | "purchaseDate" | "status">): Promise<MockOrder> => {
   const config = getApiConfig();
-  let orderId = `ord-${Date.now()}`;
-  let status: MockOrder["status"] = "confirmed";
 
   if (config) {
     try {
@@ -68,6 +138,12 @@ export const createOrder = async (orderData: Omit<MockOrder, "id" | "orderNumber
         id: string;
         totalCents: number;
         paymentStatus: "PENDING" | "AUTHORIZED" | "PAID" | "FAILED";
+        status: ApiOrder["status"];
+        createdAt: string;
+        eventId: string;
+        userId: string;
+        currency: string;
+        items: ApiOrder["items"];
       }>("/orders", {
         method: "POST",
         body: JSON.stringify({
@@ -80,12 +156,17 @@ export const createOrder = async (orderData: Omit<MockOrder, "id" | "orderNumber
         }),
       });
 
-      orderId = response.id;
-      status = response.paymentStatus === "PAID" ? "confirmed" : "pending";
-    } catch {
-      // Fall back to mock behavior if API is unavailable.
+      const lang = getLanguage();
+      const mapped = await mapOrder(response, lang);
+      orders = [mapped, ...orders];
+      return mapped;
+    } catch (error) {
+      console.warn("Failed to create order via API, falling back to mock", error);
     }
   }
+
+  const orderId = `ord-${Date.now()}`;
+  const status: MockOrder["status"] = "confirmed";
 
   const newOrder: MockOrder = {
     ...orderData,

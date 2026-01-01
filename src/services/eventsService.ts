@@ -144,6 +144,22 @@ const fetchTicketTiers = async (eventId: string): Promise<TicketTier[]> => {
   }
 };
 
+export const fetchEventById = async (id: string, lang?: "en" | "ar"): Promise<Event | undefined> => {
+  const activeLang = lang || getLanguage();
+  const config = getApiConfig();
+  if (!config) {
+    return simulateLatency(mockEvents.find((event) => event.id === id));
+  }
+
+  try {
+    const event = await apiFetch<ApiEvent>(`/events/${encodeURIComponent(id)}?lang=${activeLang}`);
+    const ticketTiers = await fetchTicketTiers(event.id);
+    return mapEvent(event, activeLang, ticketTiers);
+  } catch {
+    return simulateLatency(mockEvents.find((event) => event.id === id));
+  }
+};
+
 export const fetchAllEvents = async (lang?: "en" | "ar"): Promise<Event[]> => {
   const activeLang = lang || getLanguage();
   const config = getApiConfig();

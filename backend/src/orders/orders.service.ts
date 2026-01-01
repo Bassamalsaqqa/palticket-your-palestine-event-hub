@@ -78,6 +78,9 @@ export class OrdersService {
           currency: orderCurrency,
           status: OrderStatus.PENDING,
           paymentStatus: PaymentStatus.PENDING,
+          attendeeName,
+          attendeeEmail,
+          attendeePhone,
           items: {
             create: orderItemsData,
           },
@@ -90,6 +93,7 @@ export class OrdersService {
           paymentStatus: true,
           paymentProvider: true,
           paymentReference: true,
+          attendeeName: true,
           createdAt: true,
         },
       });
@@ -136,12 +140,19 @@ export class OrdersService {
     });
   }
 
-  async findAll(organizationId: string, eventId?: string, skip = 0, take = 20) {
+  async findAll(
+    organizationId: string,
+    eventId?: string,
+    userId?: string,
+    skip = 0,
+    take = 20,
+  ) {
     const limit = Math.min(take, 100);
     return this.prisma.order.findMany({
       where: {
         organizationId,
         ...(eventId ? { eventId } : {}),
+        ...(userId ? { userId } : {}),
       },
       select: {
         id: true,
@@ -152,6 +163,7 @@ export class OrdersService {
         paymentStatus: true,
         paymentProvider: true,
         paymentReference: true,
+        attendeeName: true,
         createdAt: true,
         items: {
           select: {
@@ -180,6 +192,7 @@ export class OrdersService {
         paymentStatus: true,
         paymentProvider: true,
         paymentReference: true,
+        attendeeName: true,
         createdAt: true,
         items: {
           select: {

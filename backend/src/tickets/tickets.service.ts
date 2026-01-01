@@ -9,6 +9,7 @@ export class TicketsService {
     organizationId: string,
     eventId?: string,
     orderId?: string,
+    userId?: string,
     skip = 0,
     take = 20,
   ) {
@@ -18,16 +19,23 @@ export class TicketsService {
         organizationId,
         ...(eventId ? { eventId } : {}),
         ...(orderId ? { orderId } : {}),
+        ...(userId ? { order: { userId } } : {}),
       },
       select: {
         id: true,
         code: true,
         status: true,
         ticketTypeId: true,
+        eventId: true,
         orderId: true,
         ticketType: {
           select: {
             name: true,
+          },
+        },
+        order: {
+          select: {
+            userId: true,
           },
         },
       },
@@ -45,10 +53,16 @@ export class TicketsService {
         code: true,
         status: true,
         ticketTypeId: true,
+        eventId: true,
         orderId: true,
         ticketType: {
           select: {
             name: true,
+          },
+        },
+        order: {
+          select: {
+            userId: true,
           },
         },
         scanLogs: {

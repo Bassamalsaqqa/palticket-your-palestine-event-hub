@@ -30,6 +30,7 @@ export class TicketsController {
       req.orgId!,
       query.eventId,
       query.orderId,
+      query.userId,
       query.skip,
       query.take,
     );

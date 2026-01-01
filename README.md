@@ -75,12 +75,12 @@ The backend implements **JWT Authentication** and **RBAC**.
 
 ## Code Quality
 
-The project adheres to strict **ESLint** rules. Code is structured to separate components from hooks and constants to ensure Fast Refresh works reliably.
+The project adheres to strict **ESLint** rules. The root lint configuration covers both the frontend and the backend. Code is structured to separate components from hooks and constants to ensure Fast Refresh works reliably.
 
 ## Known Issues & Troubleshooting
 
 *   **Data Persistence:** Frontend data vanishes on reload (until connected to Backend).
-*   **Backend Connection:** The frontend is NOT yet connected to the backend API. The Backend is standalone ready.
+*   **Backend Connection:** The frontend supports connecting to the backend API for Events, Orders, and Tickets when environment variables are provided. Otherwise, it falls back to mock data.
 
 ## Roadmap
 - [x] Step A: Foundation (env validation, CORS, Prisma, Health)

@@ -27,7 +27,7 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Localization:** Fully localized names via translation tables. Use `?lang=en|ar` on applicable endpoints.
 
 *   **Orders/Tickets:**
-    *   **Orders:** Create + read (ticket issuance happens here).
+    *   **Orders:** Create + read (ticket issuance happens here). Includes `attendeeName`.
     *   **Tickets:** Read-only (list and detail).
     *   **Access:** ADMIN and STAFF can read.
     *   **Privacy:** Explicit selection of fields (no full PII exposure).

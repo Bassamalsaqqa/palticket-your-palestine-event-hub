@@ -41,6 +41,7 @@ export class OrdersController {
     return this.ordersService.findAll(
       req.orgId!,
       query.eventId,
+      query.userId,
       query.skip,
       query.take,
     );

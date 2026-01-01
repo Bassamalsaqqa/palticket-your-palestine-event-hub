@@ -6,6 +6,10 @@ export class ListOrdersQueryDto {
   @IsOptional()
   eventId?: string;
 
+  @IsUUID()
+  @IsOptional()
+  userId?: string;
+
   @IsInt()
   @Min(0)
   @IsOptional()

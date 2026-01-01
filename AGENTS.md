@@ -98,6 +98,7 @@ Backend architecture and rules
 - **Pagination:** List endpoints must support `skip`/`take` via Query DTOs. Max take is 100.
 - Scan endpoint: `POST /scan` with atomic update + ScanLog; invalid codes are not logged (ticketId FK required).
 - Orders: `POST /orders` creates Order + OrderItems + Tickets in a transaction; tickets get unique codes.
+- Orders now store attendeeName/attendeeEmail/attendeePhone on the Order record and return attendeeName in list/detail responses.
 - Currency: Order currency derived from TicketTypes; helper `backend/src/common/currency.ts` maps currency to symbol.
 
 Role separation
