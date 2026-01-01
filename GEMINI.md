@@ -108,9 +108,9 @@ npm run prisma:studio   # View Data UI
 *   **Fast Refresh:** Keep component files pure. Move hooks and constants to separate files.
 
 ### Backend Standards
-*   **Env Validation:** All env vars must be validated in `src/config/env.ts`.
-*   **Prisma:** Use `PrismaService` for DB access.
-*   **Health:** `/health` endpoint checks DB connectivity.
+*   **Validation:** Use `class-validator` DTOs for Body and Query parameters.
+*   **Pagination:** List endpoints must support `skip`/`take`. Max take is 100.
+*   **Data Privacy:** Services MUST use explicit `select` to avoid leaking PII. Do not rely on default model return.
 *   **Auth:** Protect routes with `JwtAuthGuard` and `RolesGuard`.
 
 ## Common Pitfalls

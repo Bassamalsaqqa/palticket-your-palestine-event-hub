@@ -87,6 +87,10 @@ Backend architecture and rules
 - Money fields use integer cents; no floats/decimals
 - Ticket scan-once enforced by Ticket.status and ScanLog
 - All tenant-owned tables include organizationId or link to Event with organizationId; prefer explicit organizationId and indexes
+- Global ValidationPipe enforces DTO validation (whitelist + forbidNonWhitelisted + transform)
+- Domain modules: Events/Venues/Gates/TicketTypes CRUD; Orders/Tickets read-only
+- **Services MUST use explicit Prisma `select`** to avoid over-fetching and leaking PII. Do not rely on default model return.
+- **Pagination:** List endpoints must support `skip`/`take` via Query DTOs. Max take is 100.
 
 Role separation
 - Gemini: generates bulk changes or scaffolding
