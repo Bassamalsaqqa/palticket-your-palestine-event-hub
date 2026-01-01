@@ -1,6 +1,8 @@
 import {
   Controller,
   Get,
+  Post,
+  Body,
   Param,
   Query,
   UseGuards,
@@ -8,6 +10,7 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
+import { CreateOrderDto } from './dto/create-order.dto';
 import { ListOrdersQueryDto } from './dto/order.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
@@ -19,6 +22,15 @@ import { AuthenticatedRequest } from '../common/types';
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
+
+  @Post()
+  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  create(
+    @Req() req: AuthenticatedRequest,
+    @Body() createOrderDto: CreateOrderDto,
+  ) {
+    return this.ordersService.create(req.orgId!, req.user.id, createOrderDto);
+  }
 
   @Get()
   @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)

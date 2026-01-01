@@ -20,7 +20,8 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Scope:** All queries filtered by `x-organization-id`.
 
 *   **Orders/Tickets:**
-    *   **Read-Only:** List and Get details only.
+    *   **Orders:** Create + read (ticket issuance happens here).
+    *   **Tickets:** Read-only (list and detail).
     *   **Access:** ADMIN and STAFF can read.
     *   **Privacy:** Explicit selection of fields (no full PII exposure).
 

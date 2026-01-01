@@ -56,7 +56,7 @@ The backend implements **JWT Authentication** and **RBAC**.
 *   **Frontend:** React + Vite + Shadcn/UI. Uses a **Service Layer** to mock data.
 *   **Backend:** NestJS + Prisma + PostgreSQL.
     *   **Multi-tenant:** Organization-based data isolation.
-    *   **Domain Modules:** Events, Venues, Gates, TicketTypes (CRUD); Orders, Tickets (Read-only).
+    *   **Domain Modules:** Events/Venues/Gates/TicketTypes (CRUD); Orders (Create + Read); Tickets (Read-only).
     *   **Scanning:** `POST /scan` with atomic scan-once enforcement and ScanLog auditing.
 
 **Important:** Do not import `mockEvents` directly into UI components. Use the services.
@@ -79,7 +79,7 @@ The project adheres to strict **ESLint** rules. Code is structured to separate c
 - [x] Step A: Foundation (env validation, CORS, Prisma, Health)
 - [x] Step 1: Schema + Migrations (Multi-tenant, Orders, Tickets)
 - [x] Step 2: Auth + RBAC (JWT, RolesGuard, OrganizationMember)
-- [x] Step 3: Domain Modules (Events, Venues, Gates, TicketTypes CRUD; Orders/Tickets Read-only)
+- [x] Step 3: Domain Modules (Events/Venues/Gates/TicketTypes CRUD; Orders Create + Read; Tickets Read-only)
 - [x] Step 4: Scanner endpoint + ScanLog
 - [ ] Step 5: Payments, commissions, payouts, notifications
 
