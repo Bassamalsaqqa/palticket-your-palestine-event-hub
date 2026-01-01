@@ -91,6 +91,7 @@ Backend architecture and rules
 - Domain modules: Events/Venues/Gates/TicketTypes CRUD; Orders/Tickets read-only
 - **Services MUST use explicit Prisma `select`** to avoid over-fetching and leaking PII. Do not rely on default model return.
 - **Pagination:** List endpoints must support `skip`/`take` via Query DTOs. Max take is 100.
+- Scan endpoint: `POST /scan` with atomic update + ScanLog; invalid codes are not logged (ticketId FK required).
 
 Role separation
 - Gemini: generates bulk changes or scaffolding

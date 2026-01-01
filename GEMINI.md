@@ -66,6 +66,12 @@ The database is designed for multi-tenancy and atomic scanning operations.
     *   **Decorator:** `@Roles('ADMIN', 'STAFF')`.
     *   **Logic:** Validates user membership in the target organization.
 
+3.  **Scanning Logic:**
+    *   **Atomic:** Scan operations are wrapped in `prisma.$transaction`.
+    *   **Isolation:** Ticket lookup is strictly scoped to `x-organization-id`.
+    *   **Privacy:** Cross-organization scans return "Invalid" (Not Found) without logging, preserving tenant isolation.
+    *   **Logs:** `ScanLog` records Success, Duplicate, and Void attempts for valid tickets within the tenant.
+
 ## Service Layer (Frontend Mock)
 
 Currently, the frontend uses these services to simulate API calls.

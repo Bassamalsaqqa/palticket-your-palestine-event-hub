@@ -57,7 +57,7 @@ The backend implements **JWT Authentication** and **RBAC**.
 *   **Backend:** NestJS + Prisma + PostgreSQL.
     *   **Multi-tenant:** Organization-based data isolation.
     *   **Domain Modules:** Events, Venues, Gates, TicketTypes (CRUD); Orders, Tickets (Read-only).
-    *   **Scanning:** Database-enforced atomic entry validation.
+    *   **Scanning:** `POST /scan` with atomic scan-once enforcement and ScanLog auditing.
 
 **Important:** Do not import `mockEvents` directly into UI components. Use the services.
 
@@ -80,7 +80,7 @@ The project adheres to strict **ESLint** rules. Code is structured to separate c
 - [x] Step 1: Schema + Migrations (Multi-tenant, Orders, Tickets)
 - [x] Step 2: Auth + RBAC (JWT, RolesGuard, OrganizationMember)
 - [x] Step 3: Domain Modules (Events, Venues, Gates, TicketTypes CRUD; Orders/Tickets Read-only)
-- [ ] Step 4: Scanner endpoint + ScanLog
+- [x] Step 4: Scanner endpoint + ScanLog
 - [ ] Step 5: Payments, commissions, payouts, notifications
 
 ## Deployment

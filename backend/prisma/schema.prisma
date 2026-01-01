@@ -26,9 +26,10 @@ enum TicketStatus {
 }
 
 enum ScanResult {
-  SUCCESS
-  DUPLICATE
-  INVALID
+  GRANTED
+  DENIED_ALREADY_USED
+  DENIED_INVALID_EVENT
+  DENIED_INVALID_TICKET
 }
 
 enum OrderStatus {

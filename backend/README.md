@@ -9,7 +9,6 @@
 - Multi-tenant boundary: Organization
 - RBAC: OrganizationMember (ADMIN/STAFF per org)
 - DTO validation: Global ValidationPipe enabled
-- Pagination: list endpoints validate skip/take and cap results at 100
 
 ## Domain Modules & Scoping
 
@@ -24,6 +23,12 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Read-Only:** List and Get details only.
     *   **Access:** ADMIN and STAFF can read.
     *   **Privacy:** Explicit selection of fields (no full PII exposure).
+
+*   **Scanning:**
+    *   **Endpoint:** `POST /scan`.
+    *   **Atomicity:** Uses Prisma transactions to ensure one-time entry.
+    *   **Isolation:** Strict `x-organization-id` scoping. Cross-org scans return "Not Found".
+    *   **Logging:** Success/Duplicate/Void are logged in `ScanLog`. Invalid codes are not logged (ticketId FK required).
 
 ## Environment Variables
 
