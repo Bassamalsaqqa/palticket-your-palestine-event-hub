@@ -91,6 +91,10 @@ model Organization {
   scanLogs           ScanLog[]
   commissionPolicies CommissionPolicy[]
   payouts            Payout[]
+  categories         Category[]
+  cities             City[]
+
+  @@index([slug])
 }
 
 model OrganizationMember {
@@ -111,30 +115,103 @@ model OrganizationMember {
 }
 
 // -----------------------------------------------------------------------------
-// 2. Events & Venues
+// 2. Taxonomy
+// -----------------------------------------------------------------------------
+
+model Category {
+  id             String   @id @default(uuid())
+  slug           String
+  organizationId String?
+  isGlobal       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  translations   CategoryTranslation[]
+  events         Event[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([slug])
+}
+
+model CategoryTranslation {
+  id         String   @id @default(uuid())
+  categoryId String
+  locale     String
+  name       String
+
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, locale])
+}
+
+model City {
+  id             String   @id @default(uuid())
+  slug           String
+  organizationId String?
+  isGlobal       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  translations   CityTranslation[]
+  events         Event[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([slug])
+}
+
+model CityTranslation {
+  id      String @id @default(uuid())
+  cityId  String
+  locale  String
+  name    String
+
+  city    City   @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@unique([cityId, locale])
+}
+
+// -----------------------------------------------------------------------------
+// 3. Events & Venues
 // -----------------------------------------------------------------------------
 
 model Venue {
   id             String   @id @default(uuid())
   organizationId String
-  name           String
-  address        String?
   capacity       Int?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  events       Event[]
+  organization   Organization       @relation(fields: [organizationId], references: [id])
+  events         Event[]
+  translations   VenueTranslation[]
 
   @@index([organizationId])
+}
+
+model VenueTranslation {
+  id      String @id @default(uuid())
+  venueId String
+  locale  String
+  name    String
+  address String?
+  city    String?
+
+  venue   Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, locale])
 }
 
 model Event {
   id             String    @id @default(uuid())
   organizationId String
   venueId        String?
-  name           String
-  description    String?
+  categoryId     String?
+  cityId         String?
+  slug           String
   startTime      DateTime
   endTime        DateTime?
   status         EventStatus @default(DRAFT)
@@ -143,16 +220,40 @@ model Event {
 
   organization       Organization       @relation(fields: [organizationId], references: [id])
   venue              Venue?             @relation(fields: [venueId], references: [id])
+  category           Category?          @relation(fields: [categoryId], references: [id])
+  city               City?              @relation(fields: [cityId], references: [id])
+  translations       EventTranslation[]
   ticketTypes        TicketType[]
   gates              Gate[]
   orders             Order[]
   tickets            Ticket[]
   commissionPolicies CommissionPolicy[]
 
+  @@unique([organizationId, slug])
   @@index([organizationId])
   @@index([venueId])
+  @@index([categoryId])
+  @@index([cityId])
   @@index([startTime])
+  @@index([slug])
 }
+
+model EventTranslation {
+  id          String  @id @default(uuid())
+  eventId     String
+  locale      String
+  name        String
+  description String?
+  summary     String?
+
+  event       Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, locale])
+}
+
+// -----------------------------------------------------------------------------
+// 4. Gates
+// -----------------------------------------------------------------------------
 
 model Gate {
   id             String @id @default(uuid())
@@ -169,7 +270,7 @@ model Gate {
 }
 
 // -----------------------------------------------------------------------------
-// 3. Ticket Economics & Orders
+// 5. Ticket Economics & Orders
 // -----------------------------------------------------------------------------
 
 model TicketType {
@@ -257,7 +358,7 @@ model Ticket {
 }
 
 // -----------------------------------------------------------------------------
-// 4. Scanning & Logs
+// 6. Scanning & Logs
 // -----------------------------------------------------------------------------
 
 model ScanLog {
@@ -285,7 +386,7 @@ model ScanLog {
 }
 
 // -----------------------------------------------------------------------------
-// 5. Finance (Future Ready)
+// 7. Finance (Future Ready)
 // -----------------------------------------------------------------------------
 
 model CommissionPolicy {

@@ -1,7 +1,5 @@
 # PalTicket
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
-
 ## Overview
 PalTicket is a bilingual event ticketing platform for Palestine.
 
@@ -82,7 +80,3 @@ The project adheres to strict **ESLint** rules. Code is structured to separate c
 - [x] Step 3: Domain Modules (Events/Venues/Gates/TicketTypes CRUD; Orders Create + Read; Tickets Read-only)
 - [x] Step 4: Scanner endpoint + ScanLog
 - [ ] Step 5: Payments, commissions, payouts, notifications
-
-## Deployment
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.

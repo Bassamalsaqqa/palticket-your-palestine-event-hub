@@ -7,11 +7,18 @@ import {
   IsUUID,
   IsInt,
   Min,
+  IsArray,
+  ArrayMinSize,
+  ValidateNested,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EventStatus } from '@prisma/client';
 
-export class CreateEventDto {
+export class EventTranslationDto {
+  @IsIn(['en', 'ar'])
+  locale: 'en' | 'ar';
+
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -20,9 +27,33 @@ export class CreateEventDto {
   @IsOptional()
   description?: string;
 
+  @IsString()
+  @IsOptional()
+  summary?: string;
+}
+
+export class CreateEventDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => EventTranslationDto)
+  translations: EventTranslationDto[];
+
+  @IsString()
+  @IsNotEmpty()
+  slug: string;
+
   @IsUUID()
   @IsOptional()
   venueId?: string;
+
+  @IsUUID()
+  @IsOptional()
+  categoryId?: string;
+
+  @IsUUID()
+  @IsOptional()
+  cityId?: string;
 
   @IsDateString()
   startTime: string;
@@ -33,17 +64,27 @@ export class CreateEventDto {
 }
 
 export class UpdateEventDto {
-  @IsString()
+  @IsArray()
   @IsOptional()
-  name?: string;
+  @ValidateNested({ each: true })
+  @Type(() => EventTranslationDto)
+  translations?: EventTranslationDto[];
 
   @IsString()
   @IsOptional()
-  description?: string;
+  slug?: string;
 
   @IsUUID()
   @IsOptional()
   venueId?: string;
+
+  @IsUUID()
+  @IsOptional()
+  categoryId?: string;
+
+  @IsUUID()
+  @IsOptional()
+  cityId?: string;
 
   @IsDateString()
   @IsOptional()
@@ -59,6 +100,10 @@ export class UpdateEventDto {
 }
 
 export class ListEventsQueryDto {
+  @IsIn(['en', 'ar'])
+  @IsOptional()
+  lang?: string = 'en';
+
   @IsInt()
   @Min(0)
   @IsOptional()
@@ -70,4 +115,10 @@ export class ListEventsQueryDto {
   @IsOptional()
   @Type(() => Number)
   take?: number;
+}
+
+export class GetEventQueryDto {
+  @IsIn(['en', 'ar'])
+  @IsOptional()
+  lang?: string = 'en';
 }

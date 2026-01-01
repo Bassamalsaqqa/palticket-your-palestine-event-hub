@@ -88,7 +88,10 @@ Backend architecture and rules
 - Ticket scan-once enforced by Ticket.status and ScanLog
 - All tenant-owned tables include organizationId or link to Event with organizationId; prefer explicit organizationId and indexes
 - Global ValidationPipe enforces DTO validation (whitelist + forbidNonWhitelisted + transform)
-- Domain modules: Events/Venues/Gates/TicketTypes CRUD; Orders/Tickets read-only
+- Domain modules:
+  - Events/Venues/Gates/TicketTypes CRUD (Events use translations; slug endpoint: `GET /events/slug/:slug?lang=en|ar`)
+  - Categories/Cities read-only (global + org-specific, localized via `?lang=en|ar`)
+  - Orders create + read; Tickets read-only
 - **Services MUST use explicit Prisma `select`** to avoid over-fetching and leaking PII. Do not rely on default model return.
 - **Pagination:** List endpoints must support `skip`/`take` via Query DTOs. Max take is 100.
 - Scan endpoint: `POST /scan` with atomic update + ScanLog; invalid codes are not logged (ticketId FK required).

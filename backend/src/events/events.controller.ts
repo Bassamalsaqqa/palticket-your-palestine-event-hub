@@ -15,6 +15,7 @@ import {
   CreateEventDto,
   UpdateEventDto,
   ListEventsQueryDto,
+  GetEventQueryDto,
 } from './dto/event.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
@@ -42,7 +43,22 @@ export class EventsController {
     @Req() req: AuthenticatedRequest,
     @Query() query: ListEventsQueryDto,
   ) {
-    return this.eventsService.findAll(req.orgId!, query.skip, query.take);
+    return this.eventsService.findAll(
+      req.orgId!,
+      query.lang,
+      query.skip,
+      query.take,
+    );
+  }
+
+  @Get('slug/:slug')
+  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  findBySlug(
+    @Req() req: AuthenticatedRequest,
+    @Param('slug') slug: string,
+    @Query() query: GetEventQueryDto,
+  ) {
+    return this.eventsService.findBySlug(req.orgId!, slug, query.lang);
   }
 
   @Get(':id')
@@ -50,8 +66,9 @@ export class EventsController {
   findOne(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: GetEventQueryDto,
   ) {
-    return this.eventsService.findOne(req.orgId!, id);
+    return this.eventsService.findOne(req.orgId!, id, query.lang);
   }
 
   @Put(':id')

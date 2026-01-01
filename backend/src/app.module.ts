@@ -17,6 +17,8 @@ import { TicketTypesModule } from './ticket-types/ticket-types.module';
 import { OrdersModule } from './orders/orders.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { ScansModule } from './scans/scans.module';
+import { CategoriesModule } from './categories/categories.module';
+import { CitiesModule } from './cities/cities.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { ScansModule } from './scans/scans.module';
     OrdersModule,
     TicketsModule,
     ScansModule,
+    CategoriesModule,
+    CitiesModule,
   ],
   controllers: [AppController],
   providers: [
