@@ -35,19 +35,19 @@ npm run prisma:migrate
 npm run start:dev
 ```
 
-## Authentication & Roles (Frontend Mock)
+## Authentication & Roles
 
-The frontend currently uses a mock authentication system.
+### Frontend (Mock)
+The frontend uses a mock authentication system for UI testing.
+*   **Admin:** `admin@palticket.com` (Full access)
+*   **Staff:** `staff@event.com` (Scanner access)
+*   **User:** `user@example.com` (Public access)
 
-| Role | Access Level | Email Pattern | Example Login |
-|------|-------------|---------------|---------------|
-| **Admin** | Full access to Admin Dashboard, Scanner, and User features. | Starts with `admin` | `admin@palticket.com` |
-| **Staff** | Access to Scanner and User features. | Starts with `staff` | `staff@event.com` |
-| **User** | Access to public events and personal account only. | Any other email | `user@example.com` |
-
-**Seed data available for admin@palticket.com.**
-
-**Password:** Any string with 6+ characters (e.g., `123456`).
+### Backend (Real)
+The backend implements **JWT Authentication** and **RBAC**.
+*   **Endpoints:** `/auth/login`, `/auth/me`
+*   **Guards:** Global `JwtAuthGuard` and `RolesGuard` enforce security.
+*   **Multi-tenancy:** Data is scoped by `x-organization-id` header.
 
 ## Development Architecture
 
@@ -61,7 +61,7 @@ The frontend currently uses a mock authentication system.
 ## Technologies
 
 - **Frontend:** React, TypeScript, Tailwind CSS, TanStack Query.
-- **Backend:** NestJS, Prisma, PostgreSQL.
+- **Backend:** NestJS, Prisma, PostgreSQL, Passport (Auth).
 
 ## Code Quality
 
@@ -70,15 +70,15 @@ The project adheres to strict **ESLint** rules. Code is structured to separate c
 ## Known Issues & Troubleshooting
 
 *   **Data Persistence:** Frontend data vanishes on reload (until connected to Backend).
-*   **Backend Connection:** The frontend is NOT yet connected to the backend API.
+*   **Backend Connection:** The frontend is NOT yet connected to the backend API. The Backend is standalone ready.
 
 ## Roadmap
-- Step A: Foundation (env validation, CORS allowlist, PrismaModule, /health) - done
-- Step 1: Schema + migrations (multi-tenant + RBAC + orders/tickets) - in progress
-- Step 2: Auth + RBAC module (OrganizationMember) - next
-- Step 3: Events / Orders / Tickets modules - next
-- Step 4: Scanner endpoint + ScanLog - next
-- Step 5: Payments, commissions, payouts, notifications - later
+- [x] Step A: Foundation (env validation, CORS, Prisma, Health)
+- [x] Step 1: Schema + Migrations (Multi-tenant, Orders, Tickets)
+- [x] Step 2: Auth + RBAC (JWT, RolesGuard, OrganizationMember)
+- [ ] Step 3: Events / Orders / Tickets modules
+- [ ] Step 4: Scanner endpoint + ScanLog
+- [ ] Step 5: Payments, commissions, payouts, notifications
 
 ## Deployment
 
