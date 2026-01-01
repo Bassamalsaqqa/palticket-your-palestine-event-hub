@@ -1,90 +1,96 @@
 # PalTicket Context Guide
 
 ## Project Overview
-**PalTicket** is a bilingual (English/Arabic) event ticketing and discovery platform tailored for the Palestinian market. It is a Single Page Application (SPA) built with React and Vite.
+**PalTicket** is a bilingual (English/Arabic) event ticketing and discovery platform tailored for the Palestinian market. It is a Single Page Application (SPA) built with React and Vite, currently transitioning to a NestJS backend.
 
-**Current State:** Prototype / MVP.
-**Note:** The backend is **mocked** via a Service Layer. Data resides in memory (simulated database) and resets on page reload.
-
-### Tech Stack
-*   **Core:** React 18, Vite, TypeScript.
-*   **Data Fetching:** TanStack Query (React Query) v5.
-*   **State Management:** React Context (`AuthContext` for Session), React Query (Server State).
-*   **Styling:** Tailwind CSS, Shadcn/UI (Radix UI primitives).
-*   **Routing:** React Router DOM (v6).
-*   **Internationalization:** Custom implementation supporting LTR (English) and RTL (Arabic).
+**Current State:** Hybrid.
+*   **Frontend:** Uses a **Service Layer** to mock data (in-memory).
+*   **Backend:** NestJS foundation is set up (`/backend`) with a complete Prisma schema applied to the PostgreSQL database.
 
 ## Architecture
 
-### Directory Structure
-*   `src/services`: **Service Layer**. Wraps mock data with Promise-based APIs.
-    *   `eventsService.ts`: Fetches events, categories, cities. Handles filtering.
-    *   `ordersService.ts`: Handles order creation and retrieval.
-    *   `ticketsService.ts`: Handles ticket generation and retrieval.
-*   `src/types/domain.ts`: Shared TypeScript interfaces (`Event`, `MockOrder`, `MockUser`, etc.).
-*   `src/data/mockEvents.ts`: **Database**. Contains the initial hardcoded data. Only services should import values from here.
-*   `src/contexts`: **Global Contexts**.
-    *   `AuthContext.tsx`: Session Provider.
-    *   `useAuth.ts`: Auth hook (separated for linting compliance).
-    *   `authUtils.ts`: Auth helpers (ID generation).
-    *   `index.ts`: Export hub.
-*   `src/i18n`: **Internationalization**.
-    *   `LanguageContext.tsx`: Language Provider.
-    *   `language-core.ts`: Context definition and hook.
-*   `src/components/ui`: **UI Library**.
-    *   Includes split files for lint compliance (e.g., `button-variants.ts`, `form-definitions.tsx`, `sidebar-context.tsx`).
-*   `src/components/RouteGuards.tsx`: Route protection components (`RequireAdmin`, `RequireStaff`).
+### Tech Stack
+*   **Frontend:**
+    *   React 18, Vite, TypeScript.
+    *   TanStack Query (React Query) v5.
+    *   Tailwind CSS, Shadcn/UI.
+    *   React Router DOM (v6).
+*   **Backend (New):**
+    *   NestJS (Node.js framework).
+    *   PostgreSQL (Database).
+    *   Prisma (ORM).
+    *   Zod (Validation).
 
-### Key Workflows
+### Directory Structure
+*   `src/`: **Frontend Source**.
+    *   `services/`: Service Layer (Currently mocks backend).
+    *   `data/mockEvents.ts`: Initial mock data.
+    *   `contexts/`: Global state (Auth, Theme).
+    *   `components/`: UI Components.
+*   `backend/`: **Backend Source**.
+    *   `src/config/`: Environment validation (`env.ts`).
+    *   `src/prisma/`: Database connection (`prisma.service.ts`).
+    *   `src/health/`: Health check endpoint (`/health`).
+    *   `prisma/`: Schema definitions (`schema.prisma`).
+
+### Database Schema (Prisma)
+The database is designed for multi-tenancy and atomic scanning operations.
+
+*   **Core Models:**
+    *   `Organization`: The tenant root. All events/tickets belong to an organization.
+    *   `User`: Global users (can be members of multiple orgs).
+    *   `OrganizationMember`: Links Users to Organizations with Roles (OWNER, ADMIN, STAFF).
+*   **Event Domain:**
+    *   `Event`: An event instance.
+    *   `TicketType`: Tiers (VIP, General) defining price and quantity.
+    *   `Gate`: Physical entry points for scanning.
+*   **Sales & Access:**
+    *   `Order`: A purchase transaction containing multiple items.
+    *   `Ticket`: A single validatable asset with a unique QR code.
+    *   `ScanLog`: Immutable audit trail of every scan attempt (Granted/Denied).
+*   **Key Design Decisions:**
+    *   **Currency:** All monetary values are stored as **Integer Cents** (e.g., 100 = 1.00).
+    *   **Scanning:** Enforced via database constraints/transactions to prevent race conditions (double entry).
+
+### Key Workflows (Frontend)
 
 1.  **Data Access:**
     *   **Pattern:** Components/Pages -> React Query Hooks -> Services -> Mock Data.
-    *   **Rule:** Pages MUST NOT import `mockEvents` directly. They must use `useQuery` with `eventsService`.
+    *   **Rule:** Pages MUST NOT import `mockEvents` directly. Use `useQuery` with `eventsService`.
 
 2.  **Authentication & RBAC:**
     *   **Roles:** `admin`, `staff`, `user`.
     *   **Logic:** Roles are assigned based on email prefix during mock login (`admin@...` -> Admin).
-    *   **Guards:** Routes are protected by wrappers in `src/App.tsx`.
     *   **Seed Data:** Initial mock orders and tickets are seeded for `admin@palticket.com`.
 
-3.  **Order Flow:**
-    *   User selects tickets in `EventDetailPage`.
-    *   `createOrder` mutation is called.
-    *   `ordersService` appends order to local array.
-    *   `ticketsService` generates tickets.
-    *   Query Cache (`["orders"], ["tickets"]`) is invalidated to update `AccountPage`.
+## Service Layer (Frontend Mock)
 
-## Service Layer (API Reference)
+Currently, the frontend uses these services to simulate API calls.
 
-Since there is no real backend, these services act as the API SDK. All return Promises with simulated latency (~300ms).
-
-### Events (`src/services/eventsService.ts`)
-*   `fetchAllEvents()`: Returns `Event[]`.
-*   `fetchFeaturedEvents()`: Returns `Event[]` (featured only).
-*   `fetchEventBySlug(slug)`: Returns `Event | undefined`.
-*   `filterEvents(filters)`: Returns `Event[]` based on criteria.
-*   `fetchCategories()`: Returns `Category[]`.
-*   `fetchCities()`: Returns `City[]`.
-
-### Orders (`src/services/ordersService.ts`)
-*   `fetchOrdersByUser(userId)`: Returns `MockOrder[]`.
-*   `createOrder(input)`: Creates a new order and triggers ticket generation. Returns `MockOrder`.
-
-### Tickets (`src/services/ticketsService.ts`)
-*   `fetchTicketsByUser(userId)`: Returns `MockTicket[]`.
-*   `addTicketsForOrder(order)`: (Internal) Generates tickets for a new order.
+*   `eventsService.ts`: Fetches events, categories, cities.
+*   `ordersService.ts`: Handles order creation/retrieval.
+*   `ticketsService.ts`: Handles ticket generation/retrieval.
 
 ## Building and Running
 
-### Prerequisites
-*   Node.js & npm/bun
-
-### Commands
+### Frontend
 ```bash
 npm install       # Install dependencies
 npm run dev       # Start development server
-npm run build     # Build for production
-npm run lint      # Run linting
+```
+
+### Backend
+Prerequisites: Docker (PostgreSQL).
+
+```bash
+cd backend
+npm install       # Install dependencies
+# Create .env from .env.example
+npm run start:dev # Start NestJS server (http://localhost:3001)
+# Database Tools
+npm run prisma:generate # Generate Client
+npm run prisma:migrate  # Run Migrations (already initialized)
+npm run prisma:studio   # View Data UI
 ```
 
 ## Development Conventions
@@ -95,14 +101,14 @@ npm run lint      # Run linting
 *   **Mutations:** Always invalidate relevant queries in `onSuccess` callback.
 
 ### TypeScript & Linting
-*   **Types:** Define shared domain types in `src/types/domain.ts`.
 *   **Strictness:** Low (`noImplicitAny: false`). Be careful with type safety.
-*   **Fast Refresh:** Keep component files pure (export components only). Move hooks, variants, and constants to separate files to avoid lint warnings.
+*   **Fast Refresh:** Keep component files pure. Move hooks and constants to separate files.
 
-### Internationalization
-*   **RTL:** Use `ltr:` and `rtl:` Tailwind modifiers (e.g., `ltr:ml-2 rtl:mr-2`) for direction-aware spacing.
+### Backend Standards
+*   **Env Validation:** All env vars must be validated in `src/config/env.ts`.
+*   **Prisma:** Use `PrismaService` for DB access.
+*   **Health:** `/health` endpoint checks DB connectivity.
 
 ## Common Pitfalls
-1.  **Direct Mock Access:** Do not import `mockEvents` in pages. Use the Service Layer.
-2.  **Persistence:** Data created during a session (Orders/Tickets) **vanishes on reload**.
-3.  **Routing Hooks:** Import `useLocation`, `useNavigate` from `react-router-dom`. Use optional chaining for `location.state`.
+1.  **Direct Mock Access:** Do not import `mockEvents` in pages.
+2.  **Persistence:** Frontend data currently vanishes on reload. Backend persistence is coming soon.
