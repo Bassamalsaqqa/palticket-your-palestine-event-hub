@@ -49,6 +49,11 @@ export interface MockTicket {
   attendeeName: string;
   qrCode: string;
   status: "valid" | "used" | "expired" | "cancelled";
+  scanHistory?: {
+    scannedAt: string;
+    result: string;
+    gateName?: string;
+  }[];
 }
 
 export interface TicketTier {
@@ -69,6 +74,9 @@ export interface TicketTier {
 export interface Event {
   id: string;
   slug: string;
+  venueId?: string;
+  categoryId?: string;
+  cityId?: string;
   title: {
     en: string;
     ar: string;

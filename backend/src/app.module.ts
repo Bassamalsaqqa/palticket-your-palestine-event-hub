@@ -17,6 +17,9 @@ import { TicketsModule } from './tickets/tickets.module';
 import { ScansModule } from './scans/scans.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CitiesModule } from './cities/cities.module';
+import { AdminModule } from './admin/admin.module';
+import { MembersModule } from './members/members.module';
+import { ExportsModule } from './exports/exports.module';
 
 @Module({
   imports: [
@@ -38,6 +41,9 @@ import { CitiesModule } from './cities/cities.module';
     ScansModule,
     CategoriesModule,
     CitiesModule,
+    AdminModule,
+    MembersModule,
+    ExportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

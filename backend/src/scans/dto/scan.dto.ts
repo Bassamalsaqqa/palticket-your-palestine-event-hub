@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsUUID,
+  IsInt,
+  Min,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { ScanResult } from '@prisma/client';
 
 export class ScanRequestDto {
@@ -24,4 +32,26 @@ export class ScanResponseDto {
     attendeeName?: string | null;
     ticketType?: string;
   };
+}
+
+export class ListScanLogsQueryDto {
+  @IsOptional()
+  @IsUUID()
+  eventId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  gateId?: string;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  skip?: number;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  take?: number;
 }

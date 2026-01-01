@@ -4,8 +4,15 @@ import { useLanguage } from "@/i18n";
 import { useAuth } from "@/contexts";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -25,6 +32,7 @@ import {
   ChevronLeft,
   LogOut,
   Home,
+  Settings,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -167,11 +175,45 @@ export function AdminLayout() {
             <div className="flex items-center gap-2">
               <LanguageSwitcher />
               {user && (
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="text-xs">
-                    {user.firstName?.[0]}{user.lastName?.[0]}
-                  </AvatarFallback>
-                </Avatar>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.avatar} alt={user.firstName} />
+                        <AvatarFallback className="text-xs">
+                          {user.firstName?.[0]}{user.lastName?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align={isRTL ? "start" : "end"} forceMount>
+                    <div className="flex items-center justify-start gap-2 p-2">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {user.firstName} {user.lastName}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to={`/${language}/account`} className="cursor-pointer w-full flex items-center">
+                        <Settings className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                        <span>{t.nav.account || "Account"}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      className="text-destructive cursor-pointer"
+                      onClick={() => logout()}
+                    >
+                      <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                      <span>{t.nav.logout || "Logout"}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
           </header>

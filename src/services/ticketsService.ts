@@ -72,6 +72,13 @@ type ApiTicket = {
   order: {
     userId: string;
   };
+  scanLogs?: {
+    scannedAt: string;
+    result: string;
+    gate?: {
+      name: string;
+    };
+  }[];
   event?: {
     id: string;
     slug: string;
@@ -118,6 +125,11 @@ const mapTicket = async (apiTicket: ApiTicket, lang: "en" | "ar"): Promise<MockT
     attendeeName: apiTicket.attendeeName || "Attendee",
     qrCode: apiTicket.code,
     status: mapTicketStatus(apiTicket.status),
+    scanHistory: apiTicket.scanLogs?.map(log => ({
+      scannedAt: log.scannedAt,
+      result: log.result,
+      gateName: log.gate?.name
+    }))
   };
 };
 

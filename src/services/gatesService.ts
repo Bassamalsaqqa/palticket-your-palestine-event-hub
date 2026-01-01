@@ -50,6 +50,18 @@ export const createGate = async (data: {
   });
 };
 
+export const updateGate = async (id: string, data: {
+  name: string;
+}): Promise<{ id: string }> => {
+  const config = getApiConfig();
+  if (!config) return { id };
+
+  return await apiFetch<{ id: string }>(`/gates/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+};
+
 export type ScanResponse = {
   result: "GRANTED" | "DENIED_ALREADY_USED" | "DENIED_INVALID_EVENT" | "DENIED_INVALID_TICKET";
   message: string;

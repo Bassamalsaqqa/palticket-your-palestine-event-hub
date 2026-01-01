@@ -165,4 +165,55 @@ export class ScansService {
       };
     });
   }
+
+  async findScanLogs(
+    organizationId: string,
+    query: {
+      eventId?: string;
+      gateId?: string;
+      skip?: number;
+      take?: number;
+    },
+  ) {
+    const { eventId, gateId, skip = 0, take = 20 } = query;
+    const limit = Math.min(take, 100);
+
+    return this.prisma.scanLog.findMany({
+      where: {
+        organizationId,
+        ...(gateId ? { gateId } : {}),
+        ...(eventId ? { ticket: { eventId } } : {}),
+      },
+      include: {
+        ticket: {
+          select: {
+            code: true,
+            attendeeName: true,
+            event: {
+              select: {
+                translations: {
+                  where: { locale: 'en' },
+                  select: { name: true },
+                },
+              },
+            },
+          },
+        },
+        scannedBy: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        gate: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      skip,
+      take: limit,
+      orderBy: { scannedAt: 'desc' },
+    });
+  }
 }

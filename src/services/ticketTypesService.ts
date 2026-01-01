@@ -9,19 +9,27 @@ type ApiTicketType = {
   id: string;
   name: string;
   sellPriceCents: number;
+  partnerPriceCents: number;
+  currency: string;
+  quantity: number;
+  eventId: string;
 };
 
-interface UI_TicketType {
+export interface UI_TicketType {
   id: string;
   name: string;
   price: number;
-  events: number;
+  partnerPrice: number;
+  currency: string;
+  quantity: number;
+  eventId: string;
   color: string;
+  events?: number; // Keep for mock compatibility
 }
 
 export const fetchAllTicketTypes = async (): Promise<UI_TicketType[]> => {
   const config = getApiConfig();
-  if (!config) return mockTicketTypes;
+  if (!config) return mockTicketTypes.map(t => ({ ...t, partnerPrice: t.price * 0.9, currency: "ILS", quantity: 100, eventId: "mock-event" }));
 
   try {
     const types = await apiFetch<ApiTicketType[]>("/ticket-types?skip=0&take=100");
@@ -29,11 +37,14 @@ export const fetchAllTicketTypes = async (): Promise<UI_TicketType[]> => {
       id: t.id,
       name: t.name,
       price: Math.round(t.sellPriceCents / 100),
-      events: 1, // Simple mapping for now
+      partnerPrice: Math.round(t.partnerPriceCents / 100),
+      currency: t.currency,
+      quantity: t.quantity,
+      eventId: t.eventId,
       color: "#3b82f6",
     }));
   } catch {
-    return mockTicketTypes;
+    return mockTicketTypes.map(t => ({ ...t, partnerPrice: t.price * 0.9, currency: "ILS", quantity: 100, eventId: "mock-event" }));
   }
 };
 
@@ -56,6 +67,22 @@ export const createTicketType = async (data: {
 
   return await apiFetch<{ id: string }>("/ticket-types", {
     method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
+export const updateTicketType = async (id: string, data: {
+  name?: string;
+  sellPriceCents?: number;
+  partnerPriceCents?: number;
+  currency?: string;
+  quantity?: number;
+}): Promise<{ id: string }> => {
+  const config = getApiConfig();
+  if (!config) return { id };
+
+  return await apiFetch<{ id: string }>(`/ticket-types/${encodeURIComponent(id)}`, {
+    method: "PUT",
     body: JSON.stringify(data),
   });
 };

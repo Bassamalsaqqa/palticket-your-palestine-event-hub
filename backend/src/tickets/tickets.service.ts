@@ -38,6 +38,21 @@ export class TicketsService {
             userId: true,
           },
         },
+        scanLogs: {
+          select: {
+            scannedAt: true,
+            result: true,
+            gate: {
+              select: {
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            scannedAt: 'desc',
+          },
+          take: 10,
+        },
       },
       skip,
       take: limit,

@@ -25,7 +25,9 @@ import {
   DoorOpen,
   Calendar,
   RefreshCw,
-  Search
+  Search,
+  Home,
+  LayoutDashboard
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,7 +36,7 @@ import { fetchAllEvents } from "@/services/eventsService";
 import { fetchAllGates, scanTicket } from "@/services/gatesService";
 import { BrowserMultiFormatReader } from "@zxing/library";
 import { useAuth } from "@/contexts";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 
 type ScanStep = "login" | "select-event" | "select-gate" | "scanning" | "result";
 type ScanResult = "allowed" | "denied-used" | "denied-wrong-event" | "denied-invalid" | null;
@@ -266,11 +268,37 @@ export default function ScannerPage() {
                 <span className="font-bold">{t.scanner.title}</span>
               </div>
             </div>
-            {step === "scanning" && (
-              <Button variant="ghost" size="icon" onClick={() => setShowHistory(!showHistory)}>
-                <History className="h-5 w-5" />
-              </Button>
-            )}
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" asChild>
+                            <Link to={`/${language}`}>
+                              <Home className="h-5 w-5" />
+                            </Link>
+                          </Button>
+                          
+                          {isAdmin && (
+                            <Button variant="ghost" size="icon" asChild>
+                              <Link to={`/${language}/admin`}>
+                                <LayoutDashboard className="h-5 w-5" />
+                              </Link>
+                            </Button>
+                          )}
+            
+                          <Button variant="ghost" size="icon" asChild>
+                            <Link to={`/${language}/account`}>
+                              <User className="h-5 w-5" />
+                            </Link>
+                          </Button>
+            
+                          {step === "scanning" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setShowHistory(!showHistory)}
+                            >
+                              <History className="h-5 w-5" />
+                            </Button>
+                          )}
+                        </div>
           </div>
         </header>
 

@@ -19,34 +19,30 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Shield } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Edit, Trash2, Shield, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-const mockUsers = [
-  { id: "1", name: "Ahmad Hassan", email: "ahmad@email.com", role: "admin", orders: 5, joined: "2024-06-15" },
-  { id: "2", name: "Sara Khalil", email: "sara@email.com", role: "user", orders: 12, joined: "2024-08-20" },
-  { id: "3", name: "Omar Nasser", email: "omar@email.com", role: "organizer", orders: 3, joined: "2024-09-10" },
-  { id: "4", name: "Layla Mahmoud", email: "layla@email.com", role: "user", orders: 8, joined: "2024-10-05" },
-  { id: "5", name: "Khaled Ali", email: "khaled@email.com", role: "scanner", orders: 0, joined: "2024-11-12" },
-  { id: "6", name: "Nadia Yousef", email: "nadia@email.com", role: "user", orders: 15, joined: "2024-07-22" },
-];
+import { useQuery } from "@tanstack/react-query";
+import { fetchMembers } from "@/services/membersService";
 
 export default function AdminUsers() {
   const { language, t } = useLanguage();
   const [search, setSearch] = useState("");
 
-  const filteredUsers = mockUsers.filter((user) =>
-    user.name.toLowerCase().includes(search.toLowerCase()) ||
-    user.email.toLowerCase().includes(search.toLowerCase())
+  const { data: members = [], isLoading } = useQuery({
+    queryKey: ["admin", "members"],
+    queryFn: () => fetchMembers(),
+  });
+
+  const filteredMembers = members.filter((member) =>
+    (member.user.name || "").toLowerCase().includes(search.toLowerCase()) ||
+    member.user.email.toLowerCase().includes(search.toLowerCase())
   );
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case "admin":
+      case "ADMIN":
         return "bg-red-500/10 text-red-600 border-red-500/20";
-      case "organizer":
-        return "bg-purple-500/10 text-purple-600 border-purple-500/20";
-      case "scanner":
+      case "STAFF":
         return "bg-blue-500/10 text-blue-600 border-blue-500/20";
       default:
         return "bg-muted text-muted-foreground";
@@ -84,67 +80,71 @@ export default function AdminUsers() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t.admin.user}</TableHead>
-                  <TableHead>{t.admin.role}</TableHead>
-                  <TableHead>{t.admin.orders}</TableHead>
-                  <TableHead>{t.admin.joined}</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="text-xs">
-                            {user.name.split(" ").map((n) => n[0]).join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{user.name}</p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
-                    </TableCell>
-                    <TableCell>{user.orders}</TableCell>
-                    <TableCell>{user.joined}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleAction("Edit")}>
-                            <Edit className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-                            {t.common.edit}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction("Change role")}>
-                            <Shield className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-                            {t.admin.changeRole}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleAction("Delete")}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-                            {t.common.delete}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            {isLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t.admin.user}</TableHead>
+                    <TableHead>{t.admin.role}</TableHead>
+                    <TableHead>{t.admin.joined}</TableHead>
+                    <TableHead className="w-12"></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredMembers.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="text-xs">
+                              {(member.user.name || member.user.email).charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{member.user.name || "---"}</p>
+                            <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getRoleColor(member.role)}>{member.role}</Badge>
+                      </TableCell>
+                      <TableCell>{new Date(member.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleAction("Edit")}>
+                              <Edit className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                              {t.common.edit}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleAction("Change role")}>
+                              <Shield className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                              {t.admin.changeRole}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleAction("Delete")}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                              {t.common.delete}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
         </CardContent>
       </Card>

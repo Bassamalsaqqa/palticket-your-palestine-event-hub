@@ -31,11 +31,11 @@ import {
 import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchAllTicketTypes, deleteTicketType, createTicketType } from "@/services/ticketTypesService";
+import { fetchAllTicketTypes, deleteTicketType, createTicketType, updateTicketType, type UI_TicketType } from "@/services/ticketTypesService";
 import { fetchAllEvents } from "@/services/eventsService";
 import { useForm, Controller } from "react-hook-form";
 
-interface CreateTicketTypeForm {
+interface TicketTypeFormValues {
   eventId: string;
   name: string;
   sellPrice: number;
@@ -48,13 +48,16 @@ export default function AdminTicketTypes() {
   const { language, t } = useLanguage();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingTicketType, setEditingTicketType] = useState<UI_TicketType | null>(null);
 
-  const { register, handleSubmit, control, reset } = useForm<CreateTicketTypeForm>({
+  const createForm = useForm<TicketTypeFormValues>({
     defaultValues: {
       currency: "ILS",
       quantity: 100
     }
   });
+
+  const editForm = useForm<TicketTypeFormValues>();
 
   const { data: ticketTypes = [], isLoading } = useQuery({
     queryKey: ["adminTicketTypes"],
@@ -65,6 +68,13 @@ export default function AdminTicketTypes() {
     queryKey: ["adminEventsList"],
     queryFn: () => fetchAllEvents(language),
   });
+
+  const eventById = new Map(events.map((event) => [event.id, event]));
+  const getEventTitle = (eventId: string) => {
+    const event = eventById.get(eventId);
+    if (!event) return eventId;
+    return language === "ar" ? event.title.ar : event.title.en;
+  };
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteTicketType(id),
@@ -83,14 +93,27 @@ export default function AdminTicketTypes() {
       queryClient.invalidateQueries({ queryKey: ["adminTicketTypes"] });
       toast.success("Ticket type created successfully");
       setIsCreateOpen(false);
-      reset();
+      createForm.reset();
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to create ticket type");
     }
   });
 
-  const onSubmit = (data: CreateTicketTypeForm) => {
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: Parameters<typeof updateTicketType>[1] }) => updateTicketType(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminTicketTypes"] });
+      toast.success("Ticket type updated successfully");
+      setEditingTicketType(null);
+      editForm.reset();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update ticket type");
+    },
+  });
+
+  const handleCreateSubmit = (data: TicketTypeFormValues) => {
     createMutation.mutate({
       eventId: data.eventId,
       name: data.name,
@@ -98,6 +121,32 @@ export default function AdminTicketTypes() {
       partnerPriceCents: Math.round(data.partnerPrice * 100),
       currency: data.currency,
       quantity: Number(data.quantity)
+    });
+  };
+
+  const handleEditSubmit = (data: TicketTypeFormValues) => {
+    if (!editingTicketType) return;
+    updateMutation.mutate({
+      id: editingTicketType.id,
+      data: {
+        name: data.name,
+        sellPriceCents: Math.round(data.sellPrice * 100),
+        partnerPriceCents: Math.round(data.partnerPrice * 100),
+        currency: data.currency,
+        quantity: Number(data.quantity)
+      }
+    });
+  };
+
+  const startEditing = (type: UI_TicketType) => {
+    setEditingTicketType(type);
+    editForm.reset({
+      eventId: type.eventId,
+      name: type.name,
+      sellPrice: type.price,
+      partnerPrice: type.partnerPrice,
+      currency: type.currency,
+      quantity: type.quantity
     });
   };
 
@@ -120,12 +169,12 @@ export default function AdminTicketTypes() {
             <DialogHeader>
               <DialogTitle>{t.admin.createTicketType}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+            <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Event</Label>
                 <Controller
                   name="eventId"
-                  control={control}
+                  control={createForm.control}
                   rules={{ required: true }}
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -146,28 +195,28 @@ export default function AdminTicketTypes() {
 
               <div className="space-y-2">
                 <Label htmlFor="name">Tier Name</Label>
-                <Input id="name" {...register("name", { required: true })} placeholder="Regular, VIP, etc." />
+                <Input id="name" {...createForm.register("name", { required: true })} placeholder="Regular, VIP, etc." />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="sellPrice">Sell Price</Label>
-                  <Input id="sellPrice" type="number" step="0.01" {...register("sellPrice", { required: true, valueAsNumber: true })} />
+                  <Input id="sellPrice" type="number" step="0.01" {...createForm.register("sellPrice", { required: true, valueAsNumber: true })} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="partnerPrice">Partner Price</Label>
-                  <Input id="partnerPrice" type="number" step="0.01" {...register("partnerPrice", { required: true, valueAsNumber: true })} />
+                  <Input id="partnerPrice" type="number" step="0.01" {...createForm.register("partnerPrice", { required: true, valueAsNumber: true })} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="currency">Currency</Label>
-                  <Input id="currency" {...register("currency", { required: true })} placeholder="ILS, USD, etc." />
+                  <Input id="currency" {...createForm.register("currency", { required: true })} placeholder="ILS, USD, etc." />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="quantity">Quantity</Label>
-                  <Input id="quantity" type="number" {...register("quantity", { required: true, valueAsNumber: true })} />
+                  <Input id="quantity" type="number" {...createForm.register("quantity", { required: true, valueAsNumber: true })} />
                 </div>
               </div>
 
@@ -230,7 +279,7 @@ export default function AdminTicketTypes() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => toast.info("Edit - not implemented")}
+                              onClick={() => startEditing(type)}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -256,6 +305,55 @@ export default function AdminTicketTypes() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={!!editingTicketType} onOpenChange={(open) => !open && setEditingTicketType(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.common.edit}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Event</Label>
+              <Input value={events.find(e => e.id === editingTicketType?.eventId)?.title[language] || editingTicketType?.eventId || ""} disabled />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Tier Name</Label>
+              <Input id="edit-name" {...editForm.register("name", { required: true })} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-sellPrice">Sell Price</Label>
+                <Input id="edit-sellPrice" type="number" step="0.01" {...editForm.register("sellPrice", { required: true, valueAsNumber: true })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-partnerPrice">Partner Price</Label>
+                <Input id="edit-partnerPrice" type="number" step="0.01" {...editForm.register("partnerPrice", { required: true, valueAsNumber: true })} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-currency">Currency</Label>
+                <Input id="edit-currency" {...editForm.register("currency", { required: true })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-quantity">Quantity</Label>
+                <Input id="edit-quantity" type="number" {...editForm.register("quantity", { required: true, valueAsNumber: true })} />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setEditingTicketType(null)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t.common.save}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -282,6 +282,25 @@ export const createEvent = async (data: {
   });
 };
 
+export const updateEvent = async (id: string, data: {
+  translations?: { locale: 'en' | 'ar', name: string, description?: string, summary?: string }[],
+  slug?: string,
+  venueId?: string,
+  categoryId?: string,
+  cityId?: string,
+  startTime?: string,
+  endTime?: string,
+  status?: "DRAFT" | "PUBLISHED" | "CANCELLED"
+}): Promise<{ id: string }> => {
+  const config = getApiConfig();
+  if (!config) return { id };
+
+  return await apiFetch<{ id: string }>(`/events/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+};
+
 export const filterEvents = async (filters: EventFilters, lang?: "en" | "ar"): Promise<Event[]> => {
   const activeLang = lang || getLanguage();
   const events = await fetchAllEvents(activeLang);

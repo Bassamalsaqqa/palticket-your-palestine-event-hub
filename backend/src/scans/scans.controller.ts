@@ -1,6 +1,14 @@
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  Get,
+  Query,
+} from '@nestjs/common';
 import { ScansService } from './scans.service';
-import { ScanRequestDto } from './dto/scan.dto';
+import { ScanRequestDto, ListScanLogsQueryDto } from './dto/scan.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -16,5 +24,14 @@ export class ScansController {
   @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
   scan(@Req() req: AuthenticatedRequest, @Body() body: ScanRequestDto) {
     return this.scansService.scan(req.orgId!, req.user.id, body);
+  }
+
+  @Get('logs')
+  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  findLogs(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: ListScanLogsQueryDto,
+  ) {
+    return this.scansService.findScanLogs(req.orgId!, query);
   }
 }

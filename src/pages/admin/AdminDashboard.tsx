@@ -6,66 +6,60 @@ import {
   ShoppingCart,
   Ticket,
   Calendar,
-  TrendingUp,
-  TrendingDown,
   ArrowUpRight,
+  Loader2,
+  QrCode,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllEvents } from "@/services/eventsService";
-
-// Mock KPI data
-const mockStats = {
-  totalRevenue: 45650,
-  revenueChange: 12.5,
-  totalOrders: 342,
-  ordersChange: 8.3,
-  ticketsSold: 1248,
-  ticketsChange: -2.1,
-  activeEvents: 8,
-  eventsChange: 25,
-};
-
-const mockRecentOrders = [
-  { id: "ORD-001", customer: "Ahmad Hassan", event: "Mahmoud Darwish Poetry Night", amount: 150, status: "confirmed" },
-  { id: "ORD-002", customer: "Sara Khalil", event: "Palestinian Food Festival", amount: 60, status: "confirmed" },
-  { id: "ORD-003", customer: "Omar Nasser", event: "Dabke Championship", amount: 200, status: "pending" },
-  { id: "ORD-004", customer: "Layla Mahmoud", event: "Tech Startup Summit", amount: 75, status: "confirmed" },
-  { id: "ORD-005", customer: "Khaled Ali", event: "Comedy Night Ramallah", amount: 120, status: "confirmed" },
-];
+import { fetchAdminStats } from "@/services/adminService";
+import { fetchAllOrders } from "@/services/ordersService";
 
 export default function AdminDashboard() {
   const { language, t } = useLanguage();
 
-  const { data: events = [] } = useQuery({
+  const { data: events = [], isLoading: eventsLoading } = useQuery({
     queryKey: ["adminEvents", language],
     queryFn: () => fetchAllEvents(language),
   });
 
-  const stats = [
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ["adminStats"],
+    queryFn: () => fetchAdminStats(),
+  });
+
+  const { data: recentOrders = [], isLoading: ordersLoading } = useQuery({
+    queryKey: ["admin", "recentOrders"],
+    queryFn: () => fetchAllOrders(),
+  });
+
+  const isLoading = eventsLoading || statsLoading || ordersLoading;
+
+  const kpiStats = [
     {
       title: t.admin.totalRevenue,
-      value: `${mockStats.totalRevenue.toLocaleString()} ${t.common.currency}`,
-      change: mockStats.revenueChange,
+      value: stats ? `${Math.round(stats.totalRevenueCents / 100).toLocaleString()} ${t.common.currency}` : "---",
       icon: DollarSign,
+      color: "text-green-600",
     },
     {
       title: t.admin.totalOrders,
-      value: mockStats.totalOrders.toLocaleString(),
-      change: mockStats.ordersChange,
+      value: stats ? stats.totalOrders.toLocaleString() : "---",
       icon: ShoppingCart,
+      color: "text-blue-600",
     },
     {
       title: t.admin.ticketsSold,
-      value: mockStats.ticketsSold.toLocaleString(),
-      change: mockStats.ticketsChange,
+      value: stats ? stats.totalTickets.toLocaleString() : "---",
       icon: Ticket,
+      color: "text-purple-600",
     },
     {
-      title: t.admin.activeEvents,
-      value: mockStats.activeEvents.toString(),
-      change: mockStats.eventsChange,
-      icon: Calendar,
+      title: t.scanner.scansToday || "Scans Today",
+      value: stats ? stats.scansToday.toLocaleString() : "---",
+      icon: QrCode,
+      color: "text-orange-600",
     },
   ];
 
@@ -76,7 +70,7 @@ export default function AdminDashboard() {
       case "pending":
         return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
       default:
-        return "";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -89,29 +83,20 @@ export default function AdminDashboard() {
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, i) => (
+        {kpiStats.map((stat, i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}
               </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
+              <stat.icon className={stat.color + " h-4 w-4"} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="flex items-center text-sm mt-1">
-                {stat.change > 0 ? (
-                  <TrendingUp className="h-4 w-4 text-green-500 ltr:mr-1 rtl:ml-1" />
-                ) : (
-                  <TrendingDown className="h-4 w-4 text-red-500 ltr:mr-1 rtl:ml-1" />
-                )}
-                <span className={stat.change > 0 ? "text-green-500" : "text-red-500"}>
-                  {stat.change > 0 ? "+" : ""}{stat.change}%
-                </span>
-                <span className="text-muted-foreground ltr:ml-1 rtl:mr-1">
-                  {t.admin.vsLastMonth}
-                </span>
-              </div>
+              {isLoading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                <div className="text-2xl font-bold">{stat.value}</div>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -132,22 +117,30 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {mockRecentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{order.customer}</p>
-                    <p className="text-sm text-muted-foreground truncate">{order.event}</p>
+              {isLoading ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+              ) : recentOrders.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground">{t.common.noResults}</p>
+              ) : (
+                recentOrders.slice(0, 5).map((order) => (
+                  <div key={order.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{order.attendeeName}</p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {order.eventTitle[language] || order.eventTitle.en}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <Badge className={getStatusColor(order.status)}>
+                        {t.account.orderStatus[order.status as keyof typeof t.account.orderStatus] || order.status}
+                      </Badge>
+                      <span className="font-medium">
+                        {order.total} {t.common.currency}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <Badge className={getStatusColor(order.status)}>
-                      {order.status}
-                    </Badge>
-                    <span className="font-medium">
-                      {order.amount} {t.common.currency}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -166,23 +159,29 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {events.slice(0, 5).map((event) => (
-                <div key={event.id} className="flex items-center gap-3">
-                  <img
-                    src={event.images[0]}
-                    alt=""
-                    className="w-12 h-12 rounded-lg object-cover shrink-0"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">
-                      {language === "ar" ? event.title.ar : event.title.en}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {event.date} • {language === "ar" ? event.venue.city.ar : event.venue.city.en}
-                    </p>
+              {isLoading ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+              ) : events.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground">{t.common.noResults}</p>
+              ) : (
+                events.slice(0, 5).map((event) => (
+                  <div key={event.id} className="flex items-center gap-3 border-b pb-2 last:border-0 last:pb-0">
+                    <img
+                      src={event.images[0]}
+                      alt=""
+                      className="w-12 h-12 rounded-lg object-cover shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">
+                        {language === "ar" ? event.title.ar : event.title.en}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {event.date} • {language === "ar" ? event.venue.city.ar : event.venue.city.en}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

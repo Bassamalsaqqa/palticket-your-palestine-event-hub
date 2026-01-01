@@ -9,32 +9,70 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, FileSpreadsheet, FileText, Calendar, Clock } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, Calendar, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllEvents } from "@/services/eventsService";
+import { getApiConfig } from "@/services/apiClient";
 
 const mockExportHistory = [
   { id: "1", type: "Orders", format: "CSV", date: "2025-01-28 14:32", size: "245 KB", records: 342 },
   { id: "2", type: "Tickets", format: "Excel", date: "2025-01-27 09:15", size: "1.2 MB", records: 1248 },
-  { id: "3", type: "Attendees", format: "CSV", date: "2025-01-26 16:45", size: "156 KB", records: 528 },
-  { id: "4", type: "Revenue Report", format: "Excel", date: "2025-01-25 11:20", size: "89 KB", records: 45 },
-  { id: "5", type: "Event Summary", format: "PDF", date: "2025-01-24 13:00", size: "2.1 MB", records: 8 },
 ];
 
 export default function AdminExports() {
   const { language, t } = useLanguage();
   const [selectedEvent, setSelectedEvent] = useState("all");
   const [exportType, setExportType] = useState("orders");
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: events = [] } = useQuery({
     queryKey: ["adminEvents", language],
     queryFn: () => fetchAllEvents(language),
   });
 
-  const handleExport = (format: string) => {
-    toast.success(`${t.admin.exportStarted} (${format.toUpperCase()})`);
+  const handleExport = async (format: string) => {
+    if (format !== "csv") {
+      toast.info("Only CSV format is currently supported for real exports.");
+      return;
+    }
+
+    const config = getApiConfig();
+    if (!config) {
+      toast.error("API not configured for export.");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const endpoint = exportType === "orders" ? "orders.csv" : "tickets.csv";
+      const response = await fetch(`${config.baseUrl}/exports/${endpoint}`, {
+        headers: {
+          "Authorization": `Bearer ${config.token}`,
+          "x-organization-id": config.organizationId
+        }
+      });
+
+      if (!response.ok) throw new Error("Export failed");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${exportType}_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success(`${t.admin.exportStarted} (${format.toUpperCase()})`);
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Failed to export data.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const exportTypes = [
@@ -94,15 +132,15 @@ export default function AdminExports() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button onClick={() => handleExport("csv")} variant="outline">
-              <FileText className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+            <Button onClick={() => handleExport("csv")} variant="outline" disabled={isExporting}>
+              {isExporting ? <Loader2 className="h-4 w-4 animate-spin ltr:mr-2 rtl:ml-2" /> : <FileText className="h-4 w-4 ltr:mr-2 rtl:ml-2" />}
               {t.admin.exportCSV}
             </Button>
-            <Button onClick={() => handleExport("excel")} variant="outline">
+            <Button onClick={() => handleExport("excel")} variant="outline" disabled={isExporting}>
               <FileSpreadsheet className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
               {t.admin.exportExcel}
             </Button>
-            <Button onClick={() => handleExport("pdf")} variant="outline">
+            <Button onClick={() => handleExport("pdf")} variant="outline" disabled={isExporting}>
               <Download className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
               {t.admin.exportPDF}
             </Button>

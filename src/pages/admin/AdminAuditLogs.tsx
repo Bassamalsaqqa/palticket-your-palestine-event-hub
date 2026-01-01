@@ -11,67 +11,54 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Calendar, Shield, Edit, Trash2, Plus, Eye, LogIn, LogOut } from "lucide-react";
-
-const mockAuditLogs = [
-  { id: "1", user: "Ahmad Hassan", action: "login", target: "System", details: "Login from 192.168.1.1", timestamp: "2025-01-28 14:32:15" },
-  { id: "2", user: "Sara Khalil", action: "create", target: "Event: Tech Summit", details: "Created new event", timestamp: "2025-01-28 13:15:42" },
-  { id: "3", user: "Omar Nasser", action: "update", target: "Order: PAL-2025-001236", details: "Changed status to confirmed", timestamp: "2025-01-28 12:45:00" },
-  { id: "4", user: "Ahmad Hassan", action: "delete", target: "User: test@email.com", details: "Deleted user account", timestamp: "2025-01-28 11:30:22" },
-  { id: "5", user: "Layla Mahmoud", action: "view", target: "Export: Tickets Report", details: "Downloaded CSV export", timestamp: "2025-01-28 10:15:00" },
-  { id: "6", user: "System", action: "update", target: "Event: Poetry Night", details: "Auto-updated ticket availability", timestamp: "2025-01-28 09:00:00" },
-  { id: "7", user: "Khaled Ali", action: "checkin", target: "Ticket: TKT-001234-A", details: "Scanned at Main Gate", timestamp: "2025-01-27 19:45:30" },
-  { id: "8", user: "Sara Khalil", action: "logout", target: "System", details: "Logout from admin panel", timestamp: "2025-01-27 18:00:00" },
-];
+import { Search, Calendar, Shield, Loader2, QrCode, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchScanLogs } from "@/services/scansService";
 
 export default function AdminAuditLogs() {
   const { language, t } = useLanguage();
   const [search, setSearch] = useState("");
-  const [actionFilter, setActionFilter] = useState("all");
+  const [resultFilter, setResultFilter] = useState("all");
 
-  const filteredLogs = mockAuditLogs.filter((log) => {
-    const matchesSearch =
-      log.user.toLowerCase().includes(search.toLowerCase()) ||
-      log.target.toLowerCase().includes(search.toLowerCase()) ||
-      log.details.toLowerCase().includes(search.toLowerCase());
-    const matchesAction = actionFilter === "all" || log.action === actionFilter;
-    return matchesSearch && matchesAction;
+  const { data: logs = [], isLoading } = useQuery({
+    queryKey: ["admin", "scanLogs"],
+    queryFn: () => fetchScanLogs(),
   });
 
-  const getActionIcon = (action: string) => {
-    switch (action) {
-      case "create":
-        return <Plus className="h-4 w-4" />;
-      case "update":
-        return <Edit className="h-4 w-4" />;
-      case "delete":
-        return <Trash2 className="h-4 w-4" />;
-      case "view":
-        return <Eye className="h-4 w-4" />;
-      case "login":
-        return <LogIn className="h-4 w-4" />;
-      case "logout":
-        return <LogOut className="h-4 w-4" />;
-      case "checkin":
-        return <Shield className="h-4 w-4" />;
+  const filteredLogs = logs.filter((log) => {
+    const attendee = log.ticket.attendeeName || "";
+    const eventName = log.ticket.event.translations[0]?.name || "";
+    const matchesSearch =
+      attendee.toLowerCase().includes(search.toLowerCase()) ||
+      log.ticket.code.toLowerCase().includes(search.toLowerCase()) ||
+      eventName.toLowerCase().includes(search.toLowerCase());
+    const matchesResult = resultFilter === "all" || log.result === resultFilter;
+    return matchesSearch && matchesResult;
+  });
+
+  const getResultIcon = (result: string) => {
+    switch (result) {
+      case "GRANTED":
+        return <CheckCircle2 className="h-4 w-4" />;
+      case "DENIED_ALREADY_USED":
+        return <AlertTriangle className="h-4 w-4" />;
+      case "DENIED_INVALID_EVENT":
+      case "DENIED_INVALID_TICKET":
+        return <XCircle className="h-4 w-4" />;
       default:
-        return <Calendar className="h-4 w-4" />;
+        return <Shield className="h-4 w-4" />;
     }
   };
 
-  const getActionColor = (action: string) => {
-    switch (action) {
-      case "create":
+  const getResultColor = (result: string) => {
+    switch (result) {
+      case "GRANTED":
         return "bg-green-500/10 text-green-600 border-green-500/20";
-      case "update":
-        return "bg-blue-500/10 text-blue-600 border-blue-500/20";
-      case "delete":
-        return "bg-red-500/10 text-red-600 border-red-500/20";
-      case "login":
-      case "logout":
-        return "bg-purple-500/10 text-purple-600 border-purple-500/20";
-      case "checkin":
+      case "DENIED_ALREADY_USED":
         return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
+      case "DENIED_INVALID_EVENT":
+      case "DENIED_INVALID_TICKET":
+        return "bg-red-500/10 text-red-600 border-red-500/20";
       default:
         return "bg-muted text-muted-foreground";
     }
@@ -96,58 +83,77 @@ export default function AdminAuditLogs() {
                 className="ltr:pl-9 rtl:pr-9"
               />
             </div>
-            <Select value={actionFilter} onValueChange={setActionFilter}>
-              <SelectTrigger className="w-full sm:w-40">
+            <Select value={resultFilter} onValueChange={setResultFilter}>
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder={t.admin.action} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t.admin.allActions}</SelectItem>
-                <SelectItem value="create">{t.admin.actionCreate}</SelectItem>
-                <SelectItem value="update">{t.admin.actionUpdate}</SelectItem>
-                <SelectItem value="delete">{t.admin.actionDelete}</SelectItem>
-                <SelectItem value="login">{t.admin.actionLogin}</SelectItem>
-                <SelectItem value="logout">{t.admin.actionLogout}</SelectItem>
-                <SelectItem value="checkin">{t.admin.actionCheckin}</SelectItem>
+                <SelectItem value="GRANTED">GRANTED</SelectItem>
+                <SelectItem value="DENIED_ALREADY_USED">ALREADY USED</SelectItem>
+                <SelectItem value="DENIED_INVALID_EVENT">WRONG EVENT</SelectItem>
+                <SelectItem value="DENIED_INVALID_TICKET">INVALID TICKET</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {filteredLogs.map((log) => (
-              <div
-                key={log.id}
-                className="flex items-start gap-4 p-4 rounded-lg border bg-card"
-              >
-                <Avatar className="h-10 w-10 shrink-0">
-                  <AvatarFallback className="text-xs">
-                    {log.user === "System" ? "SYS" : log.user.split(" ").map((n) => n[0]).join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium">{log.user}</span>
-                    <Badge className={getActionColor(log.action)}>
-                      <span className="flex items-center gap-1">
-                        {getActionIcon(log.action)}
-                        {log.action}
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : filteredLogs.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              {t.common.noResults}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className="flex items-start gap-4 p-4 rounded-lg border bg-card"
+                >
+                  <Avatar className="h-10 w-10 shrink-0">
+                    <AvatarFallback className="text-xs">
+                      {log.scannedBy?.name?.charAt(0) || "S"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium">{log.scannedBy?.name || "System"}</span>
+                        <Badge className={getResultColor(log.result)}>
+                          <span className="flex items-center gap-1">
+                            {getResultIcon(log.result)}
+                            {log.result}
+                          </span>
+                        </Badge>
+                      </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {new Date(log.scannedAt).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}
                       </span>
-                    </Badge>
+                    </div>
+                    <p className="text-sm mt-1">
+                      <span className="font-medium">{log.ticket.attendeeName || "---"}</span>
+                      <span className="text-muted-foreground"> — {log.ticket.event.translations[0]?.name}</span>
+                    </p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <QrCode className="h-3 w-3" />
+                        <code className="bg-muted px-1 rounded">{log.ticket.code}</code>
+                      </div>
+                      {log.gate && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Shield className="h-3 w-3" />
+                          <span>{log.gate.name}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm mt-1">
-                    <span className="font-medium">{log.target}</span>
-                    {log.details && (
-                      <span className="text-muted-foreground"> — {log.details}</span>
-                    )}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {log.timestamp}
-                  </p>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
