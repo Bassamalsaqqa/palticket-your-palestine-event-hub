@@ -130,6 +130,14 @@ export interface City {
   };
 }
 
+export interface Gate {
+  id: string;
+  name: string;
+  eventId: string;
+  scansToday?: number;
+  status: "active" | "inactive";
+}
+
 export interface EventFilters {
   category?: string;
   city?: string;

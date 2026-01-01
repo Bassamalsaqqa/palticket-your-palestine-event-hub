@@ -14,6 +14,17 @@ PalTicket is a bilingual event ticketing platform for Palestine.
 *   Node.js & npm (or Bun)
 *   Docker (for Database)
 
+### Full Application (Single Command)
+To run both backend and frontend simultaneously:
+```sh
+npm run dev:all
+```
+
+To prepare the database (generate, migrate, seed) and then run both:
+```sh
+npm run dev:all:seed
+```
+
 ### Frontend Installation
 ```sh
 npm install
@@ -39,6 +50,7 @@ npm install
 # Ensure Docker is running
 npm run prisma:generate
 npm run prisma:migrate
+npm run prisma:seed
 npm run start:dev
 ```
 
@@ -65,6 +77,7 @@ The backend implements **JWT Authentication** and **RBAC**.
     *   **Multi-tenant:** Organization-based data isolation.
     *   **Domain Modules:** Events/Venues/Gates/TicketTypes (CRUD); Orders (Create + Read); Tickets (Read-only).
     *   **Scanning:** `POST /scan` with atomic scan-once enforcement and ScanLog auditing.
+*   **Admin UI:** Admin forms now create Events (with translations), Ticket Types, and Gates via backend APIs.
 
 **Important:** Do not import `mockEvents` directly into UI components. Use the services.
 
@@ -81,6 +94,7 @@ The project adheres to strict **ESLint** rules. The root lint configuration cove
 
 *   **Data Persistence:** Frontend data vanishes on reload (until connected to Backend).
 *   **Backend Connection:** The frontend supports connecting to the backend API for Events, Orders, and Tickets when environment variables are provided. Otherwise, it falls back to mock data.
+*   **Scanner Camera (Mobile):** Camera access requires a secure context. Use `localhost` on desktop or HTTPS for mobile testing.
 
 ## Roadmap
 - [x] Step A: Foundation (env validation, CORS, Prisma, Health)

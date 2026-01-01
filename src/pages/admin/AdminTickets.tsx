@@ -18,28 +18,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, QrCode } from "lucide-react";
-
-const mockTickets = [
-  { id: "TKT-001234-A", order: "PAL-2025-001234", attendee: "Ahmad Hassan", event: "Mahmoud Darwish Poetry Night", tier: "Regular", status: "valid", checkedIn: false },
-  { id: "TKT-001234-B", order: "PAL-2025-001234", attendee: "Sara Khalil", event: "Mahmoud Darwish Poetry Night", tier: "Regular", status: "valid", checkedIn: false },
-  { id: "TKT-001235-A", order: "PAL-2025-001235", attendee: "Sara Khalil", event: "Palestinian Food Festival", tier: "Weekend Pass", status: "valid", checkedIn: false },
-  { id: "TKT-001236-A", order: "PAL-2025-001236", attendee: "Omar Nasser", event: "Dabke Championship", tier: "VIP", status: "used", checkedIn: true },
-  { id: "TKT-001236-B", order: "PAL-2025-001236", attendee: "Layla Mahmoud", event: "Dabke Championship", tier: "VIP", status: "used", checkedIn: true },
-  { id: "TKT-001237-A", order: "PAL-2025-001237", attendee: "Layla Mahmoud", event: "Tech Startup Summit", tier: "General", status: "valid", checkedIn: false },
-  { id: "TKT-001238-A", order: "PAL-2025-001238", attendee: "Khaled Ali", event: "Comedy Night Ramallah", tier: "Front Row", status: "cancelled", checkedIn: false },
-];
+import { Search, QrCode, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAllTickets } from "@/services/ticketsService";
 
 export default function AdminTickets() {
   const { language, t } = useLanguage();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredTickets = mockTickets.filter((ticket) => {
+  const { data: tickets = [], isLoading } = useQuery({
+    queryKey: ["admin", "tickets"],
+    queryFn: () => fetchAllTickets(),
+  });
+
+  const filteredTickets = tickets.filter((ticket) => {
+    const eventName = ticket.eventTitle[language] || ticket.eventTitle.en;
     const matchesSearch = 
-      ticket.id.toLowerCase().includes(search.toLowerCase()) ||
-      ticket.attendee.toLowerCase().includes(search.toLowerCase()) ||
-      ticket.event.toLowerCase().includes(search.toLowerCase());
+      ticket.ticketNumber.toLowerCase().includes(search.toLowerCase()) ||
+      ticket.attendeeName.toLowerCase().includes(search.toLowerCase()) ||
+      eventName.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || ticket.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -93,49 +91,53 @@ export default function AdminTickets() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t.admin.ticketId}</TableHead>
-                  <TableHead>{t.admin.attendee}</TableHead>
-                  <TableHead>{t.admin.eventName}</TableHead>
-                  <TableHead>{t.admin.tier}</TableHead>
-                  <TableHead>{t.admin.status}</TableHead>
-                  <TableHead>{t.admin.checkedIn}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTickets.map((ticket) => (
-                  <TableRow key={ticket.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <QrCode className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-mono text-sm">{ticket.id}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{ticket.attendee}</TableCell>
-                    <TableCell>{ticket.event}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{ticket.tier}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(ticket.status)}>
-                        {t.account.ticketStatus[ticket.status as keyof typeof t.account.ticketStatus]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {ticket.checkedIn ? (
-                        <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
-                          {t.admin.yes}
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">{t.admin.no}</Badge>
-                      )}
-                    </TableCell>
+            {isLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t.admin.ticketId}</TableHead>
+                    <TableHead>{t.admin.attendee}</TableHead>
+                    <TableHead>{t.admin.eventName}</TableHead>
+                    <TableHead>{t.admin.tier}</TableHead>
+                    <TableHead>{t.admin.status}</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredTickets.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        {t.common.noResults || "No tickets found"}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredTickets.map((ticket) => (
+                      <TableRow key={ticket.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <QrCode className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-mono text-sm">{ticket.ticketNumber}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{ticket.attendeeName}</TableCell>
+                        <TableCell>{ticket.eventTitle[language] || ticket.eventTitle.en}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{ticket.tierName[language] || ticket.tierName.en}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(ticket.status)}>
+                            {t.account.ticketStatus[ticket.status as keyof typeof t.account.ticketStatus]}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </div>
         </CardContent>
       </Card>

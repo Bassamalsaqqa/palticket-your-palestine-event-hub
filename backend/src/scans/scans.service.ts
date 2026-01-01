@@ -12,7 +12,7 @@ export class ScansService {
     userId: string,
     data: ScanRequestDto,
   ): Promise<ScanResponseDto> {
-    const { ticketCode, gateId } = data;
+    const { ticketCode, gateId, eventId } = data;
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Find ticket scoped to organization
@@ -25,11 +25,9 @@ export class ScansService {
       });
 
       if (!ticket) {
-        // If ticket not found for this org, we treat it as invalid/not found.
-        // We cannot log it because ScanLog requires a valid ticketId foreign key.
         return {
-          status: 'invalid',
-          message: 'Ticket not found',
+          result: ScanResult.DENIED_INVALID_TICKET,
+          message: 'Ticket not found or access denied',
           timestamp: new Date(),
         };
       }
@@ -45,7 +43,45 @@ export class ScansService {
       });
       const scannedByMemberId = scannerMember?.id;
 
-      // 2. Check Ticket Status (Void)
+      // 2. Validate Event if provided
+      if (eventId && ticket.eventId !== eventId) {
+        await tx.scanLog.create({
+          data: {
+            organizationId,
+            ticketId: ticket.id,
+            gateId,
+            scannedByUserId: userId,
+            scannedByMemberId,
+            result: ScanResult.DENIED_INVALID_EVENT,
+          },
+        });
+        return {
+          result: ScanResult.DENIED_INVALID_EVENT,
+          message: 'Ticket belongs to another event',
+          timestamp: new Date(),
+          ticket: {
+            id: ticket.id,
+            attendeeName: ticket.attendeeName,
+            ticketType: ticket.ticketType.name,
+          },
+        };
+      }
+
+      // 3. Validate Gate if provided (belongs to org)
+      if (gateId) {
+        const gate = await tx.gate.findFirst({
+          where: { id: gateId, organizationId },
+        });
+        if (!gate) {
+          return {
+            result: ScanResult.DENIED_INVALID_TICKET,
+            message: 'Invalid gate',
+            timestamp: new Date(),
+          };
+        }
+      }
+
+      // 4. Check Ticket Status (Void)
       if (ticket.status === TicketStatus.VOID) {
         await tx.scanLog.create({
           data: {
@@ -58,7 +94,7 @@ export class ScansService {
           },
         });
         return {
-          status: 'invalid',
+          result: ScanResult.DENIED_INVALID_TICKET,
           message: 'Ticket is void',
           timestamp: new Date(),
           ticket: {
@@ -69,7 +105,7 @@ export class ScansService {
         };
       }
 
-      // 3. Try Atomic Update (handles ISSUED -> SCANNED)
+      // 5. Try Atomic Update (handles ISSUED -> SCANNED)
       const updateResult = await tx.ticket.updateMany({
         where: {
           id: ticket.id,
@@ -82,7 +118,7 @@ export class ScansService {
       });
 
       if (updateResult.count === 0) {
-        // Already scanned (since we checked VOID above)
+        // Already scanned
         await tx.scanLog.create({
           data: {
             organizationId,
@@ -94,7 +130,7 @@ export class ScansService {
           },
         });
         return {
-          status: 'duplicate',
+          result: ScanResult.DENIED_ALREADY_USED,
           message: 'Ticket already scanned',
           timestamp: new Date(),
           ticket: {
@@ -105,7 +141,7 @@ export class ScansService {
         };
       }
 
-      // Success
+      // 6. Success
       await tx.scanLog.create({
         data: {
           organizationId,
@@ -118,7 +154,7 @@ export class ScansService {
       });
 
       return {
-        status: 'success',
+        result: ScanResult.GRANTED,
         message: 'Access Granted',
         timestamp: new Date(),
         ticket: {

@@ -6,12 +6,24 @@ import { BrandLogo } from "./BrandLogo";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X, User, Search } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+import { Menu, User, Search, LogOut, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Header() {
   const { language, t, isRTL } = useLanguage();
-  const { isAdmin, isStaff } = useAuth();
+  const { isAdmin, isStaff, isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -36,6 +48,10 @@ export function Header() {
     }
     return location.pathname.startsWith(href);
   };
+
+  const userInitials = user 
+    ? `${user.firstName?.charAt(0) || ""}${user.lastName?.charAt(0) || ""}`.toUpperCase() || user.email.charAt(0).toUpperCase()
+    : "U";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -66,16 +82,59 @@ export function Header() {
             <Search className="h-5 w-5" />
           </Button>
           <LanguageSwitcher />
-          <Button variant="ghost" size="sm" asChild>
-            <Link to={`/${language}/login`}>
-              {t.nav.login}
-            </Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link to={`/${language}/signup`}>
-              {t.nav.signup}
-            </Link>
-          </Button>
+          
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={user?.avatar} alt={user?.firstName} />
+                    <AvatarFallback>{userInitials}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align={isRTL ? "start" : "end"} forceMount>
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {user?.firstName} {user?.lastName}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to={`/${language}/account`} className="cursor-pointer w-full flex items-center">
+                    <Settings className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                    <span>{t.nav.account || "Account"}</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="text-destructive cursor-pointer"
+                  onClick={() => logout()}
+                >
+                  <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+                  <span>{t.auth.logout || "Logout"}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to={`/${language}/login`}>
+                  {t.nav.login}
+                </Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to={`/${language}/signup`}>
+                  {t.nav.signup}
+                </Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu */}
@@ -112,17 +171,37 @@ export function Header() {
                 </nav>
 
                 <div className="mt-auto pt-8 flex flex-col gap-2">
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link to={`/${language}/login`} onClick={() => setIsOpen(false)}>
-                      <User className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-                      {t.nav.login}
-                    </Link>
-                  </Button>
-                  <Button className="w-full" asChild>
-                    <Link to={`/${language}/signup`} onClick={() => setIsOpen(false)}>
-                      {t.nav.signup}
-                    </Link>
-                  </Button>
+                  {isAuthenticated ? (
+                    <>
+                      <Button variant="outline" className="w-full justify-start" asChild>
+                        <Link to={`/${language}/account`} onClick={() => setIsOpen(false)}>
+                          <User className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                          {t.nav.account || "Account"}
+                        </Link>
+                      </Button>
+                      <Button variant="ghost" className="w-full justify-start text-destructive" onClick={() => {
+                        logout();
+                        setIsOpen(false);
+                      }}>
+                        <LogOut className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                        {t.auth.logout || "Logout"}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outline" className="w-full" asChild>
+                        <Link to={`/${language}/login`} onClick={() => setIsOpen(false)}>
+                          <User className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                          {t.nav.login}
+                        </Link>
+                      </Button>
+                      <Button className="w-full" asChild>
+                        <Link to={`/${language}/signup`} onClick={() => setIsOpen(false)}>
+                          {t.nav.signup}
+                        </Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </SheetContent>

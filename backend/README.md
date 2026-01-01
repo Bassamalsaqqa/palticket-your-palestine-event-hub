@@ -20,6 +20,7 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Access:** ADMIN can write; STAFF can read.
     *   **Scope:** All queries filtered by `x-organization-id`.
     *   **Localization:** Events and Venues support multi-locale translations (e.g., "en", "ar") via separate translation tables. Use `?lang=en|ar` (default: `en`) on read endpoints to retrieve localized content.
+    *   **Create/Update:** Events accept `translations[]` and optional `venueId`, `categoryId`, and `cityId`.
 
 *   ** Taxonomy (Categories & Cities):**
     *   **Endpoints:** `GET /categories?lang=en|ar`, `GET /cities?lang=en|ar`
@@ -36,6 +37,7 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Endpoint:** `POST /scan`.
     *   **Atomicity:** Uses Prisma transactions to ensure one-time entry.
     *   **Isolation:** Strict `x-organization-id` scoping. Cross-org scans return "Not Found".
+    *   **Responses:** Uses `ScanResult` enum (GRANTED / DENIED_*).
     *   **Logging:** Success/Duplicate/Void are logged in `ScanLog`. Invalid codes are not logged (ticketId FK required).
 
 ## Environment Variables
@@ -55,6 +57,7 @@ Copy `.env.example` to `.env` and update as needed.
 $ npx prisma generate
 $ npx prisma migrate dev -n init
 $ npx prisma studio
+$ npm run prisma:seed
 ```
 
 ## Project setup

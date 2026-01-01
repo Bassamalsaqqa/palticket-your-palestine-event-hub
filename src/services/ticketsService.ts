@@ -139,6 +139,22 @@ export const fetchTicketsByUser = async (userId: string): Promise<MockTicket[]> 
   }
 };
 
+export const fetchAllTickets = async (): Promise<MockTicket[]> => {
+  const config = getApiConfig();
+  if (!config) {
+    return simulateLatency(tickets);
+  }
+
+  try {
+    const lang = getLanguage();
+    const apiTickets = await apiFetch<ApiTicket[]>(`/tickets?skip=0&take=100`);
+    return await Promise.all(apiTickets.map(t => mapTicket(t, lang)));
+  } catch (error) {
+    console.warn("Failed to fetch all tickets from API, falling back to mock", error);
+    return simulateLatency(tickets);
+  }
+};
+
 export const addTicketsForOrder = (order: MockOrder) => {
   const newTickets: MockTicket[] = [];
   

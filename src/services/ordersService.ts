@@ -129,6 +129,22 @@ export const fetchOrdersByUser = async (userId: string): Promise<MockOrder[]> =>
   }
 };
 
+export const fetchAllOrders = async (): Promise<MockOrder[]> => {
+  const config = getApiConfig();
+  if (!config) {
+    return simulateLatency(orders);
+  }
+
+  try {
+    const lang = getLanguage();
+    const apiOrders = await apiFetch<ApiOrder[]>(`/orders?skip=0&take=100`);
+    return await Promise.all(apiOrders.map(o => mapOrder(o, lang)));
+  } catch (error) {
+    console.warn("Failed to fetch all orders from API, falling back to mock", error);
+    return simulateLatency(orders);
+  }
+};
+
 export const createOrder = async (orderData: Omit<MockOrder, "id" | "orderNumber" | "purchaseDate" | "status">): Promise<MockOrder> => {
   const config = getApiConfig();
 

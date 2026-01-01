@@ -250,6 +250,38 @@ export const fetchCities = async (lang?: "en" | "ar"): Promise<City[]> => {
   }
 };
 
+export const deleteEvent = async (id: string): Promise<void> => {
+  const config = getApiConfig();
+  if (!config) return;
+
+  try {
+    await apiFetch(`/events/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+  } catch (error) {
+    console.warn("Failed to delete event via API", error);
+    throw error;
+  }
+};
+
+export const createEvent = async (data: {
+  translations: { locale: 'en' | 'ar', name: string, description?: string, summary?: string }[],
+  slug: string,
+  venueId?: string,
+  categoryId?: string,
+  cityId?: string,
+  startTime: string,
+  endTime?: string
+}): Promise<{ id: string }> => {
+  const config = getApiConfig();
+  if (!config) return { id: `mock-${Date.now()}` };
+
+  return await apiFetch<{ id: string }>("/events", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
 export const filterEvents = async (filters: EventFilters, lang?: "en" | "ar"): Promise<Event[]> => {
   const activeLang = lang || getLanguage();
   const events = await fetchAllEvents(activeLang);

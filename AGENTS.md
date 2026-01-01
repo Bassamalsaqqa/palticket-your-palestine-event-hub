@@ -40,6 +40,9 @@ Service layer (mocked APIs)
   - src/services/eventsService.ts
   - src/services/ordersService.ts
   - src/services/ticketsService.ts
+  - src/services/gatesService.ts
+  - src/services/ticketTypesService.ts
+  - src/services/venuesService.ts
 - Pages use React Query to call services (Home, Discover, EventDetail, Account, Admin modules, Scanner, PastEvents).
 
 Domain types
@@ -80,6 +83,7 @@ Common access for admin panel (mock)
 Notes
 - The project uses backend APIs for events/categories/cities when API config is provided; otherwise it falls back to mock data.
 - API config (frontend): `VITE_API_BASE_URL`, `VITE_API_TOKEN`, `VITE_ORGANIZATION_ID` (or localStorage overrides).
+- Scanner uses camera access; mobile browsers require HTTPS or localhost for camera permissions.
 
 Backend architecture and rules
 - Backend runtime: http://localhost:3001
@@ -100,6 +104,8 @@ Backend architecture and rules
 - Orders: `POST /orders` creates Order + OrderItems + Tickets in a transaction; tickets get unique codes.
 - Orders now store attendeeName/attendeeEmail/attendeePhone on the Order record and return attendeeName in list/detail responses.
 - Currency: Order currency derived from TicketTypes; helper `backend/src/common/currency.ts` maps currency to symbol.
+- Seed data: `backend/prisma/seed.ts` contains an embedded demo list and creates a demo org/user plus venues, cities, events, and ticket types.
+- Admin UI: Event, Ticket Type, and Gate creation forms are wired to backend APIs.
 
 Role separation
 - Gemini: generates bulk changes or scaffolding

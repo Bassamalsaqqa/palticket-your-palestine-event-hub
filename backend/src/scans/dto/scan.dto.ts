@@ -1,4 +1,5 @@
 import { IsString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { ScanResult } from '@prisma/client';
 
 export class ScanRequestDto {
   @IsString()
@@ -8,10 +9,14 @@ export class ScanRequestDto {
   @IsOptional()
   @IsUUID()
   gateId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  eventId?: string;
 }
 
 export class ScanResponseDto {
-  status: 'success' | 'duplicate' | 'invalid';
+  result: ScanResult;
   message: string;
   timestamp: Date;
   ticket?: {

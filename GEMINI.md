@@ -1,11 +1,11 @@
 # PalTicket Context Guide
 
 ## Project Overview
-**PalTicket** is a bilingual (English/Arabic) event ticketing and discovery platform tailored for the Palestinian market. It is a Single Page Application (SPA) built with React and Vite, currently transitioning to a NestJS backend.
+**PalTicket** is a bilingual (English/Arabic) event ticketing and discovery platform tailored for the Palestinian market. It is a Single Page Application (SPA) built with React and Vite, connected to a NestJS backend.
 
-**Current State:** Hybrid.
-*   **Frontend:** Uses a **Service Layer** to mock data (in-memory).
-*   **Backend:** NestJS foundation is set up (`/backend`) with Prisma schema, Authentication (JWT), and RBAC.
+**Current State:** Hybrid / Integrated.
+*   **Frontend:** Connected to backend APIs for Events, Orders, and Tickets with automatic mock data fallback if API configuration is missing or unavailable.
+*   **Backend:** Fully functional NestJS application (`/backend`) with Prisma, PostgreSQL, JWT Authentication, and RBAC.
 
 ## Architecture
 
@@ -15,110 +15,102 @@
     *   TanStack Query (React Query) v5.
     *   Tailwind CSS, Shadcn/UI.
     *   React Router DOM (v6).
-*   **Backend (New):**
+*   **Backend:**
     *   NestJS (Node.js framework).
     *   PostgreSQL (Database).
     *   Prisma (ORM).
-    *   Passport (Auth).
-    *   Zod (Validation).
+    *   Passport (JWT Auth).
+    *   Class-validator (Validation).
 
 ### Directory Structure
 *   `src/`: **Frontend Source**.
-    *   `services/`: Service Layer (Currently mocks backend).
-    *   `data/mockEvents.ts`: Initial mock data.
+    *   `services/`: Service Layer (Calls backend APIs with mock fallbacks).
+    *   `data/mockEvents.ts`: Fallback/Seed mock data.
     *   `contexts/`: Global state (Auth, Theme).
     *   `components/`: UI Components.
 *   `backend/`: **Backend Source**.
     *   `src/auth/`: Authentication & RBAC (`auth.service.ts`, `roles.guard.ts`).
-    *   `src/config/`: Environment validation (`env.ts`).
-    *   `src/prisma/`: Database connection (`prisma.service.ts`).
-    *   `src/health/`: Health check endpoint (`/health`).
-    *   `prisma/`: Schema definitions (`schema.prisma`).
+    *   `src/events/`, `src/orders/`, `src/tickets/`, `src/scans/`: Domain modules.
+    *   `src/categories/`, `src/cities/`: Taxonomy modules.
+    *   `src/venues/`: Venue management with localization.
+    *   `prisma/`: Schema definitions and migrations.
 
 ### Database Schema (Prisma)
-The database is designed for multi-tenancy and atomic scanning operations.
+The database is designed for multi-tenancy, localization, and atomic scanning operations.
 
 *   **Core Models:**
     *   `Organization`: The tenant root. All events/tickets belong to an organization.
-    *   `User`: Global users (can be members of multiple orgs).
+    *   `User`: Global users.
     *   `OrganizationMember`: Links Users to Organizations with Roles (ADMIN, STAFF).
 *   **Event Domain:**
-    *   `Event`: An event instance.
+    *   `Event` & `Venue`: Support multi-locale translations (English/Arabic).
+    *   `Category` & `City`: Taxonomy with global and tenant-specific entries.
     *   `TicketType`: Tiers (VIP, General) defining price and quantity.
-    *   `Gate`: Physical entry points for scanning.
 *   **Sales & Access:**
-    *   `Order`: A purchase transaction containing multiple items.
-    *   `Ticket`: A single validatable asset with a unique QR code.
-    *   `ScanLog`: Immutable audit trail of every scan attempt (Granted/Denied).
+    *   `Order`: Stores purchase details and `attendeeName`.
+    *   `Ticket`: Unique assets with QR codes.
+    *   `ScanLog`: Immutable audit trail for every entry attempt.
 *   **Key Design Decisions:**
-    *   **Currency:** All monetary values are stored as **Integer Cents** (e.g., 100 = 1.00).
-    *   **Scanning:** Enforced via database constraints/transactions to prevent race conditions (double entry).
+    *   **Currency:** Stored as **Integer Cents** (e.g., 100 = 1.00).
+    *   **Scanning:** Atomic transactions prevent double-entry.
 
 ### Key Workflows (Backend)
 
 1.  **Authentication:**
     *   **Method:** JWT (Bearer Token).
     *   **Endpoints:** `/auth/login`, `/auth/me`.
-    *   **Security:** Passwords hashed with bcrypt.
 
-2.  **RBAC (Role-Based Access Control):**
-    *   **Guard:** `RolesGuard` checks `x-organization-id` header.
-    *   **Decorator:** `@Roles('ADMIN', 'STAFF')`.
-    *   **Logic:** Validates user membership in the target organization.
+2.  **RBAC & Multi-tenancy:**
+    *   **Guard:** `RolesGuard` enforces `x-organization-id` and role permissions.
+    *   **Filtering:** All data is scoped to the organization provided in headers.
 
-3.  **Scanning Logic:**
-    *   **Atomic:** Scan operations are wrapped in `prisma.$transaction`.
-    *   **Isolation:** Ticket lookup is strictly scoped to `x-organization-id`.
-    *   **Privacy:** Cross-organization scans return "Invalid" (Not Found) without logging, preserving tenant isolation.
-    *   **Logs:** `ScanLog` records Success, Duplicate, and Void attempts for valid tickets within the tenant.
+3.  **Localization:**
+    *   **Implementation:** Translation tables for `Event`, `Venue`, `Category`, and `City`.
+    *   **Usage:** Query parameter `?lang=en|ar` determines returned content.
 
-## Service Layer (Frontend Mock)
+## Service Layer (Integrated)
 
-Currently, the frontend uses these services to simulate API calls.
+The frontend services act as a bridge between the UI models and the backend APIs.
 
-*   `eventsService.ts`: Fetches events, categories, cities.
-*   `ordersService.ts`: Handles order creation/retrieval.
-*   `ticketsService.ts`: Handles ticket generation/retrieval.
+*   `eventsService.ts`: Fetches localized events, categories, and cities.
+*   `ordersService.ts`: Handles order creation and historical retrieval.
+*   `ticketsService.ts`: Manages ticket retrieval and status mapping.
+*   `gatesService.ts`, `ticketTypesService.ts`, `venuesService.ts`: Admin CRUD helpers with API + mock fallback.
+*   **Fallback Logic:** Services use `apiClient.ts` to check for configuration. If `VITE_API_BASE_URL` is missing or the request fails, they fall back to in-memory mock data.
 
 ## Building and Running
 
-### Frontend
-```bash
-npm install       # Install dependencies
-npm run dev       # Start development server
-```
-
-### Backend
-Prerequisites: Docker (PostgreSQL).
-
-```bash
-cd backend
-npm install       # Install dependencies
-# Create .env from .env.example
-npm run start:dev # Start NestJS server (http://localhost:3001)
-# Database Tools
-npm run prisma:generate # Generate Client
-npm run prisma:migrate  # Run Migrations
-npm run prisma:studio   # View Data UI
-```
+### Full Stack
+1.  **Backend:**
+    ```bash
+    cd backend
+    npm install
+    # Set .env (DATABASE_URL, JWT_SECRET, etc.)
+    npm run prisma:migrate
+    npm run start:dev
+    ```
+2.  **Frontend:**
+    ```bash
+    npm install
+    # Set environment variables for API connection
+    npm run dev
+    ```
 
 ## Development Conventions
 
-### Data Fetching
-*   **Use React Query:** Do not use `useEffect` for data fetching.
-*   **Query Keys:** Use descriptive keys (e.g., `["events", { category: "music" }]`).
-*   **Mutations:** Always invalidate relevant queries in `onSuccess` callback.
+### Linting
+*   **Unified:** Root ESLint configuration covers both frontend and backend (`/backend/src`).
+*   **Rules:** Strict TypeScript and React rules enforced. Use `npm run lint` at the root.
 
-### TypeScript & Linting
-*   **Strictness:** Low (`noImplicitAny: false`). Be careful with type safety.
-*   **Fast Refresh:** Keep component files pure. Move hooks and constants to separate files.
+### UI Notes
+*   **Scanner:** Uses camera access on the scan page, skips login when already authenticated (ADMIN/STAFF).
+*   **Admin Forms:** Events, Ticket Types, and Gates creation are wired to backend APIs.
 
 ### Backend Standards
-*   **Validation:** Use `class-validator` DTOs for Body and Query parameters.
-*   **Pagination:** List endpoints must support `skip`/`take`. Max take is 100.
-*   **Data Privacy:** Services MUST use explicit `select` to avoid leaking PII. Do not rely on default model return.
-*   **Auth:** Protect routes with `JwtAuthGuard` and `RolesGuard`.
+*   **DTOs:** Use `@IsIn(['en', 'ar'])` for locale validation.
+*   **Services:** Use explicit Prisma `select` to avoid leaking PII and over-fetching.
+*   **Security:** `RolesGuard` must be applied to all tenant-scoped routes.
 
 ## Common Pitfalls
-1.  **Direct Mock Access:** Do not import `mockEvents` in pages.
-2.  **Persistence:** Frontend data currently vanishes on reload. Backend persistence is coming soon.
+1.  **Route Shadowing:** In controllers, ensure static or specific routes (like `/slug/:slug`) are defined *above* generic ID routes (`/:id`).
+2.  **Explicit Any:** Avoid `any` in service mappings; define appropriate `ApiResult` types.
