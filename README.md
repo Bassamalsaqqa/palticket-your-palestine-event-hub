@@ -104,3 +104,37 @@ The project adheres to strict **ESLint** rules. The root lint configuration cove
 - [x] Step 3: Domain Modules (Events/Venues/Gates/TicketTypes CRUD; Orders Create + Read; Tickets Read-only)
 - [x] Step 4: Scanner endpoint + ScanLog
 - [ ] Step 5: Payments, commissions, payouts, notifications
+
+## Project State Review (Jan 1, 2026)
+
+### Overall Progress
+PalTicket has evolved into a multi-tenant, localized ticketing platform with order issuance, scan-once enforcement, admin reporting, and exports. The frontend now consumes real APIs with a mock fallback.
+
+### Data Model & Database
+- **Multi-tenant:** Organization-scoped data with OrganizationMember RBAC (ADMIN/STAFF).
+- **Tickets & Scanning:** Ticket status (ISSUED/SCANNED/VOID) and ScanLog with ScanResult (GRANTED/DENIED_*).
+- **Orders & Payments:** Orders include paymentProvider/paymentReference/paymentStatus placeholders (no provider integration yet).
+- **Localization & Taxonomy:** Category/City + translation tables; Event/Venue translations with per-tenant slugs.
+
+### Backend Services
+- **Scanning:** Atomic scan-once logic, tenant-scoped, logs ScanResult. `POST /scan` and `GET /scan/logs`.
+- **Orders:** Order creation issues tickets and returns ticket codes. Payment remains PENDING until provider integration.
+- **Events/Venues/Categories/Cities:** Localized read; Events support translation arrays on create/update.
+- **Admin & Members:** `/admin/stats` for KPI metrics, `/members` for org members.
+- **Exports:** `GET /exports/orders.csv` and `GET /exports/tickets.csv` with optional `eventId` filter.
+
+### Frontend Integration
+- **Admin UI:** Create flows for Events/Ticket Types/Gates are wired to backend.
+- **Scanner:** Uses `/scan`, returns ScanResult, camera lifecycle handled; requires HTTPS on mobile.
+- **Admin Dashboard:** Uses `/admin/stats` and API-backed orders/events.
+
+### Known Gaps
+- **Tests:** Some scan tests may still assert legacy `status` instead of `result`.
+- **Localization fallback:** Limited handling when a requested locale is missing.
+- **Payments/Notifications:** Payment provider, commissions, payouts, and delivery channels are not implemented.
+- **Admin panels:** Users/Roles/Staff/Exports/AuditLogs are read-only; edits/invites not implemented.
+
+### Next Steps
+- Update scan tests to assert `result: ScanResult`.
+- Add translation fallback to English when missing.
+- Implement payment provider integration and notifications.
