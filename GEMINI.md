@@ -5,7 +5,7 @@
 
 **Current State:** Hybrid.
 *   **Frontend:** Uses a **Service Layer** to mock data (in-memory).
-*   **Backend:** NestJS foundation is set up (`/backend`) with a complete Prisma schema applied to the PostgreSQL database.
+*   **Backend:** NestJS foundation is set up (`/backend`) with Prisma schema, Authentication (JWT), and RBAC.
 
 ## Architecture
 
@@ -19,6 +19,7 @@
     *   NestJS (Node.js framework).
     *   PostgreSQL (Database).
     *   Prisma (ORM).
+    *   Passport (Auth).
     *   Zod (Validation).
 
 ### Directory Structure
@@ -28,6 +29,7 @@
     *   `contexts/`: Global state (Auth, Theme).
     *   `components/`: UI Components.
 *   `backend/`: **Backend Source**.
+    *   `src/auth/`: Authentication & RBAC (`auth.service.ts`, `roles.guard.ts`).
     *   `src/config/`: Environment validation (`env.ts`).
     *   `src/prisma/`: Database connection (`prisma.service.ts`).
     *   `src/health/`: Health check endpoint (`/health`).
@@ -39,7 +41,7 @@ The database is designed for multi-tenancy and atomic scanning operations.
 *   **Core Models:**
     *   `Organization`: The tenant root. All events/tickets belong to an organization.
     *   `User`: Global users (can be members of multiple orgs).
-    *   `OrganizationMember`: Links Users to Organizations with Roles (OWNER, ADMIN, STAFF).
+    *   `OrganizationMember`: Links Users to Organizations with Roles (ADMIN, STAFF).
 *   **Event Domain:**
     *   `Event`: An event instance.
     *   `TicketType`: Tiers (VIP, General) defining price and quantity.
@@ -52,16 +54,17 @@ The database is designed for multi-tenancy and atomic scanning operations.
     *   **Currency:** All monetary values are stored as **Integer Cents** (e.g., 100 = 1.00).
     *   **Scanning:** Enforced via database constraints/transactions to prevent race conditions (double entry).
 
-### Key Workflows (Frontend)
+### Key Workflows (Backend)
 
-1.  **Data Access:**
-    *   **Pattern:** Components/Pages -> React Query Hooks -> Services -> Mock Data.
-    *   **Rule:** Pages MUST NOT import `mockEvents` directly. Use `useQuery` with `eventsService`.
+1.  **Authentication:**
+    *   **Method:** JWT (Bearer Token).
+    *   **Endpoints:** `/auth/login`, `/auth/me`.
+    *   **Security:** Passwords hashed with bcrypt.
 
-2.  **Authentication & RBAC:**
-    *   **Roles:** `admin`, `staff`, `user`.
-    *   **Logic:** Roles are assigned based on email prefix during mock login (`admin@...` -> Admin).
-    *   **Seed Data:** Initial mock orders and tickets are seeded for `admin@palticket.com`.
+2.  **RBAC (Role-Based Access Control):**
+    *   **Guard:** `RolesGuard` checks `x-organization-id` header.
+    *   **Decorator:** `@Roles('ADMIN', 'STAFF')`.
+    *   **Logic:** Validates user membership in the target organization.
 
 ## Service Layer (Frontend Mock)
 
@@ -89,7 +92,7 @@ npm install       # Install dependencies
 npm run start:dev # Start NestJS server (http://localhost:3001)
 # Database Tools
 npm run prisma:generate # Generate Client
-npm run prisma:migrate  # Run Migrations (already initialized)
+npm run prisma:migrate  # Run Migrations
 npm run prisma:studio   # View Data UI
 ```
 
@@ -108,6 +111,7 @@ npm run prisma:studio   # View Data UI
 *   **Env Validation:** All env vars must be validated in `src/config/env.ts`.
 *   **Prisma:** Use `PrismaService` for DB access.
 *   **Health:** `/health` endpoint checks DB connectivity.
+*   **Auth:** Protect routes with `JwtAuthGuard` and `RolesGuard`.
 
 ## Common Pitfalls
 1.  **Direct Mock Access:** Do not import `mockEvents` in pages.

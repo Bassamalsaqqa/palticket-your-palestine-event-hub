@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -51,12 +54,13 @@ enum PayoutStatus {
 // -----------------------------------------------------------------------------
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  phone     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  phone        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   memberships OrganizationMember[]
   orders      Order[]

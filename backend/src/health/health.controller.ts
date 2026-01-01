@@ -9,8 +9,8 @@ export class HealthController {
   async check() {
     let dbStatus = 'ok';
     try {
-      await this.prisma.$queryRaw`SELECT 1`;
-    } catch (e) {
+      await this.prisma.user.findFirst();
+    } catch {
       dbStatus = 'error';
     }
 

@@ -10,7 +10,8 @@ async function bootstrap() {
     .get<string>('CORS_ORIGINS', 'http://localhost:8080')
     .split(',')
     .map((origin) => origin.trim())
-    .filter(Boolean);
+    .filter((origin) => origin.length > 0);
+
   app.enableCors({
     origin: corsOrigins,
     credentials: true,
@@ -20,4 +21,4 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`Application is running on: ${await app.getUrl()}`);
 }
-bootstrap();
+void bootstrap();

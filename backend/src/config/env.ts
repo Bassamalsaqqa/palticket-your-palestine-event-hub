@@ -5,7 +5,9 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRES_IN: z.string().min(1, 'JWT_EXPIRES_IN is required'),
   PORT: z.coerce.number().default(3001),
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'test', 'production'])
+    .default('development'),
   CORS_ORIGINS: z.string().default('http://localhost:8080'),
 });
 
@@ -21,4 +23,3 @@ export function validate(config: Record<string, unknown>) {
 
   return result.data;
 }
-
