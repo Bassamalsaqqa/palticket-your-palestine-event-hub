@@ -40,6 +40,11 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Responses:** Uses `ScanResult` enum (GRANTED / DENIED_*).
     *   **Logging:** Success/Duplicate/Void are logged in `ScanLog`. Invalid codes are not logged (ticketId FK required).
 
+*   **Exports:**
+    *   **Endpoints:** `GET /exports/orders.csv`, `GET /exports/tickets.csv`
+    *   **Filters:** Optional `eventId` query parameter to export a single event.
+    *   **Access:** ADMIN only
+
 ## Environment Variables
 
 Copy `.env.example` to `.env` and update as needed.

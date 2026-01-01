@@ -95,6 +95,7 @@ The project adheres to strict **ESLint** rules. The root lint configuration cove
 *   **Data Persistence:** Frontend data vanishes on reload (until connected to Backend).
 *   **Backend Connection:** The frontend supports connecting to the backend API for Events, Orders, and Tickets when environment variables are provided. Otherwise, it falls back to mock data.
 *   **Scanner Camera (Mobile):** Camera access requires a secure context. Use `localhost` on desktop or HTTPS for mobile testing.
+*   **Exports:** Admin exports support optional `eventId` filtering when a specific event is selected.
 
 ## Roadmap
 - [x] Step A: Foundation (env validation, CORS, Prisma, Health)
