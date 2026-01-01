@@ -5,22 +5,39 @@
 ## Overview
 PalTicket is a bilingual event ticketing platform for Palestine.
 
+## Architecture
+- Frontend: React + Vite + TypeScript, runs at http://localhost:8080
+- Backend: NestJS + Prisma + PostgreSQL, runs at http://localhost:3001
+- Database: Postgres on http://localhost:5432 (via Docker)
+
 ## Getting Started
 
 ### Prerequisites
 *   Node.js & npm (or Bun)
+*   Docker (for Database)
 
-### Installation
+### Frontend Installation
 ```sh
-git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
 npm install
 npm run dev
 ```
 
-## Authentication & Roles (Mock System)
+### Backend Installation
+The backend is located in `/backend`.
 
-The application uses a mock authentication system. Access control is determined by the email prefix used during login.
+```sh
+cd backend
+npm install
+# Set up .env (see .env.example)
+# Ensure Docker is running
+npm run prisma:generate
+npm run prisma:migrate
+npm run start:dev
+```
+
+## Authentication & Roles (Frontend Mock)
+
+The frontend currently uses a mock authentication system.
 
 | Role | Access Level | Email Pattern | Example Login |
 |------|-------------|---------------|---------------|
@@ -34,31 +51,34 @@ The application uses a mock authentication system. Access control is determined 
 
 ## Development Architecture
 
-This project uses a **Service Layer** to decouple the UI from the mock data source.
-
-*   **Services:** Located in `src/services/`. All data fetching goes through here.
-*   **Data Fetching:** We use **React Query** (`useQuery`, `useMutation`) for all async operations.
-*   **Mock Data:** `src/data/mockEvents.ts` serves as the initial database.
-*   **Types:** Shared types are in `src/types/domain.ts`.
+*   **Frontend:** React + Vite + Shadcn/UI. Uses a **Service Layer** to mock data.
+*   **Backend:** NestJS + Prisma + PostgreSQL.
+    *   **Multi-tenant:** Organization-based data isolation.
+    *   **Scanning:** Database-enforced atomic entry validation.
 
 **Important:** Do not import `mockEvents` directly into UI components. Use the services.
 
 ## Technologies
 
-- **Framework:** React + Vite
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS + shadcn/ui
-- **State/Query:** TanStack Query (React Query)
-- **Routing:** React Router DOM v6
+- **Frontend:** React, TypeScript, Tailwind CSS, TanStack Query.
+- **Backend:** NestJS, Prisma, PostgreSQL.
 
 ## Code Quality
 
-The project adheres to strict **ESLint** rules, including `react-refresh/only-export-components`. Code is structured to separate components from hooks, contexts, and utility functions to ensure Fast Refresh works reliably.
+The project adheres to strict **ESLint** rules. Code is structured to separate components from hooks and constants to ensure Fast Refresh works reliably.
 
 ## Known Issues & Troubleshooting
 
-*   **Login Page White Screen:** A previous issue causing a white screen on the login page (due to missing `useLocation` import) has been resolved. Ensure you are using the latest version of `src/pages/LoginPage.tsx`.
-*   **Data Persistence:** Since there is no real backend, created orders and tickets will disappear if you refresh the browser page.
+*   **Data Persistence:** Frontend data vanishes on reload (until connected to Backend).
+*   **Backend Connection:** The frontend is NOT yet connected to the backend API.
+
+## Roadmap
+- Step A: Foundation (env validation, CORS allowlist, PrismaModule, /health) - done
+- Step 1: Schema + migrations (multi-tenant + RBAC + orders/tickets) - in progress
+- Step 2: Auth + RBAC module (OrganizationMember) - next
+- Step 3: Events / Orders / Tickets modules - next
+- Step 4: Scanner endpoint + ScanLog - next
+- Step 5: Payments, commissions, payouts, notifications - later
 
 ## Deployment
 

@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +5,306 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Enums
+// -----------------------------------------------------------------------------
+
+enum OrganizationRole {
+  ADMIN
+  STAFF
+}
+
+enum TicketStatus {
+  ISSUED
+  SCANNED
+  VOID
+}
+
+enum ScanResult {
+  SUCCESS
+  DUPLICATE
+  INVALID
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+}
+
+// -----------------------------------------------------------------------------
+// 1. Multi-tenancy & Users
+// -----------------------------------------------------------------------------
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships OrganizationMember[]
+  orders      Order[]
+  scans       ScanLog[]
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members            OrganizationMember[]
+  venues             Venue[]
+  events             Event[]
+  gates              Gate[]
+  orders             Order[]
+  tickets            Ticket[]
+  scanLogs           ScanLog[]
+  commissionPolicies CommissionPolicy[]
+  payouts            Payout[]
+}
+
+model OrganizationMember {
+  id             String           @id @default(uuid())
+  organizationId String
+  userId         String
+  role           OrganizationRole
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+  scanLogs     ScanLog[]
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+// -----------------------------------------------------------------------------
+// 2. Events & Venues
+// -----------------------------------------------------------------------------
+
+model Venue {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  address        String?
+  capacity       Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  events       Event[]
+
+  @@index([organizationId])
+}
+
+model Event {
+  id             String    @id @default(uuid())
+  organizationId String
+  venueId        String?
+  name           String
+  description    String?
+  startTime      DateTime
+  endTime        DateTime?
+  status         EventStatus @default(DRAFT)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization       Organization       @relation(fields: [organizationId], references: [id])
+  venue              Venue?             @relation(fields: [venueId], references: [id])
+  ticketTypes        TicketType[]
+  gates              Gate[]
+  orders             Order[]
+  tickets            Ticket[]
+  commissionPolicies CommissionPolicy[]
+
+  @@index([organizationId])
+  @@index([venueId])
+  @@index([startTime])
+}
+
+model Gate {
+  id             String @id @default(uuid())
+  organizationId String
+  eventId        String
+  name           String
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  event        Event        @relation(fields: [eventId], references: [id])
+  scanLogs     ScanLog[]
+
+  @@index([organizationId])
+  @@index([eventId])
+}
+
+// -----------------------------------------------------------------------------
+// 3. Ticket Economics & Orders
+// -----------------------------------------------------------------------------
+
+model TicketType {
+  id                String   @id @default(uuid())
+  eventId           String
+  name              String
+  sellPriceCents    Int
+  partnerPriceCents Int
+  currency          String
+  quantity          Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  event      Event       @relation(fields: [eventId], references: [id])
+  orderItems OrderItem[]
+  tickets    Ticket[]
+
+  @@index([eventId])
+}
+
+model Order {
+  id             String   @id @default(uuid())
+  organizationId String
+  eventId        String
+  userId         String
+  totalCents     Int
+  currency       String
+  status         OrderStatus @default(PENDING)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  event        Event        @relation(fields: [eventId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+  items        OrderItem[]
+  tickets      Ticket[]
+
+  @@index([organizationId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+model OrderItem {
+  id           String @id @default(uuid())
+  orderId      String
+  ticketTypeId String
+  quantity     Int
+  priceCents   Int
+
+  order      Order      @relation(fields: [orderId], references: [id])
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id])
+
+  @@index([orderId])
+}
+
+model Ticket {
+  id             String       @id @default(uuid())
+  organizationId String
+  eventId        String
+  orderId        String
+  ticketTypeId   String
+  code           String       @unique
+  status         TicketStatus @default(ISSUED)
+  scannedAt      DateTime?
+  attendeeName   String?
+  attendeeEmail  String?
+  attendeePhone  String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  event        Event        @relation(fields: [eventId], references: [id])
+  order        Order        @relation(fields: [orderId], references: [id])
+  ticketType   TicketType   @relation(fields: [ticketTypeId], references: [id])
+  scanLogs     ScanLog[]
+
+  @@index([organizationId])
+  @@index([eventId])
+  @@index([orderId])
+  @@index([ticketTypeId])
+  @@index([code])
+}
+
+// -----------------------------------------------------------------------------
+// 4. Scanning & Logs
+// -----------------------------------------------------------------------------
+
+model ScanLog {
+  id              String     @id @default(uuid())
+  organizationId  String
+  ticketId        String
+  scannedAt       DateTime   @default(now())
+  scannedByUserId String?
+  scannedByMemberId String?
+  gateId          String?
+  result          ScanResult
+
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  ticket       Ticket           @relation(fields: [ticketId], references: [id])
+  scannedBy    User?            @relation(fields: [scannedByUserId], references: [id])
+  scannedByMember OrganizationMember? @relation(fields: [scannedByMemberId], references: [id])
+  gate         Gate?            @relation(fields: [gateId], references: [id])
+
+  @@index([organizationId])
+  @@index([ticketId])
+  @@index([gateId])
+  @@index([scannedByUserId])
+  @@index([scannedByMemberId])
+  @@index([scannedAt])
+}
+
+// -----------------------------------------------------------------------------
+// 5. Finance (Future Ready)
+// -----------------------------------------------------------------------------
+
+model CommissionPolicy {
+  id             String    @id @default(uuid())
+  organizationId String
+  eventId        String?
+  percentBps     Int
+  flatFeeCents   Int?
+  effectiveFrom  DateTime
+  effectiveTo    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  event        Event?       @relation(fields: [eventId], references: [id])
+
+  @@index([organizationId])
+  @@index([eventId])
+}
+
+model Payout {
+  id              String       @id @default(uuid())
+  organizationId  String
+  periodStart     DateTime
+  periodEnd       DateTime
+  grossCents      Int
+  commissionCents Int
+  netCents        Int
+  status          PayoutStatus @default(PENDING)
+  paidAt          DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
 }

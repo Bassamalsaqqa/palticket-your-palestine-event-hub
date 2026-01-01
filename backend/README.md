@@ -25,6 +25,32 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Backend Overview
+
+- Runtime: NestJS on http://localhost:3001
+- Database: Postgres via Prisma
+- Multi-tenant boundary: Organization
+- RBAC: OrganizationMember (ADMIN/STAFF per org)
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and update as needed.
+
+- DATABASE_URL
+- JWT_SECRET
+- JWT_EXPIRES_IN
+- PORT
+- NODE_ENV
+- CORS_ORIGINS
+
+## Prisma Commands
+
+```bash
+$ npx prisma generate
+$ npx prisma migrate dev -n init
+$ npx prisma studio
+```
+
 ## Project setup
 
 ```bash
@@ -33,8 +59,7 @@ $ npm install
 
 ## Prisma client generation
 
-This backend uses Prisma, but the schema has no models yet. You still need to
-generate the client for TypeScript to compile:
+Generate the client whenever the schema changes:
 
 ```bash
 $ npx prisma generate

@@ -8,6 +8,7 @@ Repository
 - Frontend: Vite + React + TypeScript + Tailwind + shadcn/ui
 - Routing: react-router-dom with /en and /ar namespaces
 - State/query: React Query used across pages
+- Backend: NestJS + Prisma + PostgreSQL in /backend
 
 Auth and RBAC (mock)
 - Auth is mock and role-based by email prefix:
@@ -77,3 +78,16 @@ Common access for admin panel (mock)
 
 Notes
 - The project is still mock-data driven; swapping to real APIs should be done by replacing services to call a backend and keeping React Query intact.
+
+Backend architecture and rules
+- Backend runtime: http://localhost:3001
+- Database: PostgreSQL via Prisma (classic workflow)
+- Tenant boundary: Organization
+- RBAC: OrganizationMember with roles ADMIN/STAFF; unique(organizationId, userId)
+- Money fields use integer cents; no floats/decimals
+- Ticket scan-once enforced by Ticket.status and ScanLog
+- All tenant-owned tables include organizationId or link to Event with organizationId; prefer explicit organizationId and indexes
+
+Role separation
+- Gemini: generates bulk changes or scaffolding
+- Codex: reviews, hardens, and migrates

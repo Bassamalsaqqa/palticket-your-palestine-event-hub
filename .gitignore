@@ -29,3 +29,11 @@ dist-ssr
 .env.test.local
 .env.production.local
 .env.local
+
+# Accidental git-internal placeholders
+dir
+hooks
+info
+objects
+refs
+rmdir
