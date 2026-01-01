@@ -129,8 +129,6 @@ PalTicket has evolved into a multi-tenant, localized ticketing platform with ord
 - **Admin Dashboard:** Uses `/admin/stats` and API-backed orders/events.
 
 ### Known Gaps
-- **Tests:** Some scan tests may still assert legacy `status` instead of `result`.
-- **Localization fallback:** Limited handling when a requested locale is missing.
 - **Payments/Notifications:** Payment provider, commissions, payouts, and delivery channels are not implemented.
 - **Admin panels:** Users/Roles/Staff/Exports/AuditLogs are read-only; edits/invites not implemented.
 

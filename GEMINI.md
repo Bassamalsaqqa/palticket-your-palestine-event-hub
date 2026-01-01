@@ -66,7 +66,7 @@ The database is designed for multi-tenancy, localization, and atomic scanning op
 
 3.  **Localization:**
     *   **Implementation:** Translation tables for `Event`, `Venue`, `Category`, and `City`.
-    *   **Usage:** Query parameter `?lang=en|ar` determines returned content.
+    *   **Usage:** Query parameter `?lang=en|ar` determines returned content, with English fallback when missing.
 
 ## Service Layer (Integrated)
 

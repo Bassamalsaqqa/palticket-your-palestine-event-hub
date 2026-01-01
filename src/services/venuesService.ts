@@ -8,9 +8,21 @@ export interface VenueOption {
 interface ApiVenue {
   id: string;
   translations?: {
+    locale: "en" | "ar";
     name: string;
   }[];
 }
+
+const pickTranslation = (
+  translations: ApiVenue["translations"] = [],
+  lang: "en" | "ar",
+) => {
+  return (
+    translations.find((t) => t.locale === lang) ||
+    translations.find((t) => t.locale === "en") ||
+    translations[0]
+  );
+};
 
 export const fetchAllVenues = async (lang?: "en" | "ar"): Promise<VenueOption[]> => {
   const activeLang = lang || getLanguage();
@@ -27,7 +39,7 @@ export const fetchAllVenues = async (lang?: "en" | "ar"): Promise<VenueOption[]>
     const venues = await apiFetch<ApiVenue[]>(`/venues?lang=${activeLang}&skip=0&take=100`);
     return venues.map(v => ({
       id: v.id,
-      name: v.translations?.[0]?.name || "Unnamed Venue",
+      name: pickTranslation(v.translations, activeLang)?.name || "Unnamed Venue",
     }));
   } catch (error) {
     console.warn("Failed to fetch venues, falling back to mock", error);

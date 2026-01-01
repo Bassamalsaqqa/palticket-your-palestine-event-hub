@@ -44,15 +44,15 @@ export class EventsService {
         endTime: true,
         status: true,
         translations: {
-          where: { locale: lang },
-          select: { name: true, summary: true, description: true },
+          where: { locale: { in: [lang, "en"] } },
+          select: { locale: true, name: true, summary: true, description: true },
         },
         category: {
           select: {
             slug: true,
             translations: {
-              where: { locale: lang },
-              select: { name: true },
+              where: { locale: { in: [lang, "en"] } },
+              select: { locale: true, name: true },
             },
           },
         },
@@ -60,8 +60,8 @@ export class EventsService {
           select: {
             slug: true,
             translations: {
-              where: { locale: lang },
-              select: { name: true },
+              where: { locale: { in: [lang, "en"] } },
+              select: { locale: true, name: true },
             },
           },
         },
@@ -69,8 +69,8 @@ export class EventsService {
           select: {
             id: true,
             translations: {
-              where: { locale: lang },
-              select: { name: true, address: true, city: true },
+              where: { locale: { in: [lang, "en"] } },
+              select: { locale: true, name: true, address: true, city: true },
             },
           },
         },
@@ -88,15 +88,15 @@ export class EventsService {
         endTime: true,
         status: true,
         translations: {
-          where: { locale: lang },
-          select: { name: true, summary: true, description: true },
+          where: { locale: { in: [lang, "en"] } },
+          select: { locale: true, name: true, summary: true, description: true },
         },
         category: {
           select: {
             slug: true,
             translations: {
-              where: { locale: lang },
-              select: { name: true },
+              where: { locale: { in: [lang, "en"] } },
+              select: { locale: true, name: true },
             },
           },
         },
@@ -104,8 +104,8 @@ export class EventsService {
           select: {
             slug: true,
             translations: {
-              where: { locale: lang },
-              select: { name: true },
+              where: { locale: { in: [lang, "en"] } },
+              select: { locale: true, name: true },
             },
           },
         },
@@ -113,8 +113,8 @@ export class EventsService {
           select: {
             id: true,
             translations: {
-              where: { locale: lang },
-              select: { name: true, address: true, city: true },
+              where: { locale: { in: [lang, "en"] } },
+              select: { locale: true, name: true, address: true, city: true },
             },
           },
         },
@@ -132,15 +132,15 @@ export class EventsService {
         endTime: true,
         status: true,
         translations: {
-          where: { locale: lang },
-          select: { name: true, summary: true, description: true },
+          where: { locale: { in: [lang, "en"] } },
+          select: { locale: true, name: true, summary: true, description: true },
         },
         category: {
           select: {
             slug: true,
             translations: {
-              where: { locale: lang },
-              select: { name: true },
+              where: { locale: { in: [lang, "en"] } },
+              select: { locale: true, name: true },
             },
           },
         },
@@ -148,8 +148,8 @@ export class EventsService {
           select: {
             slug: true,
             translations: {
-              where: { locale: lang },
-              select: { name: true },
+              where: { locale: { in: [lang, "en"] } },
+              select: { locale: true, name: true },
             },
           },
         },
@@ -157,8 +157,8 @@ export class EventsService {
           select: {
             id: true,
             translations: {
-              where: { locale: lang },
-              select: { name: true, address: true, city: true },
+              where: { locale: { in: [lang, "en"] } },
+              select: { locale: true, name: true, address: true, city: true },
             },
           },
         },

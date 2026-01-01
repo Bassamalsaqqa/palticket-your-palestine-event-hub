@@ -36,8 +36,8 @@ export class VenuesService {
         capacity: true,
         organizationId: true,
         translations: {
-          where: { locale: lang },
-          select: { name: true, address: true, city: true },
+          where: { locale: { in: [lang, "en"] } },
+          select: { locale: true, name: true, address: true, city: true },
         },
       },
     });
@@ -51,8 +51,8 @@ export class VenuesService {
         capacity: true,
         organizationId: true,
         translations: {
-          where: { locale: lang },
-          select: { name: true, address: true, city: true },
+          where: { locale: { in: [lang, "en"] } },
+          select: { locale: true, name: true, address: true, city: true },
         },
       },
     });

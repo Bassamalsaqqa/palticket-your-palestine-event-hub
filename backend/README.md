@@ -19,13 +19,13 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Endpoints:** `GET /events/slug/:slug?lang=en|ar`
     *   **Access:** ADMIN can write; STAFF can read.
     *   **Scope:** All queries filtered by `x-organization-id`.
-    *   **Localization:** Events and Venues support multi-locale translations (e.g., "en", "ar") via separate translation tables. Use `?lang=en|ar` (default: `en`) on read endpoints to retrieve localized content.
+    *   **Localization:** Events and Venues support multi-locale translations (e.g., "en", "ar") via separate translation tables. Use `?lang=en|ar` (default: `en`) on read endpoints to retrieve localized content, with English fallback when missing.
     *   **Create/Update:** Events accept `translations[]` and optional `venueId`, `categoryId`, and `cityId`.
 
 *   ** Taxonomy (Categories & Cities):**
     *   **Endpoints:** `GET /categories?lang=en|ar`, `GET /cities?lang=en|ar`
     *   **Global & Tenant-specific:** Taxonomy entries can be global (system-wide) or tenant-specific.
-    *   **Localization:** Fully localized names via translation tables. Use `?lang=en|ar` on applicable endpoints.
+    *   **Localization:** Fully localized names via translation tables. Use `?lang=en|ar` on applicable endpoints, with English fallback when missing.
 
 *   **Orders/Tickets:**
     *   **Orders:** Create + read (ticket issuance happens here). Includes `attendeeName`.

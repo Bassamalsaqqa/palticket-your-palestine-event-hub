@@ -19,8 +19,8 @@ export class CitiesService {
         id: true,
         slug: true,
         translations: {
-          where: { locale: lang },
-          select: { name: true },
+          where: { locale: { in: [lang, "en"] } },
+          select: { locale: true, name: true },
         },
       },
     });

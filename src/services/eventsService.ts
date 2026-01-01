@@ -23,6 +23,7 @@ const CATEGORY_STYLE_BY_SLUG: Record<
 };
 
 type ApiTranslation = {
+  locale: "en" | "ar";
   name: string;
   summary?: string | null;
   description?: string | null;
@@ -35,11 +36,11 @@ type ApiEvent = {
   endTime?: string | null;
   status: "DRAFT" | "PUBLISHED" | "CANCELLED";
   translations: ApiTranslation[];
-  category?: { slug: string; translations: { name: string }[] } | null;
-  city?: { slug: string; translations: { name: string }[] } | null;
+  category?: { slug: string; translations: { locale: "en" | "ar"; name: string }[] } | null;
+  city?: { slug: string; translations: { locale: "en" | "ar"; name: string }[] } | null;
   venue?: {
     id: string;
-    translations: { name: string; address?: string | null; city?: string | null }[];
+    translations: { locale: "en" | "ar"; name: string; address?: string | null; city?: string | null }[];
   } | null;
 };
 
@@ -54,13 +55,13 @@ type ApiTicketType = {
 type ApiCategory = {
   id: string;
   slug: string;
-  translations: { name: string }[];
+  translations: { locale: "en" | "ar"; name: string }[];
 };
 
 type ApiCity = {
   id: string;
   slug: string;
-  translations: { name: string }[];
+  translations: { locale: "en" | "ar"; name: string }[];
 };
 
 const simulateLatency = <T>(data: T): Promise<T> => {
@@ -74,6 +75,17 @@ const simulateLatency = <T>(data: T): Promise<T> => {
 const makeLocalized = (value?: string | null) => {
   const text = value ?? "";
   return { en: text, ar: text };
+};
+
+const pickTranslation = <T extends { locale?: string }>(
+  translations: T[] = [],
+  lang: "en" | "ar",
+) => {
+  return (
+    translations.find((t) => t.locale === lang) ||
+    translations.find((t) => t.locale === "en") ||
+    translations[0]
+  );
 };
 
 const mapStatus = (status: ApiEvent["status"], startTime: string, endTime?: string | null) => {
@@ -97,10 +109,10 @@ const mapTicketTier = (ticket: ApiTicketType): TicketTier => {
 };
 
 const mapEvent = (event: ApiEvent, lang: "en" | "ar", ticketTiers: TicketTier[] = []): Event => {
-  const translation = event.translations[0];
-  const venueTranslation = event.venue?.translations[0];
-  const categoryTranslation = event.category?.translations[0];
-  const cityTranslation = event.city?.translations[0];
+  const translation = pickTranslation(event.translations, lang);
+  const venueTranslation = pickTranslation(event.venue?.translations, lang);
+  const categoryTranslation = pickTranslation(event.category?.translations, lang);
+  const cityTranslation = pickTranslation(event.city?.translations, lang);
   const datePart = event.startTime.split("T")[0] || "";
   const timePart = event.startTime.split("T")[1]?.slice(0, 5) || "";
   const endDatePart = event.endTime?.split("T")[0];
@@ -212,7 +224,7 @@ export const fetchCategories = async (lang?: "en" | "ar"): Promise<Category[]> =
   try {
     const categories = await apiFetch<ApiCategory[]>(`/categories?lang=${activeLang}`);
     return categories.map((category) => {
-      const translation = category.translations[0];
+      const translation = pickTranslation(category.translations, activeLang);
       const style = CATEGORY_STYLE_BY_SLUG[category.slug] || {
         icon: "Tag",
         color: "hsl(var(--primary))",
@@ -239,7 +251,7 @@ export const fetchCities = async (lang?: "en" | "ar"): Promise<City[]> => {
   try {
     const cities = await apiFetch<ApiCity[]>(`/cities?lang=${activeLang}`);
     return cities.map((city) => {
-      const translation = city.translations[0];
+      const translation = pickTranslation(city.translations, activeLang);
       return {
         id: city.slug,
         name: makeLocalized(translation?.name),

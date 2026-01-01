@@ -70,8 +70,8 @@ describe('ScansService', () => {
 
     const result = await service.scan(orgId, userId, { ticketCode });
 
-    expect(result.status).toBe('invalid');
-    expect(result.message).toBe('Ticket not found');
+    expect(result.result).toBe(ScanResult.DENIED_INVALID_TICKET);
+    expect(result.message).toBe('Ticket not found or access denied');
     expect(prisma.scanLog.create.mock.calls.length).toBe(0);
   });
 
@@ -82,8 +82,8 @@ describe('ScansService', () => {
 
     const result = await service.scan(orgId, userId, { ticketCode });
 
-    expect(result.status).toBe('invalid');
-    expect(result.message).toBe('Ticket not found');
+    expect(result.result).toBe(ScanResult.DENIED_INVALID_TICKET);
+    expect(result.message).toBe('Ticket not found or access denied');
     expect(prisma.scanLog.create.mock.calls.length).toBe(0);
   });
 
@@ -94,7 +94,7 @@ describe('ScansService', () => {
 
     const result = await service.scan(orgId, userId, { ticketCode });
 
-    expect(result.status).toBe('success');
+    expect(result.result).toBe(ScanResult.GRANTED);
     expect(prisma.ticket.updateMany.mock.calls.length).toBe(1);
     const updateArgs = prisma.ticket.updateMany.mock.calls[0]?.[0];
     expect(updateArgs?.where).toMatchObject({
@@ -116,7 +116,7 @@ describe('ScansService', () => {
 
     const result = await service.scan(orgId, userId, { ticketCode });
 
-    expect(result.status).toBe('duplicate');
+    expect(result.result).toBe(ScanResult.DENIED_ALREADY_USED);
     expect(prisma.scanLog.create.mock.calls.length).toBe(1);
     const duplicateLogArgs = prisma.scanLog.create.mock.calls[0]?.[0];
     expect(duplicateLogArgs?.data?.result).toBe(ScanResult.DENIED_ALREADY_USED);
@@ -133,7 +133,7 @@ describe('ScansService', () => {
 
     const result = await service.scan(orgId, userId, { ticketCode });
 
-    expect(result.status).toBe('duplicate');
+    expect(result.result).toBe(ScanResult.DENIED_ALREADY_USED);
     expect(prisma.scanLog.create.mock.calls.length).toBe(1);
     const duplicateLogArgs = prisma.scanLog.create.mock.calls[0]?.[0];
     expect(duplicateLogArgs?.data?.result).toBe(ScanResult.DENIED_ALREADY_USED);
@@ -149,7 +149,7 @@ describe('ScansService', () => {
 
     const result = await service.scan(orgId, userId, { ticketCode });
 
-    expect(result.status).toBe('invalid');
+    expect(result.result).toBe(ScanResult.DENIED_INVALID_TICKET);
     expect(result.message).toBe('Ticket is void');
     expect(prisma.scanLog.create.mock.calls.length).toBe(1);
     const voidLogArgs = prisma.scanLog.create.mock.calls[0]?.[0];

@@ -84,6 +84,7 @@ Notes
 - The project uses backend APIs for events/categories/cities when API config is provided; otherwise it falls back to mock data.
 - API config (frontend): `VITE_API_BASE_URL`, `VITE_API_TOKEN`, `VITE_ORGANIZATION_ID` (or localStorage overrides).
 - Scanner uses camera access; mobile browsers require HTTPS or localhost for camera permissions.
+- Localization: backend returns translations for requested locale with English fallback when missing.
 
 Backend architecture and rules
 - Backend runtime: http://localhost:3001

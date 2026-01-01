@@ -67,7 +67,7 @@ describe('ScansController (e2e)', () => {
   });
 
   it('/scan (POST) success', () => {
-    scansService.scan.mockResolvedValue({ status: 'success' });
+    scansService.scan.mockResolvedValue({ result: 'GRANTED' });
 
     return request(httpServer)
       .post('/scan')
@@ -75,8 +75,8 @@ describe('ScansController (e2e)', () => {
       .send({ ticketCode: 'VALID' })
       .expect(201)
       .expect((res: Response) => {
-        const body = res.body as { status: string };
-        expect(body.status).toBe('success');
+        const body = res.body as { result: string };
+        expect(body.result).toBe('GRANTED');
       });
   });
 
@@ -99,8 +99,8 @@ describe('ScansController (e2e)', () => {
 
   it('/scan (POST) should return invalid status for non-existent ticket', () => {
     scansService.scan.mockResolvedValue({
-      status: 'invalid',
-      message: 'Ticket not found',
+      result: 'DENIED_INVALID_TICKET',
+      message: 'Ticket not found or access denied',
     });
 
     return request(httpServer)
@@ -109,9 +109,9 @@ describe('ScansController (e2e)', () => {
       .send({ ticketCode: 'MISSING' })
       .expect(201)
       .expect((res: Response) => {
-        const body = res.body as { status: string; message: string };
-        expect(body.status).toBe('invalid');
-        expect(body.message).toBe('Ticket not found');
+        const body = res.body as { result: string; message: string };
+        expect(body.result).toBe('DENIED_INVALID_TICKET');
+        expect(body.message).toBe('Ticket not found or access denied');
       });
   });
 
