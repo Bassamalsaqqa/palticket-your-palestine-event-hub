@@ -40,6 +40,12 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Responses:** Uses `ScanResult` enum (GRANTED / DENIED_*).
     *   **Logging:** Success/Duplicate/Void are logged in `ScanLog`. Invalid codes are not logged (ticketId FK required).
 
+*   **Invites (Member Onboarding):**
+    *   **Endpoints:** `POST /members/invites` (Create), `POST /members/invites/accept` (Accept).
+    *   **Flow:** Admin creates invite -> Token generated -> User accepts via link.
+    *   **Access:** Create requires ADMIN; Accept requires valid JWT (no org context needed initially).
+    *   **Safety:** Atomic acceptance, expiration checks, and org-scoped creation.
+
 *   **Exports:**
     *   **Endpoints:** `GET /exports/orders.csv`, `GET /exports/tickets.csv`
     *   **Filters:** Optional `eventId` query parameter to export a single event.

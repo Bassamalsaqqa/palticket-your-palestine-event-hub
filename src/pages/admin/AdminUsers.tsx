@@ -36,10 +36,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, MoreHorizontal, Edit, Shield, Loader2, Trash2, Mail } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Edit, Shield, Loader2, Trash2, Mail, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchMembers, updateMemberRole, inviteMember, removeMember, type OrganizationMember } from "@/services/membersService";
+import { fetchMembers, updateMemberRole, createInvite, removeMember, type OrganizationMember } from "@/services/membersService";
 import { updateUserProfile } from "@/services/usersService";
 import { useForm, Controller } from "react-hook-form";
 
@@ -64,6 +64,7 @@ export default function AdminUsers() {
   const [changingRoleMember, setChangingRoleMember] = useState<OrganizationMember | null>(null);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [deletingMember, setDeletingMember] = useState<OrganizationMember | null>(null);
+  const [lastInviteToken, setLastInviteToken] = useState<string | null>(null);
   
   const queryClient = useQueryClient();
   const editForm = useForm<EditUserForm>();
@@ -104,11 +105,11 @@ export default function AdminUsers() {
   });
 
   const inviteMutation = useMutation({
-    mutationFn: (data: InviteMemberForm) => inviteMember(data.email, data.role),
-    onSuccess: () => {
+    mutationFn: (data: InviteMemberForm) => createInvite(data.email, data.role),
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "members"] });
       toast.success(t.admin.userInvited);
-      setIsInviteOpen(false);
+      setLastInviteToken(data.token);
       inviteForm.reset();
     },
     onError: (error: Error) => {
@@ -173,6 +174,12 @@ export default function AdminUsers() {
     inviteMutation.mutate(data);
   };
 
+  const copyInviteLink = (token: string) => {
+    const link = `${window.location.origin}/${language}/accept-invite?token=${token}`;
+    navigator.clipboard.writeText(link);
+    toast.success(t.admin.inviteLinkCopied);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -180,7 +187,7 @@ export default function AdminUsers() {
           <h2 className="text-2xl font-bold">{t.admin.users}</h2>
           <p className="text-muted-foreground">{t.admin.usersDesc}</p>
         </div>
-        <Button onClick={() => setIsInviteOpen(true)}>
+        <Button onClick={() => { setIsInviteOpen(true); setLastInviteToken(null); }}>
           <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
           {t.admin.inviteUser}
         </Button>
@@ -279,55 +286,79 @@ export default function AdminUsers() {
               {t.admin.inviteUserDesc}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={inviteForm.handleSubmit(handleInviteSubmit)} className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t.admin.email}</Label>
-              <div className="relative">
-                <Mail className="absolute top-2.5 h-4 w-4 text-muted-foreground ltr:left-2 rtl:right-2" />
-                <Input 
-                  id="email" 
-                  placeholder="user@example.com" 
-                  className="ltr:pl-8 rtl:pr-8"
-                  {...inviteForm.register("email", { 
-                    required: t.admin.emailRequired,
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: t.admin.invalidEmail
-                    }
-                  })} 
+          
+          {lastInviteToken ? (
+            <div className="space-y-4 py-4">
+              <div className="p-4 bg-muted rounded-md border border-dashed text-center">
+                <p className="text-sm font-medium mb-2">{t.admin.inviteTokenGenerated}</p>
+                <code className="block p-2 bg-background rounded text-xs break-all mb-4">{lastInviteToken}</code>
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => copyInviteLink(lastInviteToken)}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  {t.admin.copyInviteLink}
+                </Button>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => { setIsInviteOpen(false); setLastInviteToken(null); }}>
+                  {t.admin.done}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <form onSubmit={inviteForm.handleSubmit(handleInviteSubmit)} className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">{t.admin.email}</Label>
+                <div className="relative">
+                  <Mail className="absolute top-2.5 h-4 w-4 text-muted-foreground ltr:left-2 rtl:right-2" />
+                  <Input 
+                    id="email" 
+                    placeholder="user@example.com" 
+                    className="ltr:pl-8 rtl:pr-8"
+                    {...inviteForm.register("email", { 
+                      required: t.admin.emailRequired,
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: t.admin.invalidEmail
+                      }
+                    })} 
+                  />
+                </div>
+                {inviteForm.formState.errors.email && (
+                  <p className="text-sm text-destructive">{inviteForm.formState.errors.email.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>{t.admin.role}</Label>
+                <Controller
+                  name="role"
+                  control={inviteForm.control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t.admin.selectRole} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ADMIN">ADMIN</SelectItem>
+                        <SelectItem value="STAFF">STAFF</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                 />
               </div>
-              {inviteForm.formState.errors.email && (
-                <p className="text-sm text-destructive">{inviteForm.formState.errors.email.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label>{t.admin.role}</Label>
-              <Controller
-                name="role"
-                control={inviteForm.control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t.admin.selectRole} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ADMIN">ADMIN</SelectItem>
-                      <SelectItem value="STAFF">STAFF</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setIsInviteOpen(false)}>{t.common.cancel}</Button>
-              <Button type="submit" disabled={inviteMutation.isPending}>
-                {inviteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t.admin.inviteMember}
-              </Button>
-            </DialogFooter>
-          </form>
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => setIsInviteOpen(false)}>{t.common.cancel}</Button>
+                <Button type="submit" disabled={inviteMutation.isPending}>
+                  {inviteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t.admin.inviteMember}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
 

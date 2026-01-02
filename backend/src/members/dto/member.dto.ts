@@ -21,11 +21,16 @@ export class UpdateMemberRoleDto {
   role: OrganizationRole;
 }
 
-export class InviteMemberDto {
+export class CreateInviteDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
 
   @IsEnum(OrganizationRole)
   role: OrganizationRole;
+}
+
+export class AcceptInviteDto {
+  @IsNotEmpty()
+  token: string;
 }

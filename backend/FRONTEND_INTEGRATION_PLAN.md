@@ -68,4 +68,6 @@ When a translation is missing for the requested locale:
 ## 6. Implementation Status & TODOs
 
 - [x] Read-only taxonomy endpoints are implemented (`GET /categories`, `GET /cities`).
-- [ ] Provide frontend API config (base URL, token, org ID) to enable live data.
+- [x] Frontend API config (base URL, token, org ID) provided via Admin Settings.
+- [x] Admin Member Management (Invite/Remove) implemented.
+- [x] Force Mock Mode implemented for UI testing.

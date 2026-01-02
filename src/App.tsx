@@ -23,6 +23,7 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import AccountPage from "./pages/AccountPage";
 import ScannerPage from "./pages/ScannerPage";
+import AcceptInvitePage from "./pages/AcceptInvitePage";
 import NotFound from "./pages/NotFound";
 import { RequireAdmin, RequireStaff } from "@/components/RouteGuards";
 import {
@@ -80,6 +81,7 @@ const App = () => (
                   <Route path="login" element={<LoginPage />} />
                   <Route path="signup" element={<SignupPage />} />
                   <Route path="account" element={<AccountPage />} />
+                  <Route path="accept-invite" element={<AcceptInvitePage />} />
                 </Route>
 
                 {/* English Scanner Route */}
@@ -121,6 +123,7 @@ const App = () => (
                   <Route path="login" element={<LoginPage />} />
                   <Route path="signup" element={<SignupPage />} />
                   <Route path="account" element={<AccountPage />} />
+                  <Route path="accept-invite" element={<AcceptInvitePage />} />
                 </Route>
 
                 {/* Arabic Scanner Route */}

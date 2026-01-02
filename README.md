@@ -36,7 +36,9 @@ To connect the UI to the backend APIs, set the following environment variables b
 
 - `VITE_API_BASE_URL` (e.g. `http://localhost:3001`)
 - `VITE_API_TOKEN` (JWT access token)
-- `VITE_ORGANIZATION_ID` (tenant org UUID)
+- `VITE_ORGANIZATION_ID` (tenant org UUID; required for org-scoped endpoints)
+
+Invite acceptance uses `/accept-invite?token=...` and only requires `VITE_API_BASE_URL` + `VITE_API_TOKEN` (no organization ID).
 Mock content in `src/data/mockEvents.ts` is generated from `public/English.json` and `public/Arabic.json` for local-only development.
 
 ### Backend Installation
@@ -62,7 +64,7 @@ npm run start:dev
 ### Frontend (Mock)
 The frontend uses a mock authentication system for UI testing. Backend APIs can still be used if API env vars are provided.
 *   **Admin:** `admin@palticket.com` (Full access)
-*   **Staff:** `staff@event.com` (Scanner access)
+*   **Staff:** `staff@palticket.com` (Scanner access)
 *   **User:** `user@example.com` (Public access)
 
 ### Backend (Real)
@@ -105,7 +107,7 @@ The project adheres to strict **ESLint** rules. The root lint configuration cove
 - Start backend: `npm run dev:all:seed` (prepares and seeds database).
 - Login at `http://localhost:8080/en/login` with:
   - **Email**: `admin@palticket.com`
-  - **Password**: `password`
+  - **Password**: `123456`
 - Get your **Organization ID** from the backend logs or database (seeded slug is `palticket-demo`).
 
 ### 2. Admin Flow
@@ -130,7 +132,7 @@ The project adheres to strict **ESLint** rules. The root lint configuration cove
 - [x] Step 2: Auth + RBAC (JWT, RolesGuard, OrganizationMember)
 - [x] Step 3: Domain Modules (Events/Venues/Gates/TicketTypes CRUD; Orders Create + Read; Tickets Read-only)
 - [x] Step 4: Scanner endpoint + ScanLog
-- [ ] Step 5: Payments, commissions, payouts, notifications
+- [ ] Step 5: Payments, commissions, payouts, notifications (deferred)
 
 ## Project State Review (Jan 1, 2026)
 
@@ -147,7 +149,7 @@ PalTicket has evolved into a multi-tenant, localized ticketing platform with ord
 - **Scanning:** Atomic scan-once logic, tenant-scoped, logs ScanResult. `POST /scan` and `GET /scan/logs`.
 - **Orders:** Order creation issues tickets and returns ticket codes. Payment remains PENDING until provider integration.
 - **Events/Venues/Categories/Cities:** Localized read; Events support translation arrays on create/update.
-- **Admin & Members:** `/admin/stats` for KPI metrics, `/members` for org members.
+- **Admin & Members:** `/admin/stats` for KPI metrics, `/members` for org members, invite flow via `/members/invites` and `/members/invites/accept`.
 - **Exports:** `GET /exports/orders.csv` and `GET /exports/tickets.csv` with optional `eventId` filter.
 
 ### Frontend Integration
@@ -155,12 +157,15 @@ PalTicket has evolved into a multi-tenant, localized ticketing platform with ord
 - **Scanner:** Uses `/scan`, returns ScanResult, camera lifecycle handled; requires HTTPS on mobile.
 - **Admin Dashboard:** Uses `/admin/stats` and API-backed orders/events.
 - **Admin Tools:** Audit logs, exports, order details, and edit flows are wired to the backend.
+- **Invites:** Admin Users can create invites and share `/accept-invite?token=...`; the accept flow warns when API config is missing or Mock Mode is enabled.
 
 ### Known Gaps
-- **Payments/Notifications**: Payment provider, commissions, payouts, and delivery channels are not implemented.
+- **Payments/Notifications**: Payment provider, commissions, payouts, and delivery channels are not implemented (deferred).
 
 ### Next Steps
-- Implement payment provider integration and notifications.
+- Provide frontend API config (base URL, token, org ID) for live data.
+- Implement translation fallback at the service/UI level.
+- Payments/commissions/payouts/notifications are deferred.
 
 ## API Configuration Precedence
 The application resolves its data source in the following order:

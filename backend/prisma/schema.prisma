@@ -19,6 +19,13 @@ enum OrganizationRole {
   STAFF
 }
 
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
 enum TicketStatus {
   ISSUED
   SCANNED
@@ -73,6 +80,7 @@ model User {
   memberships OrganizationMember[]
   orders      Order[]
   scans       ScanLog[]
+  sentInvites OrganizationInvite[] @relation("SentInvites")
 }
 
 model Organization {
@@ -83,6 +91,7 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   members            OrganizationMember[]
+  invites            OrganizationInvite[]
   venues             Venue[]
   events             Event[]
   gates              Gate[]
@@ -112,6 +121,26 @@ model OrganizationMember {
   @@unique([organizationId, userId])
   @@index([organizationId])
   @@index([userId])
+}
+
+model OrganizationInvite {
+  id             String       @id @default(uuid())
+  organizationId String
+  email          String
+  role           OrganizationRole
+  token          String       @unique
+  status         InviteStatus @default(PENDING)
+  expiresAt      DateTime
+  invitedByUserId String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  invitedBy    User         @relation("SentInvites", fields: [invitedByUserId], references: [id])
+
+  @@index([organizationId])
+  @@index([email])
+  @@index([token])
 }
 
 // -----------------------------------------------------------------------------
@@ -428,3 +457,4 @@ model Payout {
 
   @@index([organizationId])
 }
+

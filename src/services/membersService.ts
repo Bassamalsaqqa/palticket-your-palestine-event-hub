@@ -1,4 +1,4 @@
-import { apiFetch, getApiConfig } from "./apiClient";
+import { apiFetch, getApiConfig, apiFetchPublic, getApiAuthConfig } from "./apiClient";
 
 export interface OrganizationMember {
   id: string;
@@ -13,6 +13,15 @@ export interface OrganizationMember {
     phone: string | null;
     createdAt: string;
   };
+}
+
+export interface OrganizationInvite {
+  id: string;
+  email: string;
+  role: "ADMIN" | "STAFF";
+  token: string;
+  expiresAt: string;
+  status: "PENDING" | "ACCEPTED" | "EXPIRED" | "CANCELLED";
 }
 
 export const fetchMembers = async (): Promise<OrganizationMember[]> => {
@@ -59,15 +68,27 @@ export const fetchMembers = async (): Promise<OrganizationMember[]> => {
   }
 };
 
-export const inviteMember = async (email: string, role: "ADMIN" | "STAFF"): Promise<OrganizationMember> => {
+export const createInvite = async (email: string, role: "ADMIN" | "STAFF"): Promise<OrganizationInvite> => {
   const config = getApiConfig();
   if (!config) {
     throw new Error("API not configured");
   }
 
-  return await apiFetch<OrganizationMember>("/members/invite", {
+  return await apiFetch<OrganizationInvite>("/members/invites", {
     method: "POST",
     body: JSON.stringify({ email, role }),
+  });
+};
+
+export const acceptInvite = async (token: string): Promise<{ id: string, organization: { name: string } }> => {
+  const config = getApiAuthConfig();
+  if (!config) {
+    throw new Error("API authentication not configured");
+  }
+
+  return await apiFetchPublic<{ id: string, organization: { name: string } }>("/members/invites/accept", {
+    method: "POST",
+    body: JSON.stringify({ token }),
   });
 };
 

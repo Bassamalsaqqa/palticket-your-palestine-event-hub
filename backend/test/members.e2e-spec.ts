@@ -25,9 +25,8 @@ describe('MembersController (e2e)', () => {
   const adminUserId = randomUUID();
   const targetUserId = randomUUID();
   const targetUserEmail = `target-${Date.now()}@example.com`;
-  const nonExistentEmail = `nobody-${Date.now()}@example.com`;
   
-  // To track created member ID for removal
+  let inviteToken: string | null = null;
   let createdMemberId: string | null = null;
 
   beforeAll(async () => {
@@ -46,8 +45,9 @@ describe('MembersController (e2e)', () => {
         canActivate: (ctx: ExecutionContext) => {
           const req = ctx
             .switchToHttp()
-            .getRequest<{ user?: { id: string } }>();
-          req.user = { id: adminUserId };
+            .getRequest<{ user?: { id: string }, headers: Record<string, string | string[]> }>();
+          const impersonate = req.headers['x-impersonate-user-id'];
+          req.user = { id: (impersonate as string) || adminUserId };
           return true;
         },
       })
@@ -112,15 +112,16 @@ describe('MembersController (e2e)', () => {
 
   afterAll(async () => {
     // Cleanup
+    await prisma.organizationInvite.deleteMany({ where: { organizationId: orgId } });
     await prisma.organizationMember.deleteMany({ where: { organizationId: orgId } });
     await prisma.user.deleteMany({ where: { id: { in: [adminUserId, targetUserId] } } });
     await prisma.organization.deleteMany({ where: { id: orgId } });
     await app.close();
   });
 
-  it('/members/invite (POST) invites a user', async () => {
+  it('/members/invites (POST) creates an invite', async () => {
     const response = await request(httpServer)
-      .post('/members/invite')
+      .post('/members/invites')
       .set('x-organization-id', orgId)
       .send({
         email: targetUserEmail,
@@ -128,15 +129,14 @@ describe('MembersController (e2e)', () => {
       })
       .expect(201);
 
-    expect(response.body.userId).toBe(targetUserId);
-    expect(response.body.role).toBe('STAFF');
-    expect(response.body.organizationId).toBe(orgId);
-    createdMemberId = response.body.id;
+    expect(response.body.email).toBe(targetUserEmail);
+    expect(response.body.token).toBeDefined();
+    inviteToken = response.body.token;
   });
 
-  it('/members/invite (POST) fails if user already member', async () => {
+  it('/members/invites (POST) fails if active invite exists', async () => {
     await request(httpServer)
-      .post('/members/invite')
+      .post('/members/invites')
       .set('x-organization-id', orgId)
       .send({
         email: targetUserEmail,
@@ -145,15 +145,38 @@ describe('MembersController (e2e)', () => {
       .expect(409);
   });
 
-  it('/members/invite (POST) fails if user not found', async () => {
-    await request(httpServer)
-      .post('/members/invite')
-      .set('x-organization-id', orgId)
+  it('/members/invites/accept (POST) accepts invite WITHOUT x-organization-id', async () => {
+    const invite = await prisma.organizationInvite.create({
+      data: {
+        organizationId: orgId,
+        email: targetUserEmail,
+        role: OrganizationRole.STAFF,
+        token: 'test-token-target',
+        expiresAt: new Date(Date.now() + 10000),
+        invitedByUserId: adminUserId
+      }
+    });
+
+    const response = await request(httpServer)
+      .post('/members/invites/accept')
+      .set('x-impersonate-user-id', targetUserId)
+      // NO x-organization-id header
       .send({
-        email: nonExistentEmail,
-        role: 'STAFF',
+        token: invite.token,
       })
-      .expect(404);
+      .expect(201);
+
+    expect(response.body.id).toBeDefined();
+    createdMemberId = response.body.id;
+  });
+
+  it('/members/invites/accept (POST) fails with invalid token', async () => {
+    await request(httpServer)
+      .post('/members/invites/accept')
+      .send({
+        token: 'invalid-token',
+      })
+      .expect(400);
   });
 
   it('/members/:id (DELETE) removes a member', async () => {

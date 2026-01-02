@@ -19,6 +19,7 @@ Auth and RBAC
 - Protected routes:
   - Admin: /en/admin, /ar/admin (RequireAdmin)
   - Scanner: /en/scan, /ar/scan (RequireStaff)
+- Invite acceptance: `/en/accept-invite` and `/ar/accept-invite` use a token in the query string; backend `POST /members/invites/accept` requires JWT only (no x-organization-id).
 - Unauthorized users are redirected to login with message and a "from" location for post-login redirect.
 
 Auth implementation
@@ -40,6 +41,7 @@ Service layer (mocked + real APIs)
 - Service layer wraps mock data in Promise-based functions with simulated latency.
 - When API config is present, services call the backend and fall back to mock data on failure.
 - API config (frontend): `VITE_API_BASE_URL`, `VITE_API_TOKEN`, `VITE_ORGANIZATION_ID` (or localStorage overrides).
+- Org-independent calls use `getApiAuthConfig` + `apiFetchPublic` (base URL + token only); invite acceptance relies on this path.
 - Files:
   - src/services/eventsService.ts
   - src/services/ordersService.ts
@@ -90,6 +92,7 @@ Common access for admin panel (mock)
 
 Notes
 - The project uses backend APIs when API config is provided; otherwise it falls back to mock data.
+- Invite acceptance requires live API config (base URL + token) and is blocked in Mock Mode with a UI warning.
 - Scanner uses camera access; mobile browsers require HTTPS or localhost for camera permissions.
 - Scanner includes manual entry, session export, and camera control buttons.
 - Localization: backend returns translations for requested locale; fallback behavior is limited.
@@ -107,6 +110,7 @@ Backend architecture and rules
   - Events/Venues/Gates/TicketTypes CRUD (Events use translations; slug endpoint: `GET /events/slug/:slug?lang=en|ar`)
   - Categories/Cities read-only (global + org-specific, localized via `?lang=en|ar`)
   - Orders create + read; Tickets read-only
+  - Members: invite-by-email via `/members/invites`, accept via `/members/invites/accept` (JWT only)
   - Scan logs: `GET /scan/logs` (admin/staff), `POST /scan`
   - Exports: `GET /exports/orders.csv`, `GET /exports/tickets.csv`
 - **Services MUST use explicit Prisma `select`** to avoid over-fetching and leaking PII. Do not rely on default model return.
