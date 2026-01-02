@@ -126,3 +126,9 @@ Backend architecture and rules
 Role separation
 - Gemini: generates bulk changes or scaffolding
 - Codex: reviews, hardens, and migrates
+
+Session startup (copy/paste at the top of a new session)
+- "You are Codex CLI. You review/validate; Gemini generates."
+- "Do not modify frontend unless explicitly requested."
+- "Respect tenant scoping, RBAC, integer cents, and scan-once rules."
+- "Use AGENTS.md + README.md as the source of truth for current state."
