@@ -15,10 +15,12 @@ Auth and RBAC
   - admin: email starts with "admin"
   - staff: email starts with "staff"
   - user: any other email
+- Auth persistence uses localStorage only when "Remember me" is enabled.
 - Backend auth is real (JWT) and scoped by organization membership.
 - Protected routes:
   - Admin: /en/admin, /ar/admin (RequireAdmin)
   - Scanner: /en/scan, /ar/scan (RequireStaff)
+  - Account: /en/account, /ar/account (RequireAuth)
 - Invite acceptance: `/en/accept-invite` and `/ar/accept-invite` use a token in the query string; backend `POST /members/invites/accept` requires JWT only (no x-organization-id).
 - Unauthorized users are redirected to login with message and a "from" location for post-login redirect.
 
@@ -34,8 +36,8 @@ Auth implementation
 Seeded demo data
 - Backend seed: `backend/prisma/seed.ts` embeds a demo list (UTF-8 Arabic + English).
 - Mock events: `src/data/mockEvents.ts` is generated from `public/English.json` + `public/Arabic.json`.
-  - Do not hand-edit mockEvents; update the JSON sources and re-generate using a script (if available) or by updating the mapping in `eventsService.ts`.
-  - Prefer the `getLocalizedText` helper for all UI displays.
+  - Do not hand-edit mockEvents; update the JSON sources and re-generate using the repo's generator workflow.
+  - Prefer the `getLocalizedText` helper for localized UI displays (`src/i18n/localize.ts`).
 - Orders/tickets seeded with a stable admin user ID (matches deterministic hash for admin@palticket.com).
 
 Service layer (mocked + real APIs)

@@ -66,6 +66,8 @@
 ### UI Patterns
 *   **React Query**: Always invalidate appropriate keys (`["adminEvents"]`, `["admin", "members"]`) on success.
 *   **Localization**: Use `\u` escapes or valid UTF-8 for Arabic content; avoid mojibake separators.
+*   **Localized Display**: Prefer `getLocalizedText` from `src/i18n/localize.ts` instead of direct `name[language]` access.
+*   **Auth Persistence**: Mock auth persists only when "Remember me" is checked; localStorage is optional and guarded.
 
 ## Common Pitfalls
 1.  **UUID vs Slug**: Always use UUIDs for relationships/updates and slugs for filtering/URLs.

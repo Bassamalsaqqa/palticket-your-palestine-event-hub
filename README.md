@@ -39,10 +39,10 @@ To connect the UI to the backend APIs, set the following environment variables b
 - `VITE_ORGANIZATION_ID` (tenant org UUID; required for org-scoped endpoints)
 
 Invite acceptance uses `/accept-invite?token=...` and only requires `VITE_API_BASE_URL` + `VITE_API_TOKEN` (no organization ID).
-Mock content in `src/data/mockEvents.ts` is generated from `public/English.json` and `public/Arabic.json` for local-only development. 
-Note: If you update the JSON source files, you must manually regenerate `mockEvents.ts` or ensure the mapping logic in `eventsService.ts` is updated. 
-Avoid hand-editing `src/data/mockEvents.ts` directly to prevent inconsistency. 
-The getLocalizedText helper in `src/i19n/localize.ts` is the preferred path for localized UI display.
+Mock content in `src/data/mockEvents.ts` is generated from `public/English.json` and `public/Arabic.json` for local-only development.
+If you update the JSON source files, re-generate `src/data/mockEvents.ts` using the repo's generator workflow.
+Avoid hand-editing `src/data/mockEvents.ts` directly to prevent inconsistency.
+The `getLocalizedText` helper in `src/i18n/localize.ts` is the preferred path for localized UI display.
 
 ### Backend Installation
 The backend is located in `/backend`.
@@ -101,7 +101,7 @@ The project adheres to strict **ESLint** rules. The root lint configuration cove
 
 ## Known Issues & Troubleshooting
 
-*   **Data Persistence**: Frontend data vanishes on reload (unless connected to Backend).
+*   **Data Persistence**: Mock orders/tickets reset on reload. Auth persists only when "Remember me" is checked.
 *   **Backend Connection**: The frontend supports connecting to backend APIs when environment variables are provided. Otherwise, it falls back to mock data.
 
 ## Admin & Staff Testing Guide
@@ -167,7 +167,6 @@ PalTicket has evolved into a multi-tenant, localized ticketing platform with ord
 
 ### Next Steps
 - Provide frontend API config (base URL, token, org ID) for live data.
-- Implement translation fallback at the service/UI level.
 - Payments/commissions/payouts/notifications are deferred.
 
 ## API Configuration Precedence

@@ -51,10 +51,10 @@ const AppInternal = () => {
   return (
     <TooltipProvider>
       <Helmet>
-        <title>{t.appTitle}</title>
+        <title>{t.appTitleBilingual}</title>
         <meta name="theme-color" content="hsl(40, 33%, 98%)" />
         <meta name="description" content={t.appDescription} />
-        <meta property="og:title" content={t.appTitle} />
+        <meta property="og:title" content={t.appTitleBilingual} />
         <meta property="og:description" content={t.appDescription} />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />

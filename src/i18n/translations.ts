@@ -3,6 +3,7 @@ export const translations = {
     // Brand
     appName: "PalTicket",
     appTitle: "PalTicket | Your Gateway to Unforgettable Events in Palestine",
+    appTitleBilingual: "PalTicket - تذاكر فلسطين | Your Gateway to Unforgettable Events in Palestine",
     appDescription: "Discover and book tickets to the most exciting events across Palestine. Concerts, festivals, sports, cultural events and more.",
     tagline: "Your Gateway to Unforgettable Events",
 
@@ -728,6 +729,7 @@ export const translations = {
     // Brand
     appName: "تذاكر فلسطين",
     appTitle: "تذاكر فلسطين | بوابتك للفعاليات المميزة في فلسطين",
+    appTitleBilingual: "تذاكر فلسطين - PalTicket | بوابتك للفعاليات المميزة في فلسطين",
     appDescription: "اكتشف واحجز تذاكر لأبرز الفعاليات في فلسطين. حفلات، مهرجانات، رياضة، فعاليات ثقافية والمزيد.",
     tagline: "بوابتك إلى فعاليات لا تُنسى",
 

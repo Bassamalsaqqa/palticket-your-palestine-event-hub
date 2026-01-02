@@ -71,3 +71,4 @@ When a translation is missing for the requested locale:
 - [x] Frontend API config (base URL, token, org ID) provided via Admin Settings.
 - [x] Admin Member Management (Invite/Remove) implemented.
 - [x] Force Mock Mode implemented for UI testing.
+- [x] UI-level localization fallback implemented via `src/i18n/localize.ts`.
