@@ -9,6 +9,9 @@ const envSchema = z.object({
     .enum(['development', 'test', 'production'])
     .default('development'),
   CORS_ORIGINS: z.string().default('http://localhost:8080'),
+  STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
+  STORAGE_LOCAL_ROOT: z.string().default('uploads'),
+  STORAGE_PUBLIC_URL: z.string().default('http://localhost:3001/uploads'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

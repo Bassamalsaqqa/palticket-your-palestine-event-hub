@@ -43,7 +43,19 @@ Each domain module enforces multi-tenancy and RBAC:
 *   **Exports:**
     *   **Endpoints:** `GET /exports/orders.csv`, `GET /exports/tickets.csv`
     *   **Filters:** Optional `eventId` query parameter to export a single event.
-    *   **Access:** ADMIN only
+- **Access**: ADMIN only
+
+## Admin/Staff Testing (E2E)
+
+1. **Get Authenticated**:
+   - `POST /auth/login` with `{"email":"admin@palticket.com", "password":"password"}`.
+   - Use the `access_token` in the `Authorization: Bearer <token>` header.
+2. **Organization ID**:
+   - Include `x-organization-id` in all tenant routes. The default seeded ID can be found via `GET /organizations` after login.
+3. **Full Cycle**:
+   - `POST /events` -> `POST /ticket-types` -> `POST /gates`.
+   - `POST /orders` (simulates purchase) -> returns `tickets[]`.
+   - `POST /scan` with `ticketCode` from the order and `gateId` from your created gate.
 
 ## Environment Variables
 
@@ -55,6 +67,20 @@ Copy `.env.example` to `.env` and update as needed.
 - PORT
 - NODE_ENV
 - CORS_ORIGINS
+
+## Storage Configuration
+
+The backend supports local and S3 storage (stubbed).
+
+- `STORAGE_DRIVER`: `local` or `s3` (default: `local`)
+- `STORAGE_LOCAL_ROOT`: Directory name for local storage (default: `uploads`)
+- `STORAGE_PUBLIC_URL`: Public base URL for assets (default: `http://localhost:3001/uploads`)
+
+## Image Upload Limits
+
+Event images are limited to:
+- **Size**: Maximum 5MB
+- **Types**: `png`, `jpg`, `jpeg`, `webp` (MIME type validated)
 
 ## Prisma Commands
 

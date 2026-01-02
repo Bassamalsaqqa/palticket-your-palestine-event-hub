@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLanguage } from "@/i18n";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,10 +35,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye, Loader2, Globe, EyeOff } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye, Loader2, Globe, EyeOff, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchAllEvents, deleteEvent, createEvent, updateEvent, fetchCategories, fetchCities } from "@/services/eventsService";
+import { fetchAllEvents, deleteEvent, createEvent, updateEvent, updateEventImage, fetchCategories, fetchCities } from "@/services/eventsService";
 import { fetchAllVenues } from "@/services/venuesService";
 import { useForm, Controller } from "react-hook-form";
 import { Event } from "@/types/domain";
@@ -48,6 +48,7 @@ type EventStatus = "DRAFT" | "PUBLISHED" | "CANCELLED";
 interface EventFormValues {
   slug: string;
   startTime: string;
+  endTime?: string;
   venueId?: string;
   categoryId?: string;
   cityId?: string;
@@ -65,6 +66,8 @@ export default function AdminEvents() {
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const queryClient = useQueryClient();
   
@@ -131,10 +134,24 @@ export default function AdminEvents() {
     },
   });
 
+  const uploadMutation = useMutation({
+    mutationFn: ({ id, file }: { id: string, file: File }) => updateEventImage(id, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminEvents", language] });
+      toast.success("Image uploaded successfully");
+      setUploadingId(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to upload image");
+      setUploadingId(null);
+    }
+  });
+
   const handleCreateSubmit = (data: EventFormValues) => {
     createMutation.mutate({
       slug: data.slug,
       startTime: new Date(data.startTime).toISOString(),
+      endTime: data.endTime ? new Date(data.endTime).toISOString() : undefined,
       venueId: data.venueId || undefined,
       categoryId: data.categoryId || undefined,
       cityId: data.cityId || undefined,
@@ -152,6 +169,7 @@ export default function AdminEvents() {
       data: {
         slug: data.slug,
         startTime: new Date(data.startTime).toISOString(),
+        endTime: data.endTime ? new Date(data.endTime).toISOString() : undefined,
         venueId: data.venueId || undefined,
         categoryId: data.categoryId || undefined,
         cityId: data.cityId || undefined,
@@ -164,12 +182,20 @@ export default function AdminEvents() {
     });
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && uploadingId) {
+      uploadMutation.mutate({ id: uploadingId, file });
+    }
+  };
+
+  const triggerUpload = (id: string) => {
+    setUploadingId(id);
+    fileInputRef.current?.click();
+  };
+
   const toggleStatus = (event: Event) => {
-    const newStatus: EventStatus = event.status === "past" ? "PUBLISHED" : (event.status === "upcoming" || event.status === "ongoing" ? "DRAFT" : "PUBLISHED");
-    // status mapping is a bit loose here since UI uses upcoming/ongoing/past while backend uses DRAFT/PUBLISHED
-    // Let's just do a simple toggle for demo purposes
-    const targetStatus: EventStatus = event.status === "upcoming" ? "DRAFT" : "PUBLISHED";
-    
+    const targetStatus: EventStatus = event.status === "past" ? "PUBLISHED" : ((event.status as string) === "PUBLISHED" ? "DRAFT" : "PUBLISHED");
     updateMutation.mutate({
       id: event.id,
       data: { status: targetStatus }
@@ -181,10 +207,11 @@ export default function AdminEvents() {
     editForm.reset({
       slug: event.slug,
       startTime: event.date + "T" + event.time,
+      endTime: event.endDate ? event.endDate + "T" + event.time : "", // Assuming same time if not specified
       venueId: event.venueId,
-      categoryId: event.categoryId || categories.find(c => c.id === event.category)?.id,
-      cityId: event.cityId || cities.find(c => c.name.en === event.venue.city.en)?.id,
-      status: event.status === "upcoming" ? "PUBLISHED" : "DRAFT", 
+      categoryId: event.categoryId || categories.find(c => c.slug === event.category)?.id,
+      cityId: event.cityId || cities.find(c => c.slug === event.cityId)?.id || cities.find(c => c.name.en === event.venue.city.en)?.id,
+      status: (event.status as string) === "PUBLISHED" ? "PUBLISHED" : "DRAFT", 
       nameEn: event.title.en,
       nameAr: event.title.ar,
       descEn: event.description.en,
@@ -211,6 +238,8 @@ export default function AdminEvents() {
 
   return (
     <div className="space-y-6">
+      <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+      
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">{t.admin.events}</h2>
@@ -225,77 +254,38 @@ export default function AdminEvents() {
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{t.admin.createEvent}</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>{t.admin.createEvent}</DialogTitle></DialogHeader>
             <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="slug">Event Slug</Label>
-                  <Input id="slug" {...createForm.register("slug", { required: true })} placeholder="my-awesome-event" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="startTime">Start Time</Label>
-                  <Input id="startTime" type="datetime-local" {...createForm.register("startTime", { required: true })} />
+                <div className="space-y-2"><Label htmlFor="slug">Event Slug</Label><Input id="slug" {...createForm.register("slug", { required: true })} /></div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="startTime">Start</Label>
+                    <Input id="startTime" type="datetime-local" {...createForm.register("startTime", { required: true })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="endTime">End (Optional)</Label>
+                    <Input id="endTime" type="datetime-local" {...createForm.register("endTime")} />
+                  </div>
                 </div>
               </div>
-
               <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Venue</Label>
-                  <Controller
-                    name="venueId"
-                    control={createForm.control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger><SelectValue placeholder="Select venue" /></SelectTrigger>
-                        <SelectContent>{venues.map((v) => (<SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>))}</SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Controller
-                    name="categoryId"
-                    control={createForm.control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                        <SelectContent>{categories.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name[language] || c.name.en}</SelectItem>))}</SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>City</Label>
-                  <Controller
-                    name="cityId"
-                    control={createForm.control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger>
-                        <SelectContent>{cities.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name[language] || c.name.en}</SelectItem>))}</SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
+                <div className="space-y-2"><Label>Venue</Label><Controller name="venueId" control={createForm.control} render={({ field }) => (<Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select venue" /></SelectTrigger><SelectContent>{venues.map((v) => (<SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>))}</SelectContent></Select>)} /></div>
+                <div className="space-y-2"><Label>Category</Label><Controller name="categoryId" control={createForm.control} render={({ field }) => (<Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent>{categories.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name[language] || c.name.en}</SelectItem>))}</SelectContent></Select>)} /></div>
+                <div className="space-y-2"><Label>City</Label><Controller name="cityId" control={createForm.control} render={({ field }) => (<Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger><SelectContent>{cities.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name[language] || c.name.en}</SelectItem>))}</SelectContent></Select>)} /></div>
               </div>
-
               <div className="space-y-4 border-t pt-4">
                 <h3 className="font-semibold">English Details</h3>
                 <div className="space-y-2"><Label>Name</Label><Input {...createForm.register("nameEn", { required: true })} /></div>
                 <div className="space-y-2"><Label>Summary</Label><Input {...createForm.register("summaryEn")} /></div>
                 <div className="space-y-2"><Label>Description</Label><Textarea {...createForm.register("descEn")} /></div>
               </div>
-
               <div className="space-y-4 border-t pt-4">
                 <h3 className="font-semibold">Arabic Details</h3>
                 <div className="space-y-2"><Label>Name (Arabic)</Label><Input {...createForm.register("nameAr", { required: true })} dir="rtl" /></div>
                 <div className="space-y-2"><Label>Summary (Arabic)</Label><Input {...createForm.register("summaryAr")} dir="rtl" /></div>
                 <div className="space-y-2"><Label>Description (Arabic)</Label><Textarea {...createForm.register("descAr")} dir="rtl" /></div>
               </div>
-
               <DialogFooter><Button type="submit" disabled={createMutation.isPending}>{createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t.common.save}</Button></DialogFooter>
             </form>
           </DialogContent>
@@ -349,6 +339,7 @@ export default function AdminEvents() {
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => toast.info("View details - not implemented")}><Eye className="h-4 w-4 ltr:mr-2 rtl:ml-2" />{t.common.view}</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => triggerUpload(event.id)}><ImageIcon className="h-4 w-4 ltr:mr-2 rtl:ml-2" />Upload Image</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => startEditing(event)}><Edit className="h-4 w-4 ltr:mr-2 rtl:ml-2" />{t.common.edit}</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { if (window.confirm(t.admin.confirmDelete || "Are you sure?")) { deleteMutation.mutate(event.id); } }} className="text-destructive"><Trash2 className="h-4 w-4 ltr:mr-2 rtl:ml-2" />{t.common.delete}</DropdownMenuItem>
                             </DropdownMenuContent>
@@ -368,91 +359,53 @@ export default function AdminEvents() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{t.common.edit}</DialogTitle></DialogHeader>
           <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Event Image</Label>
+              <div className="flex items-center gap-4">
+                {editingEvent?.images[0] && (
+                  <img src={editingEvent.images[0]} alt="" className="w-24 h-24 object-cover rounded-lg border" />
+                )}
+                <Button type="button" variant="outline" size="sm" onClick={() => triggerUpload(editingEvent!.id)}>
+                  <ImageIcon className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                  Replace Image
+                </Button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label htmlFor="edit-slug">Event Slug</Label><Input id="edit-slug" {...editForm.register("slug", { required: true })} /></div>
-              <div className="space-y-2"><Label htmlFor="edit-startTime">Start Time</Label><Input id="edit-startTime" type="datetime-local" {...editForm.register("startTime", { required: true })} /></div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-startTime">Start</Label>
+                  <Input id="edit-startTime" type="datetime-local" {...editForm.register("startTime", { required: true })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-endTime">End</Label>
+                  <Input id="edit-endTime" type="datetime-local" {...editForm.register("endTime")} />
+                </div>
+              </div>
             </div>
-            
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Controller
-                  name="status"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DRAFT">DRAFT</SelectItem>
-                        <SelectItem value="PUBLISHED">PUBLISHED</SelectItem>
-                        <SelectItem value="CANCELLED">CANCELLED</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
+              <div className="space-y-2"><Label>Status</Label><Controller name="status" control={editForm.control} render={({ field }) => (<Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger><SelectContent><SelectItem value="DRAFT">DRAFT</SelectItem><SelectItem value="PUBLISHED">PUBLISHED</SelectItem><SelectItem value="CANCELLED">CANCELLED</SelectItem></SelectContent></Select>)} /></div>
             </div>
-
             <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Venue</Label>
-                <Controller
-                  name="venueId"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger><SelectValue placeholder="Select venue" /></SelectTrigger>
-                      <SelectContent>{venues.map((v) => (<SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>))}</SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Controller
-                  name="categoryId"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                      <SelectContent>{categories.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name[language] || c.name.en}</SelectItem>))}</SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>City</Label>
-                <Controller
-                  name="cityId"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger>
-                      <SelectContent>{cities.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name[language] || c.name.en}</SelectItem>))}</SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
+              <div className="space-y-2"><Label>Venue</Label><Controller name="venueId" control={editForm.control} render={({ field }) => (<Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select venue" /></SelectTrigger><SelectContent>{venues.map((v) => (<SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>))}</SelectContent></Select>)} /></div>
+              <div className="space-y-2"><Label>Category</Label><Controller name="categoryId" control={editForm.control} render={({ field }) => (<Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent>{categories.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name[language] || c.name.en}</SelectItem>))}</SelectContent></Select>)} /></div>
+              <div className="space-y-2"><Label>City</Label><Controller name="cityId" control={editForm.control} render={({ field }) => (<Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger><SelectContent>{cities.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name[language] || c.name.en}</SelectItem>))}</SelectContent></Select>)} /></div>
             </div>
-
             <div className="space-y-4 border-t pt-4">
               <h3 className="font-semibold">English Details</h3>
               <div className="space-y-2"><Label>Name</Label><Input {...editForm.register("nameEn", { required: true })} /></div>
               <div className="space-y-2"><Label>Summary</Label><Input {...editForm.register("summaryEn")} /></div>
               <div className="space-y-2"><Label>Description</Label><Textarea {...editForm.register("descEn")} /></div>
             </div>
-
             <div className="space-y-4 border-t pt-4">
               <h3 className="font-semibold">Arabic Details</h3>
               <div className="space-y-2"><Label>Name (Arabic)</Label><Input {...editForm.register("nameAr", { required: true })} dir="rtl" /></div>
               <div className="space-y-2"><Label>Summary (Arabic)</Label><Input {...editForm.register("summaryAr")} dir="rtl" /></div>
               <div className="space-y-2"><Label>Description (Arabic)</Label><Textarea {...editForm.register("descAr")} dir="rtl" /></div>
             </div>
-
-            <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setEditingEvent(null)}>{t.common.cancel}</Button>
-              <Button type="submit" disabled={updateMutation.isPending}>{updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t.common.save}</Button>
-            </DialogFooter>
+            <DialogFooter><Button type="button" variant="ghost" onClick={() => setEditingEvent(null)}>{t.common.cancel}</Button><Button type="submit" disabled={updateMutation.isPending}>{updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t.common.save}</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

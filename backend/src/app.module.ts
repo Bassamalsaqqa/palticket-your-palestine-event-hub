@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validate } from './config/env';
 import { PrismaModule } from './prisma/prisma.module';
+import { CommonModule } from './common/common.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -28,6 +29,7 @@ import { ExportsModule } from './exports/exports.module';
       validate,
     }),
     PrismaModule,
+    CommonModule,
     HealthModule,
     AuthModule,
     UsersModule,

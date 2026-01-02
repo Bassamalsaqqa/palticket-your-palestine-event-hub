@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UpdateMemberRoleDto } from './dto/member.dto';
 
 @Injectable()
 export class MembersService {
@@ -29,6 +30,28 @@ export class MembersService {
   async findOne(organizationId: string, id: string) {
     return this.prisma.organizationMember.findFirst({
       where: { id, organizationId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            phone: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+  }
+
+  async update(organizationId: string, id: string, data: UpdateMemberRoleDto) {
+    await this.prisma.organizationMember.findFirstOrThrow({
+      where: { id, organizationId },
+    });
+
+    return this.prisma.organizationMember.update({
+      where: { id },
+      data,
       include: {
         user: {
           select: {

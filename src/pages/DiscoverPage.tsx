@@ -174,7 +174,7 @@ export default function DiscoverPage() {
           <SelectContent>
             <SelectItem value="all">{t.discover.allCategories}</SelectItem>
             {categories.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id}>
+              <SelectItem key={cat.id} value={cat.slug}>
                 {cat.name[language]}
               </SelectItem>
             ))}
@@ -195,7 +195,7 @@ export default function DiscoverPage() {
           <SelectContent>
             <SelectItem value="all">{t.discover.allCities}</SelectItem>
             {cities.map((c) => (
-              <SelectItem key={c.id} value={c.name.en}>
+              <SelectItem key={c.id} value={c.slug}>
                 {c.name[language]}
               </SelectItem>
             ))}
@@ -260,10 +260,10 @@ export default function DiscoverPage() {
         <title>{t.discover.title} | {t.appName}</title>
         <meta 
           name="description" 
-          content={language === "ar" 
-            ? "اكتشف واحجز تذاكر لأروع الفعاليات في فلسطين. استعرض الحفلات والمهرجانات والفعاليات الرياضية والثقافية."
+          content={language === "ar"
+            ? "\u0627\u0643\u062a\u0634\u0641 \u0648\u0627\u062d\u062c\u0632 \u062a\u0630\u0627\u0643\u0631 \u0644\u0623\u0628\u0631\u0632 \u0627\u0644\u0641\u0639\u0627\u0644\u064a\u0627\u062a \u0641\u064a \u0641\u0644\u0633\u0637\u064a\u0646. \u062a\u0635\u0641\u062d \u0627\u0644\u062d\u0641\u0644\u0627\u062a \u0648\u0627\u0644\u0645\u0647\u0631\u062c\u0627\u0646\u0627\u062a \u0648\u0627\u0644\u0631\u064a\u0627\u0636\u0629 \u0648\u0627\u0644\u0641\u0639\u0627\u0644\u064a\u0627\u062a \u0627\u0644\u062b\u0642\u0627\u0641\u064a\u0629."
             : "Discover and book tickets to the most exciting events in Palestine. Browse concerts, festivals, sports, and cultural events."
-          } 
+          }
         />
         <link rel="canonical" href={`https://palticket.com/${language}/discover`} />
         <link rel="alternate" hrefLang="en" href="https://palticket.com/en/discover" />
@@ -369,7 +369,7 @@ export default function DiscoverPage() {
                     className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
                   >
                     {paginatedEvents.map((event, index) => {
-                      const categoryData = categories.find(c => c.id === event.category);
+                      const categoryData = categories.find(c => c.slug === event.category);
                       const IconComponent = categoryData ? iconMap[categoryData.icon] : Music;
                       
                       return (

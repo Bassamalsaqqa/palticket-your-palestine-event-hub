@@ -38,8 +38,6 @@ To connect the UI to the backend APIs, set the following environment variables b
 - `VITE_API_TOKEN` (JWT access token)
 - `VITE_ORGANIZATION_ID` (tenant org UUID)
 
-If these are not provided, the frontend continues to use mock data.
-
 ### Backend Installation
 The backend is located in `/backend`.
 
@@ -47,6 +45,10 @@ The backend is located in `/backend`.
 cd backend
 npm install
 # Set up .env (see .env.example)
+# Add storage configuration:
+# STORAGE_DRIVER=local
+# STORAGE_LOCAL_ROOT=uploads
+# STORAGE_PUBLIC_URL=http://localhost:3001/uploads
 # Ensure Docker is running
 npm run prisma:generate
 npm run prisma:migrate
@@ -72,14 +74,15 @@ The backend implements **JWT Authentication** and **RBAC**.
 
 ## Development Architecture
 
-*   **Frontend:** React + Vite + Shadcn/UI. Uses a **Service Layer** to mock data.
-*   **Backend:** NestJS + Prisma + PostgreSQL.
-    *   **Multi-tenant:** Organization-based data isolation.
-    *   **Domain Modules:** Events/Venues/Gates/TicketTypes (CRUD); Orders (Create + Read); Tickets (Read-only).
-    *   **Scanning:** `POST /scan` with atomic scan-once enforcement and ScanLog auditing.
-*   **Admin UI:** Admin forms now create Events (with translations), Ticket Types, and Gates via backend APIs.
+*   **Frontend**: React + Vite + Shadcn/UI. Uses a **Service Layer** to mock data.
+*   **Backend**: NestJS + Prisma + PostgreSQL.
+    *   **Multi-tenant**: Organization-based data isolation.
+    *   **Domain Modules**: Events/Venues/Gates/TicketTypes (CRUD); Orders (Create + Read); Tickets (Read-only).
+    *   **Scanning**: `POST /scan` with atomic scan-once enforcement and ScanLog auditing.
+*   **Admin UI**: Admin forms manage Events (with translations and image uploads), Ticket Types, Gates, and Users/Roles via backend APIs.
+*   **Scanner**: Integrated camera scanning with `@zxing/library`, session CSV exports, manual entry, and event-aware validation.
 
-**Important:** Do not import `mockEvents` directly into UI components. Use the services.
+**Important**: Do not import `mockEvents` directly into UI components. Use the services.
 
 ## Technologies
 
@@ -92,10 +95,33 @@ The project adheres to strict **ESLint** rules. The root lint configuration cove
 
 ## Known Issues & Troubleshooting
 
-*   **Data Persistence:** Frontend data vanishes on reload (until connected to Backend).
-*   **Backend Connection:** The frontend supports connecting to the backend API for Events, Orders, and Tickets when environment variables are provided. Otherwise, it falls back to mock data.
-*   **Scanner Camera (Mobile):** Camera access requires a secure context. Use `localhost` on desktop or HTTPS for mobile testing.
-*   **Exports:** Admin exports support optional `eventId` filtering when a specific event is selected.
+*   **Data Persistence**: Frontend data vanishes on reload (unless connected to Backend).
+*   **Backend Connection**: The frontend supports connecting to the backend API for Events, Orders, and Tickets when environment variables are provided. Otherwise, it falls back to mock data.
+
+## Admin & Staff Testing Guide
+
+### 1. Initial Setup
+- Start backend: `npm run dev:all:seed` (prepares and seeds database).
+- Login at `http://localhost:8080/en/login` with:
+  - **Email**: `admin@palticket.com`
+  - **Password**: `password`
+- Get your **Organization ID** from the backend logs or database (seeded slug is `palticket-demo`).
+
+### 2. Admin Flow
+- **Create Event**: Go to `/admin/events`, click "Create Event". Fill in the slug, time, and localized details.
+- **Add Pricing**: Go to `/admin/ticket-types`, create a new tier (e.g., "VIP") for your event.
+- **Add Gates**: Go to `/admin/gates`, create a gate (e.g., "Main Entrance") for your event.
+
+### 3. Customer Flow
+- Find your event on the Home or Discover page.
+- Select tickets and "Purchase" (this generates real tickets in the backend).
+- View your tickets in the **Account** section.
+
+### 4. Scanner Flow
+- Use a mobile device on the same network or `localhost`.
+- Access `/scan`. The camera requires **HTTPS** (or `localhost`) to function.
+- Select your event and gate.
+- Scan the QR code from the customer's account.
 
 ## Roadmap
 - [x] Step A: Foundation (env validation, CORS, Prisma, Health)
@@ -129,8 +155,8 @@ PalTicket has evolved into a multi-tenant, localized ticketing platform with ord
 - **Admin Dashboard:** Uses `/admin/stats` and API-backed orders/events.
 
 ### Known Gaps
-- **Payments/Notifications:** Payment provider, commissions, payouts, and delivery channels are not implemented.
-- **Admin panels:** Users/Roles/Staff/Exports/AuditLogs are read-only; edits/invites not implemented.
+- **Payments/Notifications**: Payment provider, commissions, payouts, and delivery channels are not implemented.
+- **Admin flows**: Event image management and core entity editing (Tiers, Gates, Profiles) are functional. Invites and deletion for organization members are not yet implemented. Audit logs and exports are functional.
 
 ### Next Steps
 - Update scan tests to assert `result: ScanResult`.

@@ -13,11 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  QrCode, 
-  LogIn, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  QrCode,
+  LogIn,
+  CheckCircle2,
+  XCircle,
   AlertTriangle,
   History,
   ArrowLeft,
@@ -27,7 +27,10 @@ import {
   RefreshCw,
   Search,
   Home,
-  LayoutDashboard
+  LayoutDashboard,
+  CameraOff,
+  SwitchCamera,
+  Download
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,6 +43,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 
 type ScanStep = "login" | "select-event" | "select-gate" | "scanning" | "result";
 type ScanResult = "allowed" | "denied-used" | "denied-wrong-event" | "denied-invalid" | null;
+type CameraStatus = "initializing" | "active" | "off" | "permission-denied";
 
 interface ScanRecord {
   id: string;
@@ -52,7 +56,7 @@ interface ScanRecord {
 
 export default function ScannerPage() {
   const { language, t } = useLanguage();
-  const { isAuthenticated, user, isAdmin, isStaff, login: authLogin } = useAuth();
+  const { isAuthenticated, isAdmin, isStaff, login: authLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -77,10 +81,13 @@ export default function ScannerPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [manualCode, setManualCode] = useState("");
-  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [cameraStatus, setCameraStatus] = useState<CameraStatus>("off");
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const [activeDeviceId, setActiveDeviceId] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // Auto-skip login if already authenticated as staff/admin
   useEffect(() => {
@@ -90,7 +97,6 @@ export default function ScannerPage() {
           setStep("select-event");
         }
       } else {
-        // If logged in but not staff/admin, redirect to login with message
         toast.error(t.auth.unauthorized || "Unauthorized access");
         navigate(`/${language}/login`, { state: { from: location } });
       }
@@ -102,7 +108,6 @@ export default function ScannerPage() {
     const result = await authLogin(email, password);
     if (result.success) {
       toast.success(t.scanner.loginSuccess || "Login successful");
-      // useEffect above will handle step transition
     } else {
       toast.error(result.error || "Login failed");
     }
@@ -122,16 +127,11 @@ export default function ScannerPage() {
 
   const getResultReason = useCallback((result: ScanResult): string => {
     switch (result) {
-      case "allowed":
-        return t.scanner.allowed;
-      case "denied-used":
-        return t.scanner.alreadyUsed;
-      case "denied-wrong-event":
-        return t.scanner.wrongEvent;
-      case "denied-invalid":
-        return t.scanner.invalid;
-      default:
-        return "";
+      case "allowed": return t.scanner.allowed;
+      case "denied-used": return t.scanner.alreadyUsed;
+      case "denied-wrong-event": return t.scanner.wrongEvent;
+      case "denied-invalid": return t.scanner.invalid;
+      default: return "";
     }
   }, [t.scanner]);
 
@@ -176,58 +176,114 @@ export default function ScannerPage() {
     }
   }, [manualCode, handleScan]);
 
-  useEffect(() => {
-    let reader: BrowserMultiFormatReader | null = null;
-    let stream: MediaStream | null = null;
-    const currentVideo = videoRef.current;
+  const stopCamera = useCallback(() => {
+    if (codeReaderRef.current) {
+      codeReaderRef.current.reset();
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraStatus("off");
+  }, []);
 
-    const startCamera = async () => {
-      setCameraError(null);
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } }
-        });
-        
-        if (currentVideo) {
-          currentVideo.srcObject = stream;
-          // Play is needed for some browsers to actually start the stream
-          await currentVideo.play();
-        }
+  const startCamera = useCallback(async (deviceId?: string) => {
+    setCameraStatus("initializing");
+    stopCamera();
 
-        reader = new BrowserMultiFormatReader();
-        codeReaderRef.current = reader;
-        
-        if (currentVideo) {
-          reader.decodeFromVideoElement(currentVideo, (result) => {
-            if (result) {
-              handleScan(result.getText());
-            }
-          });
-        }
-      } catch (err) {
-        console.error("Camera access error:", err);
-        const errMsg = t.scanner.cameraError || "Camera access denied or unavailable";
-        setCameraError(errMsg);
-        toast.error(errMsg);
+    try {
+      const constraints: MediaStreamConstraints = {
+        video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: { ideal: "environment" } }
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
       }
-    };
 
-    if (step === "scanning" && !showHistory) {
-      startCamera();
+      const reader = new BrowserMultiFormatReader();
+      codeReaderRef.current = reader;
+      
+      if (videoRef.current) {
+        reader.decodeFromVideoElement(videoRef.current, (result) => {
+          if (result) {
+            handleScan(result.getText());
+          }
+        });
+      }
+
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoIn = devices.filter(d => d.kind === "videoinput");
+      setVideoDevices(videoIn);
+      
+      const activeTrack = stream.getVideoTracks()[0];
+      const activeInfo = videoIn.find(d => d.label === activeTrack.label);
+      setActiveDeviceId(activeInfo?.deviceId || activeTrack.getSettings().deviceId || null);
+      
+      setCameraStatus("active");
+    } catch (err) {
+      console.error("Camera access error:", err);
+      setCameraStatus("permission-denied");
+      toast.error(t.scanner.cameraError || "Camera access denied");
+    }
+  }, [handleScan, stopCamera, t.scanner.cameraError]);
+
+  const switchCamera = () => {
+    if (videoDevices.length < 2) return;
+    const currentIndex = videoDevices.findIndex(d => d.deviceId === activeDeviceId);
+    const nextIndex = (currentIndex + 1) % videoDevices.length;
+    startCamera(videoDevices[nextIndex].deviceId);
+  };
+
+  const escapeCsv = (val: string) => {
+    const escaped = val.replace(/"/g, '""');
+    return (escaped.includes(',') || escaped.includes('\n') || escaped.includes('"')) 
+      ? `"${escaped}"` 
+      : escaped;
+  };
+
+  const exportSession = () => {
+    if (scanHistory.length === 0) {
+      toast.info("No scans to export");
+      return;
     }
 
-    return () => {
-      if (reader) {
-        reader.reset();
-      }
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      if (currentVideo) {
-        currentVideo.srcObject = null;
-      }
-    };
-  }, [step, showHistory, handleScan, t.scanner]);
+    const headers = ["Timestamp", "Ticket ID", "Attendee", "Result", "Reason"];
+    const rows = scanHistory.map(s => [
+      s.timestamp.toISOString(),
+      s.ticketId,
+      s.attendeeName,
+      s.result || "null",
+      s.reason
+    ]);
+
+    const csvContent = [headers, ...rows].map(r => r.map(cell => escapeCsv(String(cell))).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `session_export_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Session exported as CSV");
+  };
+
+  useEffect(() => {
+    if (step === "scanning" && !showHistory) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+
+    return () => stopCamera();
+  }, [step, showHistory, startCamera, stopCamera]);
 
   const scanAnother = () => {
     setScanResult(null);
@@ -265,40 +321,33 @@ export default function ScannerPage() {
               )}
               <div className="flex items-center gap-2">
                 <QrCode className="h-6 w-6 text-primary" />
-                <span className="font-bold">{t.scanner.title}</span>
+                <span className="font-bold hidden sm:inline">{t.scanner.title}</span>
               </div>
             </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" asChild>
-                            <Link to={`/${language}`}>
-                              <Home className="h-5 w-5" />
-                            </Link>
-                          </Button>
-                          
-                          {isAdmin && (
-                            <Button variant="ghost" size="icon" asChild>
-                              <Link to={`/${language}/admin`}>
-                                <LayoutDashboard className="h-5 w-5" />
-                              </Link>
-                            </Button>
-                          )}
             
-                          <Button variant="ghost" size="icon" asChild>
-                            <Link to={`/${language}/account`}>
-                              <User className="h-5 w-5" />
-                            </Link>
-                          </Button>
-            
-                          {step === "scanning" && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setShowHistory(!showHistory)}
-                            >
-                              <History className="h-5 w-5" />
-                            </Button>
-                          )}
-                        </div>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" asChild title={t.nav.home}>
+                <Link to={`/${language}`}><Home className="h-5 w-5" /></Link>
+              </Button>
+              {isAdmin && (
+                <Button variant="ghost" size="icon" asChild title={t.nav.admin}>
+                  <Link to={`/${language}/admin`}><LayoutDashboard className="h-5 w-5" /></Link>
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" asChild title={t.nav.account}>
+                <Link to={`/${language}/account`}><User className="h-5 w-5" /></Link>
+              </Button>
+              {step === "scanning" && (
+                <>
+                  <Button variant="ghost" size="icon" onClick={() => setShowHistory(!showHistory)} title={t.scanner.history}>
+                    <History className="h-5 w-5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={exportSession} title="Export Session">
+                    <Download className="h-5 w-5" />
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </header>
 
@@ -322,7 +371,7 @@ export default function ScannerPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="password">{t.auth.password}</Label>
-                        <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                        <Input id="password" type="password" placeholder={t.auth.passwordPlaceholder || "password"} value={password} onChange={(e) => setPassword(e.target.value)} required />
                       </div>
                       <Button type="submit" className="w-full" size="lg">
                         <LogIn className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
@@ -387,63 +436,69 @@ export default function ScannerPage() {
             {step === "scanning" && !showHistory && (
               <motion.div key="scanning" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
                 <Card className="bg-muted/50">
-                  <CardContent className="py-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="font-medium truncate">{selectedEventData && (language === "ar" ? selectedEventData.title.ar : selectedEventData.title.en)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <DoorOpen className="h-4 w-4 text-muted-foreground" />
-                        <span>{currentGate?.name}</span>
-                      </div>
+                  <CardContent className="py-3 flex items-center justify-between">
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{selectedEventData && (language === "ar" ? selectedEventData.title.ar : selectedEventData.title.en)}</span>
+                      <span className="text-sm font-medium">{currentGate?.name}</span>
                     </div>
+                    <Badge variant={cameraStatus === "active" ? "default" : "destructive"} className="shrink-0 capitalize">
+                      {cameraStatus}
+                    </Badge>
                   </CardContent>
                 </Card>
+
                 <Card className="overflow-hidden">
                   <div className="aspect-square bg-black relative flex items-center justify-center">
-                    {cameraError ? (
+                    {cameraStatus === "permission-denied" ? (
                       <div className="text-center p-6 space-y-4">
                         <XCircle className="h-16 w-16 text-red-500 mx-auto" />
-                        <p className="text-white text-sm font-medium">{cameraError}</p>
-                        <Button variant="outline" size="sm" onClick={() => setStep("select-gate")} className="text-white border-white hover:bg-white/10">
-                          {t.common.back || "Back"}
+                        <p className="text-white text-sm font-medium">{t.scanner.cameraError}</p>
+                        <Button variant="outline" size="sm" onClick={() => startCamera()} className="text-white border-white hover:bg-white/10">
+                          Retry Camera
+                        </Button>
+                      </div>
+                    ) : cameraStatus === "off" ? (
+                      <div className="text-center p-6 space-y-4">
+                        <CameraOff className="h-16 w-16 text-muted-foreground mx-auto" />
+                        <p className="text-white text-sm">Camera is off</p>
+                        <Button variant="default" size="sm" onClick={() => startCamera()}>
+                          Start Camera
                         </Button>
                       </div>
                     ) : (
                       <>
-                        <video
-                          ref={videoRef}
-                          muted
-                          playsInline
-                          autoPlay
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
-                        
-                        {isScanning && (
-                          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20">
-                            <RefreshCw className="h-12 w-12 text-white animate-spin" />
-                          </div>
-                        )}
-                        
+                        <video ref={videoRef} muted playsInline autoPlay className="absolute inset-0 w-full h-full object-cover" />
+                        {cameraStatus === "initializing" && <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50"><RefreshCw className="h-12 w-12 text-white animate-spin" /></div>}
                         <div className="absolute top-4 left-4 w-12 h-12 border-t-4 border-l-4 border-primary rounded-tl-lg z-20" />
                         <div className="absolute top-4 right-4 w-12 h-12 border-t-4 border-r-4 border-primary rounded-tr-lg z-20" />
                         <div className="absolute bottom-4 left-4 w-12 h-12 border-b-4 border-l-4 border-primary rounded-bl-lg z-20" />
                         <div className="absolute bottom-4 right-4 w-12 h-12 border-b-4 border-r-4 border-primary rounded-br-lg z-20" />
-                        
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <div className="w-64 h-64 border-2 border-white/30 rounded-lg" />
-                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-64 h-64 border-2 border-white/30 rounded-lg" /></div>
                       </>
                     )}
                   </div>
                   <CardContent className="pt-4 space-y-4">
+                    <div className="flex gap-2">
+                      {cameraStatus === "active" && (
+                        <Button variant="outline" className="flex-1" onClick={stopCamera}>
+                          <CameraOff className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                          Stop Camera
+                        </Button>
+                      )}
+                      {videoDevices.length > 1 && cameraStatus === "active" && (
+                        <Button variant="outline" size="icon" onClick={switchCamera}>
+                          <SwitchCamera className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
                     <form onSubmit={handleManualSubmit} className="flex gap-2">
                       <Input placeholder={t.scanner.ticketId} value={manualCode} onChange={(e) => setManualCode(e.target.value)} />
                       <Button type="submit" size="icon" disabled={!manualCode.trim() || isScanning}><Search className="h-4 w-4" /></Button>
                     </form>
                   </CardContent>
                 </Card>
+
                 <div className="grid grid-cols-3 gap-3">
                   <Card><CardContent className="py-3 text-center px-1"><p className="text-2xl font-bold text-green-600">{scanHistory.filter(s => s.result === "allowed").length}</p><p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t.scanner.allowed}</p></CardContent></Card>
                   <Card><CardContent className="py-3 text-center px-1"><p className="text-2xl font-bold text-red-600">{scanHistory.filter(s => s.result !== "allowed").length}</p><p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t.scanner.denied}</p></CardContent></Card>
@@ -454,7 +509,10 @@ export default function ScannerPage() {
 
             {step === "scanning" && showHistory && (
               <motion.div key="history" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <div className="flex items-center justify-between"><h2 className="text-lg font-semibold">{t.scanner.recentScans}</h2><Button variant="outline" size="sm" onClick={() => setShowHistory(false)}>{t.common.back}</Button></div>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">{t.scanner.recentScans}</h2>
+                  <Button variant="outline" size="sm" onClick={() => setShowHistory(false)}>{t.common.back}</Button>
+                </div>
                 {scanHistory.length === 0 ? (
                   <Card><CardContent className="py-12 text-center"><History className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" /><p className="text-muted-foreground">{t.scanner.noScansYet}</p></CardContent></Card>
                 ) : (
@@ -464,8 +522,10 @@ export default function ScannerPage() {
                         <CardContent className="py-3">
                           <div className="flex items-center gap-3">
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${scan.result === "allowed" ? "bg-green-500/10" : "bg-red-500/10"}`}>{scan.result === "allowed" ? <CheckCircle2 className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-red-600" />}</div>
-                            <div className="flex-1 min-w-0"><div className="flex items-center justify-between"><p className="font-medium truncate text-sm">{scan.attendeeName}</p><span className="text-[10px] text-muted-foreground">{scan.timestamp.toLocaleTimeString(language === "ar" ? "ar-EG" : "en-US", { hour: "2-digit", minute: "2-digit" })}</span></div>
-                            <div className="flex items-center gap-2 mt-1"><code className="text-[10px] text-muted-foreground bg-muted px-1 rounded truncate">{scan.ticketId}</code><Badge variant="secondary" className={scan.result === "allowed" ? "bg-green-500/10 text-green-600 text-[10px] h-4 py-0" : "bg-red-500/10 text-red-600 text-[10px] h-4 py-0"}>{scan.reason}</Badge></div></div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between"><p className="font-medium truncate text-sm">{scan.attendeeName}</p><span className="text-[10px] text-muted-foreground">{scan.timestamp.toLocaleTimeString(language === "ar" ? "ar-EG" : "en-US", { hour: "2-digit", minute: "2-digit" })}</span></div>
+                              <div className="flex items-center gap-2 mt-1"><code className="text-[10px] text-muted-foreground bg-muted px-1 rounded truncate">{scan.ticketId}</code><Badge variant="secondary" className={scan.result === "allowed" ? "bg-green-500/10 text-green-600 text-[10px] h-4 py-0" : "bg-red-500/10 text-red-600 text-[10px] h-4 py-0"}>{scan.reason}</Badge></div>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>

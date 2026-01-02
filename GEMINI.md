@@ -3,116 +3,71 @@
 ## Project Overview
 **PalTicket** is a bilingual (English/Arabic) event ticketing and discovery platform tailored for the Palestinian market. It is a Single Page Application (SPA) built with React and Vite, connected to a NestJS backend.
 
-**Current State:** Hybrid / Integrated.
-*   **Frontend:** Connected to backend APIs for Events, Orders, and Tickets with automatic mock data fallback if API configuration is missing or unavailable.
-*   **Backend:** Fully functional NestJS application (`/backend`) with Prisma, PostgreSQL, JWT Authentication, and RBAC.
+**Current State:** Fully Integrated.
+*   **Frontend**: Connected to backend APIs for all core domains (Events, Orders, Tickets, Admin Management, Scanning).
+*   **Backend**: Production-ready NestJS foundation with organized storage, organizational isolation, and comprehensive audit logging.
 
 ## Architecture
 
 ### Tech Stack
-*   **Frontend:**
-    *   React 18, Vite, TypeScript.
-    *   TanStack Query (React Query) v5.
-    *   Tailwind CSS, Shadcn/UI.
-    *   React Router DOM (v6).
-*   **Backend:**
-    *   NestJS (Node.js framework).
-    *   PostgreSQL (Database).
-    *   Prisma (ORM).
-    *   Passport (JWT Auth).
-    *   Class-validator (Validation).
+*   **Frontend**: React 18, Vite, TypeScript, TanStack Query v5, Tailwind CSS, Shadcn/UI.
+*   **Backend**: NestJS, PostgreSQL, Prisma, Passport (JWT), Zod/Class-validator.
+*   **Storage**: Organization-scoped local storage abstraction with organized asset paths.
 
 ### Directory Structure
 *   `src/`: **Frontend Source**.
-    *   `services/`: Service Layer (Calls backend APIs with mock fallbacks).
-    *   `data/mockEvents.ts`: Fallback/Seed mock data.
-    *   `contexts/`: Global state (Auth, Theme).
-    *   `components/`: UI Components.
+    *   `services/`: Service Layer with API-first logic and mock fallbacks.
+    *   `data/mockEvents.ts`: Standardized mock data with valid UTF-8 Arabic content.
 *   `backend/`: **Backend Source**.
-    *   `src/auth/`: Authentication & RBAC (`auth.service.ts`, `roles.guard.ts`).
-    *   `src/events/`, `src/orders/`, `src/tickets/`, `src/scans/`: Domain modules.
-    *   `src/categories/`, `src/cities/`: Taxonomy modules.
-    *   `src/venues/`: Venue management with localization.
-    *   `prisma/`: Schema definitions and migrations.
+    *   `src/common/storage.service.ts`: Storage abstraction for file uploads.
+    *   `src/exports/`: CSV generation and data portability.
+    *   `src/members/`, `src/users/`: Organizational membership and profile management.
 
 ### Database Schema (Prisma)
-The database is designed for multi-tenancy, localization, and atomic scanning operations.
+*   **Core Models**: `Organization`, `User`, `OrganizationMember`.
+*   **Event Domain**: `Event` (includes `imageUrl`), `Venue`, `TicketType`, `Gate`.
+*   **Taxonomy**: `Category` and `City` using slugs for filtering and UUIDs for relations.
+*   **Access Control**: `ScanLog` records all entry attempts (`GRANTED` / `DENIED_*`).
 
-*   **Core Models:**
-    *   `Organization`: The tenant root. All events/tickets belong to an organization.
-    *   `User`: Global users.
-    *   `OrganizationMember`: Links Users to Organizations with Roles (ADMIN, STAFF).
-*   **Event Domain:**
-    *   `Event` & `Venue`: Support multi-locale translations (English/Arabic).
-    *   `Category` & `City`: Taxonomy with global and tenant-specific entries.
-    *   `TicketType`: Tiers (VIP, General) defining price and quantity.
-*   **Sales & Access:**
-    *   `Order`: Stores purchase details and `attendeeName`.
-    *   `Ticket`: Unique assets with QR codes.
-    *   `ScanLog`: Immutable audit trail for every entry attempt.
-*   **Key Design Decisions:**
-    *   **Currency:** Stored as **Integer Cents** (e.g., 100 = 1.00).
-    *   **Scanning:** Atomic transactions prevent double-entry.
+## Key Workflows
 
-### Key Workflows (Backend)
+### 1. Asset Management (Images)
+*   **Backend**: `StorageService` builds paths like `/YYYY/event-slug/`.
+*   **Validation**: 5MB limit, restricted to `png`, `jpg`, `jpeg`, `webp`.
+*   **UI**: Admins can upload/replace cover images directly in the event management dialog.
 
-1.  **Authentication:**
-    *   **Method:** JWT (Bearer Token).
-    *   **Endpoints:** `/auth/login`, `/auth/me`.
+### 2. Administrative Suite
+*   **Entity Management**: Full CRUD for Events, Ticket Types, and Gates.
+*   **Membership**: `ADMIN` can update member roles and edit user profiles (tenant-safe).
+*   **Reporting**: Dashboard metrics and tenant-scoped CSV exports for orders and tickets.
 
-2.  **RBAC & Multi-tenancy:**
-    *   **Guard:** `RolesGuard` enforces `x-organization-id` and role permissions.
-    *   **Filtering:** All data is scoped to the organization provided in headers.
+### 3. Entry Control (Scanner)
+*   **UX**: Hardware controls (Stop/Switch camera), status indicators, and manual entry.
+*   **Session**: Exportable scan history (CSV) with robust data escaping.
+*   **Atomicity**: Single-use entry enforced via database transactions.
 
-3.  **Localization:**
-    *   **Implementation:** Translation tables for `Event`, `Venue`, `Category`, and `City`.
-    *   **Usage:** Query parameter `?lang=en|ar` determines returned content, with English fallback when missing.
+### 4. Search & Discovery
+*   **Consistency**: Filters (Category/City) utilize slugs in URL search params.
+*   **Mapping**: Service layer maps `categorySlug` and `citySlug` for reliable filtering across API and mock modes.
 
-## Service Layer (Integrated)
+## Service Layer
 
-The frontend services act as a bridge between the UI models and the backend APIs.
-
-*   `eventsService.ts`: Fetches localized events, categories, and cities.
-*   `ordersService.ts`: Handles order creation and historical retrieval.
-*   `ticketsService.ts`: Manages ticket retrieval and status mapping.
-*   `gatesService.ts`, `ticketTypesService.ts`, `venuesService.ts`: Admin CRUD helpers with API + mock fallback.
-*   `adminService.ts`, `membersService.ts`, `scansService.ts`: Admin dashboards and audit logs.
-*   **Fallback Logic:** Services use `apiClient.ts` to check for configuration. If `VITE_API_BASE_URL` is missing or the request fails, they fall back to in-memory mock data.
-
-## Building and Running
-
-### Full Stack
-1.  **Backend:**
-    ```bash
-    cd backend
-    npm install
-    # Set .env (DATABASE_URL, JWT_SECRET, etc.)
-    npm run prisma:migrate
-    npm run start:dev
-    ```
-2.  **Frontend:**
-    ```bash
-    npm install
-    # Set environment variables for API connection
-    npm run dev
-    ```
+*   `eventsService.ts`: Localized fetching + image support + slug-based filtering.
+*   `membersService.ts`: Membership and role management.
+*   `usersService.ts`: User profile updates (name, phone).
+*   `scansService.ts`: Audit log retrieval and result mapping.
 
 ## Development Conventions
 
-### Linting
-*   **Unified:** Root ESLint configuration covers both frontend and backend (`/backend/src`).
-*   **Rules:** Strict TypeScript and React rules enforced. Use `npm run lint` at the root.
+### Data Safety
+*   **Tenant Boundary**: All admin/staff operations *must* be scoped to `x-organization-id`.
+*   **PII Privacy**: Use explicit Prisma `select` to exclude sensitive fields (passwords, etc.).
 
-### UI Notes
-*   **Scanner:** Uses camera access on the scan page, skips login when already authenticated (ADMIN/STAFF).
-*   **Admin Forms:** Events, Ticket Types, and Gates creation are wired to backend APIs.
-*   **Exports:** Admin exports support optional `eventId` filtering.
-
-### Backend Standards
-*   **DTOs:** Use `@IsIn(['en', 'ar'])` for locale validation.
-*   **Services:** Use explicit Prisma `select` to avoid leaking PII and over-fetching.
-*   **Security:** `RolesGuard` must be applied to all tenant-scoped routes.
+### UI Patterns
+*   **React Query**: Always invalidate appropriate keys (`["adminEvents"]`, `["admin", "members"]`) on success.
+*   **Localization**: Use `\u` escapes or valid UTF-8 for Arabic content; avoid mojibake separators.
 
 ## Common Pitfalls
-1.  **Route Shadowing:** In controllers, ensure static or specific routes (like `/slug/:slug`) are defined *above* generic ID routes (`/:id`).
-2.  **Explicit Any:** Avoid `any` in service mappings; define appropriate `ApiResult` types.
+1.  **UUID vs Slug**: Always use UUIDs for relationships/updates and slugs for filtering/URLs.
+2.  **Camera Lifecycle**: Ensure all media tracks are stopped (`track.stop()`) on component unmount or step change.
+3.  **Mock Sync**: When updating domain types, ensure `mockEvents.ts` is updated to reflect new fields like `imageUrl` or `categorySlug`.

@@ -6,9 +6,11 @@ import {
   UseGuards,
   Req,
   ParseUUIDPipe,
+  Patch,
+  Body,
 } from '@nestjs/common';
 import { MembersService } from './members.service';
-import { ListMembersQueryDto } from './dto/member.dto';
+import { ListMembersQueryDto, UpdateMemberRoleDto } from './dto/member.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -36,5 +38,15 @@ export class MembersController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.membersService.findOne(req.orgId!, id);
+  }
+
+  @Patch(':id')
+  @Roles(OrganizationRole.ADMIN)
+  update(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateMemberDto: UpdateMemberRoleDto,
+  ) {
+    return this.membersService.update(req.orgId!, id, updateMemberDto);
   }
 }

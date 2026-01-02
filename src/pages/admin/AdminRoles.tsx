@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLanguage } from "@/i18n";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,8 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Shield, Calendar, ShoppingCart, QrCode, Settings, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
-import { fetchMembers } from "@/services/membersService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchMembers, updateMemberRole, type OrganizationMember } from "@/services/membersService";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useForm, Controller } from "react-hook-form";
 
 const allPermissions = [
   { id: "events.manage", label: "Manage Events", labelAr: "إدارة الفعاليات", icon: Calendar },
@@ -20,12 +25,33 @@ const allPermissions = [
   { id: "scanner.use", label: "Use Scanner", labelAr: "استخدام الماسح", icon: Shield },
 ];
 
+interface ChangeRoleForm {
+  memberId: string;
+  role: "ADMIN" | "STAFF";
+}
+
 export default function AdminRoles() {
   const { language, t } = useLanguage();
-
+  const queryClient = useQueryClient();
+  const [changingMember, setChangingMember] = useState<OrganizationMember | null>(null);
+  
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["admin", "members"],
     queryFn: () => fetchMembers(),
+  });
+
+  const roleForm = useForm<ChangeRoleForm>();
+
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ id, role }: { id: string, role: "ADMIN" | "STAFF" }) => updateMemberRole(id, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "members"] });
+      toast.success("User role updated");
+      setChangingMember(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update role");
+    }
   });
 
   const roles = [
@@ -47,8 +73,22 @@ export default function AdminRoles() {
     }
   ];
 
-  const handleAction = (action: string) => {
-    toast.info(`${action} - not implemented`);
+  const startChangingRole = (role: string) => {
+    // Just a demo: find first member of this role to "edit"
+    const member = members.find(m => m.role === role);
+    if (member) {
+      setChangingMember(member);
+      roleForm.reset({
+        memberId: member.id,
+        role: member.role,
+      });
+    } else {
+      toast.info("No members with this role to edit");
+    }
+  };
+
+  const handleRoleSubmit = (data: ChangeRoleForm) => {
+    updateRoleMutation.mutate({ id: data.memberId, role: data.role });
   };
 
   return (
@@ -58,7 +98,7 @@ export default function AdminRoles() {
           <h2 className="text-2xl font-bold">{t.admin.roles}</h2>
           <p className="text-muted-foreground">{t.admin.rolesDesc}</p>
         </div>
-        <Button onClick={() => handleAction("Create role")}>
+        <Button onClick={() => toast.info("Role creation coming soon")}>
           <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
           {t.admin.createRole}
         </Button>
@@ -91,7 +131,7 @@ export default function AdminRoles() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleAction("Edit role")}
+                    onClick={() => startChangingRole(role.id)}
                   >
                     {t.common.edit}
                   </Button>
@@ -166,6 +206,43 @@ export default function AdminRoles() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Change Role Dialog */}
+      <Dialog open={!!changingMember} onOpenChange={(open) => !open && setChangingMember(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.admin.changeRole}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={roleForm.handleSubmit(handleRoleSubmit)} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Member: {changingMember?.user.name || changingMember?.user.email}</Label>
+              <Controller
+                name="role"
+                control={roleForm.control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ADMIN">ADMIN</SelectItem>
+                      <SelectItem value="STAFF">STAFF</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setChangingMember(null)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={updateRoleMutation.isPending}>
+                {updateRoleMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t.common.save}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -19,7 +19,7 @@ export class CategoriesService {
         id: true,
         slug: true,
         translations: {
-          where: { locale: { in: [lang, "en"] } },
+          where: { locale: { in: [lang, 'en'] } },
           select: { locale: true, name: true },
         },
       },

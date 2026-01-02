@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import * as express from 'express';
+import * as path from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,6 +19,9 @@ async function bootstrap() {
     origin: corsOrigins,
     credentials: true,
   });
+
+  const localRoot = configService.get<string>('STORAGE_LOCAL_ROOT', 'uploads');
+  app.use(`/${localRoot}`, express.static(path.join(process.cwd(), localRoot)));
 
   app.useGlobalPipes(
     new ValidationPipe({

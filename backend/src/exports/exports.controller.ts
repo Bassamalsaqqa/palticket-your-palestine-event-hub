@@ -1,11 +1,11 @@
-import { Controller, Get, UseGuards, Req, Res, Header } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Query, Header } from '@nestjs/common';
 import { ExportsService } from './exports.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { OrganizationRole } from '@prisma/client';
 import type { AuthenticatedRequest } from '../common/types';
-import { Response } from 'express';
+import { ExportQueryDto } from './dto/exports.dto';
 
 @Controller('exports')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -16,17 +16,21 @@ export class ExportsController {
   @Roles(OrganizationRole.ADMIN)
   @Header('Content-Type', 'text/csv')
   @Header('Content-Disposition', 'attachment; filename="orders.csv"')
-  async exportOrders(@Req() req: AuthenticatedRequest, @Res() res: Response, @Query("eventId") eventId?: string) {
-    const csv = await this.exportsService.exportOrders(req.orgId!, eventId);
-    return res.send(csv);
+  async exportOrders(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: ExportQueryDto,
+  ) {
+    return await this.exportsService.exportOrders(req.orgId!, query.eventId);
   }
 
   @Get('tickets.csv')
   @Roles(OrganizationRole.ADMIN)
   @Header('Content-Type', 'text/csv')
   @Header('Content-Disposition', 'attachment; filename="tickets.csv"')
-  async exportTickets(@Req() req: AuthenticatedRequest, @Res() res: Response, @Query("eventId") eventId?: string) {
-    const csv = await this.exportsService.exportTickets(req.orgId!, eventId);
-    return res.send(csv);
+  async exportTickets(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: ExportQueryDto,
+  ) {
+    return await this.exportsService.exportTickets(req.orgId!, query.eventId);
   }
 }

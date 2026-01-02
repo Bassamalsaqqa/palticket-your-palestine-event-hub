@@ -22,6 +22,10 @@ export class UpdateGateDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @IsUUID()
+  @IsOptional()
+  eventId?: string;
 }
 
 export class ListGatesQueryDto {

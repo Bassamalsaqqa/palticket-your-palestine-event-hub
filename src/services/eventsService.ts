@@ -32,12 +32,15 @@ type ApiTranslation = {
 type ApiEvent = {
   id: string;
   slug: string;
+  imageUrl?: string | null;
   startTime: string;
   endTime?: string | null;
   status: "DRAFT" | "PUBLISHED" | "CANCELLED";
   translations: ApiTranslation[];
-  category?: { slug: string; translations: { locale: "en" | "ar"; name: string }[] } | null;
-  city?: { slug: string; translations: { locale: "en" | "ar"; name: string }[] } | null;
+  categoryId?: string | null;
+  cityId?: string | null;
+  category?: { id: string; slug: string; translations: { locale: "en" | "ar"; name: string }[] } | null;
+  city?: { id: string; slug: string; translations: { locale: "en" | "ar"; name: string }[] } | null;
   venue?: {
     id: string;
     translations: { locale: "en" | "ar"; name: string; address?: string | null; city?: string | null }[];
@@ -120,12 +123,17 @@ const mapEvent = (event: ApiEvent, lang: "en" | "ar", ticketTiers: TicketTier[] 
   return {
     id: event.id,
     slug: event.slug,
+    venueId: event.venue?.id,
+    categoryId: event.category?.id || event.categoryId || "",
+    cityId: event.city?.id || event.cityId || "",
     title: makeLocalized(translation?.name),
     description: makeLocalized(
       translation?.description || translation?.summary || "",
     ),
     category: event.category?.slug || "",
-    images: [FALLBACK_IMAGE],
+    categorySlug: event.category?.slug || "",
+    citySlug: event.city?.slug || "",
+    images: event.imageUrl ? [event.imageUrl] : [FALLBACK_IMAGE],
     date: datePart,
     time: timePart,
     endDate: endDatePart,
@@ -218,7 +226,7 @@ export const fetchCategories = async (lang?: "en" | "ar"): Promise<Category[]> =
   const activeLang = lang || getLanguage();
   const config = getApiConfig();
   if (!config) {
-    return simulateLatency(mockCategories);
+    return simulateLatency(mockCategories.map(c => ({ ...c, slug: c.id })));
   }
 
   try {
@@ -230,14 +238,15 @@ export const fetchCategories = async (lang?: "en" | "ar"): Promise<Category[]> =
         color: "hsl(var(--primary))",
       };
       return {
-        id: category.slug,
+        id: category.id,
+        slug: category.slug,
         name: makeLocalized(translation?.name),
         icon: style.icon,
         color: style.color,
       };
     });
   } catch {
-    return simulateLatency(mockCategories);
+    return simulateLatency(mockCategories.map(c => ({ ...c, slug: c.id })));
   }
 };
 
@@ -245,7 +254,7 @@ export const fetchCities = async (lang?: "en" | "ar"): Promise<City[]> => {
   const activeLang = lang || getLanguage();
   const config = getApiConfig();
   if (!config) {
-    return simulateLatency(mockCities);
+    return simulateLatency(mockCities.map(c => ({ ...c, slug: c.id })));
   }
 
   try {
@@ -253,12 +262,13 @@ export const fetchCities = async (lang?: "en" | "ar"): Promise<City[]> => {
     return cities.map((city) => {
       const translation = pickTranslation(city.translations, activeLang);
       return {
-        id: city.slug,
+        id: city.id,
+        slug: city.slug,
         name: makeLocalized(translation?.name),
       };
     });
   } catch {
-    return simulateLatency(mockCities);
+    return simulateLatency(mockCities.map(c => ({ ...c, slug: c.id })));
   }
 };
 
@@ -313,6 +323,26 @@ export const updateEvent = async (id: string, data: {
   });
 };
 
+export const updateEventImage = async (id: string, file: File): Promise<{ imageUrl: string }> => {
+  const config = getApiConfig();
+  if (!config) throw new Error("API not configured");
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const response = await fetch(`${config.baseUrl}/events/${encodeURIComponent(id)}/image`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${config.token}`,
+      "x-organization-id": config.organizationId
+    },
+    body: formData
+  });
+
+  if (!response.ok) throw new Error("Image upload failed");
+  return response.json();
+};
+
 export const filterEvents = async (filters: EventFilters, lang?: "en" | "ar"): Promise<Event[]> => {
   const activeLang = lang || getLanguage();
   const events = await fetchAllEvents(activeLang);
@@ -331,8 +361,11 @@ export const filterEvents = async (filters: EventFilters, lang?: "en" | "ar"): P
     : events;
 
   const filtered = eventsWithPrices.filter((event) => {
-    if (filters.category && event.category !== filters.category) return false;
-    if (filters.city && event.venue.city.en.toLowerCase() !== filters.city.toLowerCase()) return false;
+    const categorySlug = event.categorySlug || event.category;
+    const citySlug = event.citySlug || event.venue.city.en.toLowerCase();
+
+    if (filters.category && categorySlug !== filters.category) return false;
+    if (filters.city && citySlug !== filters.city) return false;
     if (filters.dateFrom && event.date < filters.dateFrom) return false;
     if (filters.dateTo && event.date > filters.dateTo) return false;
     if (filters.priceMin !== undefined || filters.priceMax !== undefined) {

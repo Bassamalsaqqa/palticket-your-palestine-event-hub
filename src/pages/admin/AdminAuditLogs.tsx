@@ -135,7 +135,7 @@ export default function AdminAuditLogs() {
                     </div>
                     <p className="text-sm mt-1">
                       <span className="font-medium">{log.ticket.attendeeName || "---"}</span>
-                      <span className="text-muted-foreground"> — {log.ticket.event.translations[0]?.name}</span>
+                      <span className="text-muted-foreground"> - {log.ticket.event.translations[0]?.name}</span>
                     </p>
                     <div className="flex items-center gap-4 mt-2">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">

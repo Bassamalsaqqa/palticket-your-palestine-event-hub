@@ -58,3 +58,15 @@ export const fetchMembers = async (): Promise<OrganizationMember[]> => {
     return [];
   }
 };
+
+export const updateMemberRole = async (id: string, role: "ADMIN" | "STAFF"): Promise<OrganizationMember> => {
+  const config = getApiConfig();
+  if (!config) {
+    throw new Error("API not configured");
+  }
+
+  return await apiFetch<OrganizationMember>(`/members/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ role }),
+  });
+};

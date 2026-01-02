@@ -9,7 +9,13 @@ import {
   UseGuards,
   Req,
   ParseUUIDPipe,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { EventsService } from './events.service';
 import {
   CreateEventDto,
@@ -35,6 +41,25 @@ export class EventsController {
     @Body() createEventDto: CreateEventDto,
   ) {
     return this.eventsService.create(req.orgId!, createEventDto);
+  }
+
+  @Post(':id/image')
+  @Roles(OrganizationRole.ADMIN)
+  @UseInterceptors(FileInterceptor('image'))
+  uploadImage(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new FileTypeValidator({ fileType: /image\/(png|jpe?g|webp)/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.eventsService.uploadImage(req.orgId!, id, file);
   }
 
   @Get()

@@ -1,10 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
+import { StorageService } from '../common/storage.service';
 
 @Injectable()
 export class EventsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private storageService: StorageService,
+  ) {}
 
   async create(organizationId: string, data: CreateEventDto) {
     const { translations, ...eventData } = data;
@@ -19,6 +23,7 @@ export class EventsService {
       select: {
         id: true,
         slug: true,
+        imageUrl: true,
         startTime: true,
         endTime: true,
         status: true,
@@ -40,18 +45,24 @@ export class EventsService {
       select: {
         id: true,
         slug: true,
+        imageUrl: true,
         startTime: true,
         endTime: true,
         status: true,
         translations: {
-          where: { locale: { in: [lang, "en"] } },
-          select: { locale: true, name: true, summary: true, description: true },
+          where: { locale: { in: [lang, 'en'] } },
+          select: {
+            locale: true,
+            name: true,
+            summary: true,
+            description: true,
+          },
         },
         category: {
           select: {
             slug: true,
             translations: {
-              where: { locale: { in: [lang, "en"] } },
+              where: { locale: { in: [lang, 'en'] } },
               select: { locale: true, name: true },
             },
           },
@@ -60,7 +71,7 @@ export class EventsService {
           select: {
             slug: true,
             translations: {
-              where: { locale: { in: [lang, "en"] } },
+              where: { locale: { in: [lang, 'en'] } },
               select: { locale: true, name: true },
             },
           },
@@ -69,7 +80,7 @@ export class EventsService {
           select: {
             id: true,
             translations: {
-              where: { locale: { in: [lang, "en"] } },
+              where: { locale: { in: [lang, 'en'] } },
               select: { locale: true, name: true, address: true, city: true },
             },
           },
@@ -84,18 +95,24 @@ export class EventsService {
       select: {
         id: true,
         slug: true,
+        imageUrl: true,
         startTime: true,
         endTime: true,
         status: true,
         translations: {
-          where: { locale: { in: [lang, "en"] } },
-          select: { locale: true, name: true, summary: true, description: true },
+          where: { locale: { in: [lang, 'en'] } },
+          select: {
+            locale: true,
+            name: true,
+            summary: true,
+            description: true,
+          },
         },
         category: {
           select: {
             slug: true,
             translations: {
-              where: { locale: { in: [lang, "en"] } },
+              where: { locale: { in: [lang, 'en'] } },
               select: { locale: true, name: true },
             },
           },
@@ -104,7 +121,7 @@ export class EventsService {
           select: {
             slug: true,
             translations: {
-              where: { locale: { in: [lang, "en"] } },
+              where: { locale: { in: [lang, 'en'] } },
               select: { locale: true, name: true },
             },
           },
@@ -113,7 +130,7 @@ export class EventsService {
           select: {
             id: true,
             translations: {
-              where: { locale: { in: [lang, "en"] } },
+              where: { locale: { in: [lang, 'en'] } },
               select: { locale: true, name: true, address: true, city: true },
             },
           },
@@ -128,18 +145,24 @@ export class EventsService {
       select: {
         id: true,
         slug: true,
+        imageUrl: true,
         startTime: true,
         endTime: true,
         status: true,
         translations: {
-          where: { locale: { in: [lang, "en"] } },
-          select: { locale: true, name: true, summary: true, description: true },
+          where: { locale: { in: [lang, 'en'] } },
+          select: {
+            locale: true,
+            name: true,
+            summary: true,
+            description: true,
+          },
         },
         category: {
           select: {
             slug: true,
             translations: {
-              where: { locale: { in: [lang, "en"] } },
+              where: { locale: { in: [lang, 'en'] } },
               select: { locale: true, name: true },
             },
           },
@@ -148,7 +171,7 @@ export class EventsService {
           select: {
             slug: true,
             translations: {
-              where: { locale: { in: [lang, "en"] } },
+              where: { locale: { in: [lang, 'en'] } },
               select: { locale: true, name: true },
             },
           },
@@ -157,7 +180,7 @@ export class EventsService {
           select: {
             id: true,
             translations: {
-              where: { locale: { in: [lang, "en"] } },
+              where: { locale: { in: [lang, 'en'] } },
               select: { locale: true, name: true, address: true, city: true },
             },
           },
@@ -200,6 +223,7 @@ export class EventsService {
       select: {
         id: true,
         slug: true,
+        imageUrl: true,
         startTime: true,
         endTime: true,
         status: true,
@@ -207,6 +231,44 @@ export class EventsService {
         venueId: true,
         categoryId: true,
         cityId: true,
+      },
+    });
+  }
+
+  async uploadImage(
+    organizationId: string,
+    id: string,
+    file: { buffer: Buffer; originalname: string },
+  ) {
+    const event = await this.prisma.event.findFirst({
+      where: { id, organizationId },
+    });
+
+    if (!event) {
+      throw new BadRequestException('Event not found or access denied');
+    }
+
+    if (!file || !file.buffer) {
+      throw new BadRequestException('No image file provided');
+    }
+
+    const relativePath = this.storageService.buildEventAssetPath(
+      event.startTime,
+      event.slug,
+    );
+
+    const fileName = `${Date.now()}-${file.originalname}`;
+    const imageUrl = this.storageService.store(
+      file.buffer,
+      fileName,
+      relativePath,
+    );
+    return this.prisma.event.update({
+      where: { id },
+      data: { imageUrl },
+      select: {
+        id: true,
+        imageUrl: true,
       },
     });
   }

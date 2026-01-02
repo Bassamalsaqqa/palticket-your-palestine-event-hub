@@ -57,6 +57,12 @@ export class GatesService {
       where: { id, organizationId },
     });
 
+    if (data.eventId) {
+      await this.prisma.event.findFirstOrThrow({
+        where: { id: data.eventId, organizationId },
+      });
+    }
+
     return this.prisma.gate.update({
       where: { id },
       data,

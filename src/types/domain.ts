@@ -86,6 +86,8 @@ export interface Event {
     ar: string;
   };
   category: string;
+  categorySlug?: string;
+  citySlug?: string;
   images: string[];
   date: string;
   time: string;
@@ -122,6 +124,7 @@ export interface Event {
 
 export interface Category {
   id: string;
+  slug: string;
   name: {
     en: string;
     ar: string;
@@ -132,6 +135,7 @@ export interface Category {
 
 export interface City {
   id: string;
+  slug: string;
   name: {
     en: string;
     ar: string;

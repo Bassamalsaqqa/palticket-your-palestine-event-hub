@@ -12,9 +12,18 @@ export class ExportsService {
       headers
         .map((header) => {
           const val = obj[header];
-          if (val === null || val === undefined) return '';
-          const strVal =
-            typeof val === 'object' ? JSON.stringify(val) : String(val);
+          let strVal = '';
+          if (val === null || val === undefined) {
+            strVal = '';
+          } else if (typeof val === 'string') {
+            strVal = val;
+          } else if (typeof val === 'number' || typeof val === 'boolean') {
+            strVal = String(val);
+          } else if (val instanceof Date) {
+            strVal = val.toISOString();
+          } else {
+            strVal = JSON.stringify(val);
+          }
           let escaped = strVal.replace(/"/g, '""');
           if (
             escaped.includes(',') ||
@@ -30,7 +39,10 @@ export class ExportsService {
     return [headers.join(','), ...rows].join('\n');
   }
 
-  async exportOrders(organizationId: string, eventId?: string): Promise<string> {
+  async exportOrders(
+    organizationId: string,
+    eventId?: string,
+  ): Promise<string> {
     const orders = await this.prisma.order.findMany({
       where: { organizationId, ...(eventId ? { eventId } : {}) },
       include: {
@@ -58,7 +70,10 @@ export class ExportsService {
     return this.toCsv(flatOrders);
   }
 
-  async exportTickets(organizationId: string, eventId?: string): Promise<string> {
+  async exportTickets(
+    organizationId: string,
+    eventId?: string,
+  ): Promise<string> {
     const tickets = await this.prisma.ticket.findMany({
       where: { organizationId, ...(eventId ? { eventId } : {}) },
       include: {

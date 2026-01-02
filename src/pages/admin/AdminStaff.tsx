@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useLanguage } from "@/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -11,23 +13,70 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Edit, Trash2, UserCog, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
-import { fetchMembers } from "@/services/membersService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchMembers, updateMemberRole, type OrganizationMember } from "@/services/membersService";
+import { useForm, Controller } from "react-hook-form";
+
+interface ChangeRoleForm {
+  role: "ADMIN" | "STAFF";
+}
 
 export default function AdminStaff() {
   const { language, t } = useLanguage();
+  const queryClient = useQueryClient();
+  const [changingRoleMember, setChangingRoleMember] = useState<OrganizationMember | null>(null);
+  
+  const roleForm = useForm<ChangeRoleForm>();
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["admin", "members"],
     queryFn: () => fetchMembers(),
   });
 
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ id, role }: { id: string, role: "ADMIN" | "STAFF" }) => updateMemberRole(id, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "members"] });
+      toast.success("User role updated");
+      setChangingRoleMember(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update role");
+    }
+  });
+
   const staffMembers = members.filter(m => m.role === "STAFF");
 
   const handleAction = (action: string) => {
     toast.info(`${action} - not implemented`);
+  };
+
+  const startChangingRole = (member: OrganizationMember) => {
+    setChangingRoleMember(member);
+    roleForm.reset({
+      role: member.role,
+    });
+  };
+
+  const handleRoleSubmit = (data: ChangeRoleForm) => {
+    if (!changingRoleMember) return;
+    updateRoleMutation.mutate({ id: changingRoleMember.id, role: data.role });
   };
 
   return (
@@ -37,7 +86,7 @@ export default function AdminStaff() {
           <h2 className="text-2xl font-bold">{t.admin.staff}</h2>
           <p className="text-muted-foreground">{t.admin.staffDesc}</p>
         </div>
-        <Button onClick={() => handleAction("Assign staff")}>
+        <Button onClick={() => toast.info("Invite functionality coming soon")}>
           <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
           {t.admin.assignStaff}
         </Button>
@@ -125,14 +174,14 @@ export default function AdminStaff() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleAction("Edit")}
+                            onClick={() => startChangingRole(member)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleAction("Remove")}
+                            onClick={() => toast.info("Removal not implemented")}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
@@ -146,6 +195,43 @@ export default function AdminStaff() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Change Role Dialog */}
+      <Dialog open={!!changingRoleMember} onOpenChange={(open) => !open && setChangingRoleMember(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.admin.changeRole}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={roleForm.handleSubmit(handleRoleSubmit)} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Controller
+                name="role"
+                control={roleForm.control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ADMIN">ADMIN</SelectItem>
+                      <SelectItem value="STAFF">STAFF</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setChangingRoleMember(null)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={updateRoleMutation.isPending}>
+                {updateRoleMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t.common.save}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

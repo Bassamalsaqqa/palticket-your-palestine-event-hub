@@ -51,7 +51,8 @@ export const createGate = async (data: {
 };
 
 export const updateGate = async (id: string, data: {
-  name: string;
+  name?: string;
+  eventId?: string;
 }): Promise<{ id: string }> => {
   const config = getApiConfig();
   if (!config) return { id };

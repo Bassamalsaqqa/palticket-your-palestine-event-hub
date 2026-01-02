@@ -43,6 +43,7 @@ interface CreateGateForm {
 
 interface EditGateForm {
   name: string;
+  eventId: string;
 }
 
 export default function AdminGates() {
@@ -119,7 +120,10 @@ export default function AdminGates() {
 
   const startEditing = (gate: Gate) => {
     setEditingGate(gate);
-    editForm.reset({ name: gate.name });
+    editForm.reset({ 
+      name: gate.name,
+      eventId: gate.eventId 
+    });
   };
 
   return (
@@ -226,7 +230,21 @@ export default function AdminGates() {
           <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Event</Label>
-              <Input value={events.find(e => e.id === editingGate?.eventId)?.title[language] || editingGate?.eventId || ""} disabled />
+              <Controller
+                name="eventId"
+                control={editForm.control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger><SelectValue placeholder="Select an event" /></SelectTrigger>
+                    <SelectContent>
+                      {events.map((event) => (
+                        <SelectItem key={event.id} value={event.id}>{language === "ar" ? event.title.ar : event.title.en}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-name">Gate Name</Label>
