@@ -34,7 +34,8 @@ Auth implementation
 Seeded demo data
 - Backend seed: `backend/prisma/seed.ts` embeds a demo list (UTF-8 Arabic + English).
 - Mock events: `src/data/mockEvents.ts` is generated from `public/English.json` + `public/Arabic.json`.
-  - Do not hand-edit mockEvents; update the JSON sources and re-generate.
+  - Do not hand-edit mockEvents; update the JSON sources and re-generate using a script (if available) or by updating the mapping in `eventsService.ts`.
+  - Prefer the `getLocalizedText` helper for all UI displays.
 - Orders/tickets seeded with a stable admin user ID (matches deterministic hash for admin@palticket.com).
 
 Service layer (mocked + real APIs)

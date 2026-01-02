@@ -1,4 +1,5 @@
 import { useLanguage } from "@/i18n";
+import { getLocalizedText } from "@/i18n/localize";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -127,7 +128,7 @@ export default function AdminDashboard() {
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{order.attendeeName}</p>
                       <p className="text-sm text-muted-foreground truncate">
-                        {order.eventTitle[language] || order.eventTitle.en}
+                        {getLocalizedText(order.eventTitle, language)}
                       </p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
@@ -173,10 +174,10 @@ export default function AdminDashboard() {
                     />
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">
-                        {language === "ar" ? event.title.ar : event.title.en}
+                        {getLocalizedText(event.title, language, event.slug)}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {event.date} • {language === "ar" ? event.venue.city.ar : event.venue.city.en}
+                        {event.date} • {getLocalizedText(event.venue.city, language)}
                       </p>
                     </div>
                   </div>

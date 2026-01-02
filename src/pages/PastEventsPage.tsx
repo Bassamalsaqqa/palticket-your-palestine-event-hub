@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useLanguage } from "@/i18n";
+import { getLocalizedText } from "@/i18n/localize";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users } from "lucide-react";
@@ -72,7 +73,7 @@ export default function PastEventsPage() {
               <div className="aspect-video relative">
                 <img
                   src={event.images[0]}
-                  alt={language === "ar" ? event.title.ar : event.title.en}
+                  alt={getLocalizedText(event.title, language)}
                   className="w-full h-full object-cover"
                 />
                 <Badge className="absolute top-3 ltr:right-3 rtl:left-3" variant="secondary">
@@ -81,7 +82,7 @@ export default function PastEventsPage() {
               </div>
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-2 line-clamp-1">
-                  {language === "ar" ? event.title.ar : event.title.en}
+                  {getLocalizedText(event.title, language)}
                 </h3>
                 <div className="space-y-1 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
@@ -90,7 +91,7 @@ export default function PastEventsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    <span>{language === "ar" ? event.venue.city.ar : event.venue.city.en}</span>
+                    <span>{getLocalizedText(event.venue.city, language)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4" />

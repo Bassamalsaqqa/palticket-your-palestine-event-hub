@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLanguage } from "@/i18n";
+import { getLocalizedText } from "@/i18n/localize";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -184,7 +185,7 @@ export default function AdminTicketTypes() {
                       <SelectContent>
                         {events.map((event) => (
                           <SelectItem key={event.id} value={event.id}>
-                            {language === "ar" ? event.title.ar : event.title.en}
+                            {getLocalizedText(event.title, language, event.slug)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -252,7 +253,7 @@ export default function AdminTicketTypes() {
                   {ticketTypes.map((type) => {
                     const event = events.find((e) => e.id === (type as { eventId?: string }).eventId);
                     const eventTitle = event 
-                      ? (language === "ar" ? event.title.ar : event.title.en)
+                      ? getLocalizedText(event.title, language, event.slug)
                       : (type as { eventId?: string }).eventId || "-";
 
                     return (
@@ -314,7 +315,7 @@ export default function AdminTicketTypes() {
           <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Event</Label>
-              <Input value={events.find(e => e.id === editingTicketType?.eventId)?.title[language] || editingTicketType?.eventId || ""} disabled />
+              <Input value={getLocalizedText(events.find(e => e.id === editingTicketType?.eventId)?.title, language, editingTicketType?.eventId || "")} disabled />
             </div>
 
             <div className="space-y-2">

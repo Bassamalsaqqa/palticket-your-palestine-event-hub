@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/i18n";
@@ -35,13 +35,20 @@ type LocationState = {
 
 export default function SignupPage() {
   const { language, t } = useLanguage();
-  const { signup, isLoading } = useAuth();
+  const { signup, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState | null;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const baseUrl = "https://palticket.com";
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = state?.from?.pathname || `/${language}/account`;
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, language, state]);
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -64,8 +71,6 @@ export default function SignupPage() {
     });
     if (result.success) {
       toast.success(t.auth.signupSuccess);
-      const from = state?.from?.pathname || `/${language}/account`;
-      navigate(from, { replace: true });
     } else {
       toast.error(result.error || t.auth.signupError);
     }

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useLanguage } from "@/i18n";
+import { getLocalizedText } from "@/i18n/localize";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -241,7 +242,7 @@ export default function EventDetailPage() {
   const shareEvent = async () => {
     const url = `${window.location.origin}/${language}/events/${event.slug}`;
     if (navigator.share) {
-      await navigator.share({ title: event.title[language], url });
+      await navigator.share({ title: getLocalizedText(event.title, language), url });
     } else {
       await navigator.clipboard.writeText(url);
       toast({ title: t.account.linkCopied });
@@ -252,27 +253,27 @@ export default function EventDetailPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Event",
-    name: event.title[language],
-    description: event.description[language],
+    name: getLocalizedText(event.title, language),
+    description: getLocalizedText(event.description, language),
     startDate: `${event.date}T${event.time}:00`,
     endDate: event.endDate ? `${event.endDate}T23:59:00` : undefined,
     location: {
       "@type": "Place",
-      name: event.venue.name[language],
+      name: getLocalizedText(event.venue.name, language),
       address: {
         "@type": "PostalAddress",
-        streetAddress: event.venue.address[language],
-        addressLocality: event.venue.city[language],
+        streetAddress: getLocalizedText(event.venue.address, language),
+        addressLocality: getLocalizedText(event.venue.city, language),
         addressCountry: "PS",
       },
     },
     organizer: {
       "@type": "Organization",
-      name: event.organizer.name[language],
+      name: getLocalizedText(event.organizer.name, language),
     },
     offers: event.ticketTiers.map((tier) => ({
       "@type": "Offer",
-      name: tier.name[language],
+      name: getLocalizedText(tier.name, language),
       price: tier.price,
       priceCurrency: "ILS",
       availability: tier.available > 0 ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
@@ -283,13 +284,13 @@ export default function EventDetailPage() {
   return (
     <>
       <Helmet>
-        <title>{event.title[language]} | {t.appName}</title>
-        <meta name="description" content={event.description[language].substring(0, 160)} />
+        <title>{getLocalizedText(event.title, language)} | {t.appName}</title>
+        <meta name="description" content={getLocalizedText(event.description, language).substring(0, 160)} />
         <link rel="canonical" href={`https://palticket.com/${language}/events/${event.slug}`} />
         <link rel="alternate" hrefLang="en" href={`https://palticket.com/en/events/${event.slug}`} />
         <link rel="alternate" hrefLang="ar" href={`https://palticket.com/ar/events/${event.slug}`} />
-        <meta property="og:title" content={`${event.title[language]} | ${t.appName}`} />
-        <meta property="og:description" content={event.description[language].substring(0, 160)} />
+        <meta property="og:title" content={`${getLocalizedText(event.title, language)} | ${t.appName}`} />
+        <meta property="og:description" content={getLocalizedText(event.description, language).substring(0, 160)} />
         <meta property="og:image" content={event.images[0]} />
         <meta property="og:type" content="event" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -313,7 +314,7 @@ export default function EventDetailPage() {
                     <div className="relative aspect-[16/10] lg:aspect-[4/3] rounded-xl overflow-hidden group">
                       <img
                         src={event.images[currentImageIndex]}
-                        alt={event.title[language]}
+                        alt={getLocalizedText(event.title, language)}
                         className="w-full h-full object-cover transition-transform duration-500"
                       />
                       <button
@@ -367,15 +368,15 @@ export default function EventDetailPage() {
                   <div className="lg:col-span-2 space-y-8">
                     <div>
                       <div className="flex flex-wrap items-center gap-3 mb-4">
-                        <Badge variant="secondary">{category?.name[language]}</Badge>
+                        <Badge variant="secondary">{getLocalizedText(category?.name, language, category?.slug || "Event")}</Badge>
                         <Badge variant="outline" className="text-green-600 border-green-600">
-                          {event.status === "upcoming" ? (language === "ar" ? "قادم" : "Upcoming") : event.status}
+                          {event.status === "upcoming" ? t.event.status_upcoming : event.status}
                         </Badge>
                       </div>
-                      <h1 className="text-3xl md:text-4xl font-bold mb-4">{event.title[language]}</h1>
+                      <h1 className="text-3xl md:text-4xl font-bold mb-4">{getLocalizedText(event.title, language, event.slug)}</h1>
                       <p className="text-muted-foreground flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        {t.event.organizer}: <span className="text-foreground">{event.organizer.name[language]}</span>
+                        {t.event.organizer}: <span className="text-foreground">{getLocalizedText(event.organizer.name, language)}</span>
                       </p>
                     </div>
 
@@ -410,8 +411,8 @@ export default function EventDetailPage() {
                           </div>
                           <div>
                             <p className="font-semibold">{t.event.venue}</p>
-                            <p className="text-muted-foreground">{event.venue.name[language]}</p>
-                            <p className="text-muted-foreground">{event.venue.city[language]}</p>
+                            <p className="text-muted-foreground">{getLocalizedText(event.venue.name, language)}</p>
+                            <p className="text-muted-foreground">{getLocalizedText(event.venue.city, language)}</p>
                           </div>
                         </CardContent>
                       </Card>
@@ -422,14 +423,14 @@ export default function EventDetailPage() {
                       <div className="aspect-[21/9] bg-muted flex items-center justify-center relative">
                         <div className="text-center text-muted-foreground">
                           <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p>{event.venue.address[language]}, {event.venue.city[language]}</p>
+                          <p>{getLocalizedText(event.venue.address, language)}, {getLocalizedText(event.venue.city, language)}</p>
                           <Button variant="link" className="mt-2" asChild>
                             <a 
-                              href={`https://maps.google.com/?q=${encodeURIComponent(event.venue.name.en + ", " + event.venue.city.en)}`}
+                              href={`https://maps.google.com/?q=${encodeURIComponent(getLocalizedText(event.venue.name, "en") + ", " + getLocalizedText(event.venue.city, "en"))}`}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              {language === "ar" ? "فتح في الخرائط" : "Open in Maps"}
+                              {t.event.openInMaps}
                               <ExternalLink className="h-4 w-4 ltr:ml-1 rtl:mr-1" />
                             </a>
                           </Button>
@@ -440,7 +441,7 @@ export default function EventDetailPage() {
                     {/* Description */}
                     <div>
                       <h2 className="text-xl font-semibold mb-4">{t.event.about}</h2>
-                      <p className="text-muted-foreground leading-relaxed">{event.description[language]}</p>
+                      <p className="text-muted-foreground leading-relaxed">{getLocalizedText(event.description, language)}</p>
                     </div>
 
                     {/* Ticket Tiers Table */}
@@ -450,9 +451,9 @@ export default function EventDetailPage() {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>{language === "ar" ? "نوع التذكرة" : "Ticket Type"}</TableHead>
-                              <TableHead>{language === "ar" ? "السعر" : "Price"}</TableHead>
-                              <TableHead>{language === "ar" ? "المتاح" : "Available"}</TableHead>
+                              <TableHead>{t.event.ticketType}</TableHead>
+                              <TableHead>{t.event.price}</TableHead>
+                              <TableHead>{t.event.available_header}</TableHead>
                               <TableHead className="text-center">{t.event.quantity}</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -461,9 +462,9 @@ export default function EventDetailPage() {
                               <TableRow key={tier.id}>
                                 <TableCell>
                                   <div>
-                                    <p className="font-medium">{tier.name[language]}</p>
+                                    <p className="font-medium">{getLocalizedText(tier.name, language)}</p>
                                     {tier.description && (
-                                      <p className="text-sm text-muted-foreground">{tier.description[language]}</p>
+                                      <p className="text-sm text-muted-foreground">{getLocalizedText(tier.description, language)}</p>
                                     )}
                                   </div>
                                 </TableCell>
@@ -524,7 +525,7 @@ export default function EventDetailPage() {
                                 if (!tier) return null;
                                 return (
                                   <div key={sel.tierId} className="flex justify-between text-sm">
-                                    <span>{tier.name[language]} × {sel.quantity}</span>
+                                    <span>{getLocalizedText(tier.name, language)} × {sel.quantity}</span>
                                     <span>{tier.price * sel.quantity} {t.common.currency}</span>
                                   </div>
                                 );
@@ -602,7 +603,7 @@ export default function EventDetailPage() {
                             id="name"
                             value={attendeeInfo.name}
                             onChange={(e) => setAttendeeInfo({ ...attendeeInfo, name: e.target.value })}
-                            placeholder={language === "ar" ? "أدخل اسمك الكامل" : "Enter your full name"}
+                            placeholder={t.checkout.placeholders.name}
                             className="ltr:pl-9 rtl:pr-9"
                           />
                         </div>
@@ -618,7 +619,7 @@ export default function EventDetailPage() {
                             type="email"
                             value={attendeeInfo.email}
                             onChange={(e) => setAttendeeInfo({ ...attendeeInfo, email: e.target.value })}
-                            placeholder={language === "ar" ? "أدخل بريدك الإلكتروني" : "Enter your email"}
+                            placeholder={t.checkout.placeholders.email}
                             className="ltr:pl-9 rtl:pr-9"
                           />
                         </div>
@@ -634,7 +635,7 @@ export default function EventDetailPage() {
                             type="tel"
                             value={attendeeInfo.phone}
                             onChange={(e) => setAttendeeInfo({ ...attendeeInfo, phone: e.target.value })}
-                            placeholder={language === "ar" ? "أدخل رقم هاتفك" : "Enter your phone number"}
+                            placeholder={t.checkout.placeholders.phone}
                             className="ltr:pl-9 rtl:pr-9"
                           />
                         </div>
@@ -652,9 +653,9 @@ export default function EventDetailPage() {
                       <div className="flex items-center gap-4">
                         <img src={event.images[0]} alt="" className="w-20 h-14 object-cover rounded-lg" />
                         <div>
-                          <p className="font-semibold">{event.title[language]}</p>
+                          <p className="font-semibold">{getLocalizedText(event.title, language)}</p>
                           <p className="text-sm text-muted-foreground">
-                            {new Date(event.date).toLocaleDateString(language === "ar" ? "ar-PS" : "en-US")} • {event.venue.city[language]}
+                            {new Date(event.date).toLocaleDateString(language === "ar" ? "ar-PS" : "en-US")} • {getLocalizedText(event.venue.city, language)}
                           </p>
                         </div>
                       </div>
@@ -664,7 +665,7 @@ export default function EventDetailPage() {
                         if (!tier) return null;
                         return (
                           <div key={sel.tierId} className="flex justify-between">
-                            <span>{tier.name[language]} × {sel.quantity}</span>
+                            <span>{getLocalizedText(tier.name, language)} × {sel.quantity}</span>
                             <span>{tier.price * sel.quantity} {t.common.currency}</span>
                           </div>
                         );
@@ -716,7 +717,7 @@ export default function EventDetailPage() {
 
                 <Card className="mb-6">
                   <CardContent className="p-6">
-                    <p className="text-sm text-muted-foreground mb-2">{language === "ar" ? "رقم الطلب" : "Order Number"}</p>
+                    <p className="text-sm text-muted-foreground mb-2">{t.account.orderNumber}</p>
                     <p className="font-mono font-bold text-lg mb-6">{orderNumber}</p>
 
                     <div className="bg-background p-4 rounded-xl inline-block mb-4">
@@ -730,7 +731,7 @@ export default function EventDetailPage() {
                     </div>
 
                     <p className="text-sm text-muted-foreground">
-                      {event.title[language]}
+                      {getLocalizedText(event.title, language)}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {new Date(event.date).toLocaleDateString(language === "ar" ? "ar-PS" : "en-US")} • {event.time}

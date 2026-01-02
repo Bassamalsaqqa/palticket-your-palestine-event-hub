@@ -48,8 +48,8 @@ export default function AcceptInvitePage() {
       setOrgName(result.organization.name);
       setStatus("success");
       toast.success(`${t.admin.successfullyJoined} ${result.organization.name}`);
-    } catch (err: any) {
-      const msg = err.message || t.admin.failedToAcceptInvite;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : t.admin.failedToAcceptInvite;
       setError(msg);
       setStatus("error");
       toast.error(msg);

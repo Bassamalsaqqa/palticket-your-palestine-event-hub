@@ -7,8 +7,8 @@ export interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   isStaff: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signup: (data: { email: string; password: string; firstName: string; lastName: string }) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string, remember?: boolean) => Promise<{ success: boolean; error?: string }>;
+  signup: (data: { email: string; password: string; firstName: string; lastName: string }, remember?: boolean) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   updateProfile: (data: Partial<MockUser>) => void;
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLanguage } from "@/i18n";
+import { getLocalizedText } from "@/i18n/localize";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -157,7 +158,7 @@ export default function AdminGates() {
                       <SelectTrigger><SelectValue placeholder="Select an event" /></SelectTrigger>
                       <SelectContent>
                         {events.map((event) => (
-                          <SelectItem key={event.id} value={event.id}>{language === "ar" ? event.title.ar : event.title.en}</SelectItem>
+                          <SelectItem key={event.id} value={event.id}>{getLocalizedText(event.title, language, event.slug)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -200,7 +201,7 @@ export default function AdminGates() {
                 <TableBody>
                   {gates.map((gate) => {
                     const event = events.find(e => e.id === gate.eventId);
-                    const eventTitle = event ? (language === "ar" ? event.title.ar : event.title.en) : gate.eventId;
+                    const eventTitle = event ? getLocalizedText(event.title, language, event.slug) : gate.eventId;
                     return (
                       <TableRow key={gate.id}>
                         <TableCell><div className="flex items-center gap-2"><DoorOpen className="h-4 w-4 text-muted-foreground" /><span className="font-medium">{gate.name}</span></div></TableCell>
@@ -239,7 +240,7 @@ export default function AdminGates() {
                     <SelectTrigger><SelectValue placeholder="Select an event" /></SelectTrigger>
                     <SelectContent>
                       {events.map((event) => (
-                        <SelectItem key={event.id} value={event.id}>{language === "ar" ? event.title.ar : event.title.en}</SelectItem>
+                        <SelectItem key={event.id} value={event.id}>{getLocalizedText(event.title, language, event.slug)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

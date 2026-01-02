@@ -1,4 +1,5 @@
 import { useLanguage } from "@/i18n";
+import { getLocalizedText } from "@/i18n/localize";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -113,7 +114,7 @@ export default function AdminExports() {
                   <SelectItem value="all">{t.admin.allEvents}</SelectItem>
                   {events.map((event) => (
                     <SelectItem key={event.id} value={event.id}>
-                      {language === "ar" ? event.title.ar : event.title.en}
+                      {getLocalizedText(event.title, language, event.slug)}
                     </SelectItem>
                   ))}
                 </SelectContent>

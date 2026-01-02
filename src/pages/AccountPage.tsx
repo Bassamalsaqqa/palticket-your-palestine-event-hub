@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
-import { Link, useLocation, Navigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useLanguage } from "@/i18n";
+import { getLocalizedText } from "@/i18n/localize";
 import { useAuth } from "@/contexts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -36,7 +37,7 @@ import {
 
 export default function AccountPage() {
   const { language, t, isRTL } = useLanguage();
-  const { user, isAuthenticated, logout, updateProfile } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
   const location = useLocation();
   const baseUrl = "https://palticket.com";
   const dateLocale = language === "ar" ? ar : enUS;
@@ -55,10 +56,6 @@ export default function AccountPage() {
 
   // Get active tab from URL or default to profile
   const hash = location.hash.replace("#", "") || "profile";
-
-  if (!isAuthenticated) {
-    return <Navigate to={`/${language}/login`} replace />;
-  }
 
   const handleDownloadQR = (ticketNumber: string, qrCode: string) => {
     const canvas = document.createElement("canvas");
@@ -214,7 +211,7 @@ export default function AccountPage() {
                                   to={`/${language}/events/${order.eventSlug}`}
                                   className="font-semibold hover:underline"
                                 >
-                                  {language === "ar" ? order.eventTitle.ar : order.eventTitle.en}
+                                  {getLocalizedText(order.eventTitle, language)}
                                 </Link>
                                 <p className="text-sm text-muted-foreground mt-1">
                                   {t.account.orderNumber}: {order.orderNumber}
@@ -231,7 +228,7 @@ export default function AccountPage() {
                               </span>
                               <span className="flex items-center gap-1">
                                 <MapPin className="h-4 w-4" />
-                                {language === "ar" ? order.eventVenue.ar : order.eventVenue.en}
+                                {getLocalizedText(order.eventVenue, language)}
                               </span>
                             </div>
                             <div className="flex items-center justify-between mt-4">
@@ -290,10 +287,10 @@ export default function AccountPage() {
                             to={`/${language}/events/${ticket.eventSlug}`}
                             className="font-semibold hover:underline"
                           >
-                            {language === "ar" ? ticket.eventTitle.ar : ticket.eventTitle.en}
+                            {getLocalizedText(ticket.eventTitle, language)}
                           </Link>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {language === "ar" ? ticket.tierName.ar : ticket.tierName.en} • {ticket.attendeeName}
+                            {getLocalizedText(ticket.tierName, language)} • {ticket.attendeeName}
                           </p>
                           <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                             <Calendar className="h-4 w-4" />
@@ -301,7 +298,7 @@ export default function AccountPage() {
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <MapPin className="h-4 w-4" />
-                            {language === "ar" ? ticket.eventVenue.ar : ticket.eventVenue.en}
+                            {getLocalizedText(ticket.eventVenue, language)}
                           </div>
 
                           <Separator className="my-4" />
@@ -388,7 +385,7 @@ export default function AccountPage() {
                       <p className="font-medium">{t.account.language}</p>
                       <p className="text-sm text-muted-foreground">{t.account.languageDesc}</p>
                     </div>
-                    <Badge variant="secondary">{language === "ar" ? "العربية" : "English"}</Badge>
+                    <Badge variant="secondary">{language === "ar" ? t.languages.ar : t.languages.en}</Badge>
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">

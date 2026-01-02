@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
 import { useLanguage } from "@/i18n";
+import { getLocalizedText } from "@/i18n/localize";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -398,7 +399,7 @@ export default function ScannerPage() {
                       <SelectTrigger className="h-12"><SelectValue placeholder={t.scanner.selectEvent} /></SelectTrigger>
                       <SelectContent>
                         {events.map((event) => (
-                          <SelectItem key={event.id} value={event.id}>{language === "ar" ? event.title.ar : event.title.en}</SelectItem>
+                          <SelectItem key={event.id} value={event.id}>{getLocalizedText(event.title, language, event.slug)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -416,7 +417,7 @@ export default function ScannerPage() {
                       <DoorOpen className="h-8 w-8 text-primary" />
                     </div>
                     <CardTitle>{t.scanner.selectGate}</CardTitle>
-                    <CardDescription>{selectedEventData && <span className="text-primary font-medium">{language === "ar" ? selectedEventData.title.ar : selectedEventData.title.en}</span>}</CardDescription>
+                    <CardDescription>{selectedEventData && <span className="text-primary font-medium">{getLocalizedText(selectedEventData.title, language, selectedEventData.slug)}</span>}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <Select value={selectedGate} onValueChange={setSelectedGate}>
@@ -438,7 +439,7 @@ export default function ScannerPage() {
                 <Card className="bg-muted/50">
                   <CardContent className="py-3 flex items-center justify-between">
                     <div className="flex flex-col min-w-0">
-                      <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{selectedEventData && (language === "ar" ? selectedEventData.title.ar : selectedEventData.title.en)}</span>
+                      <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{selectedEventData && getLocalizedText(selectedEventData.title, language, selectedEventData.slug)}</span>
                       <span className="text-sm font-medium">{currentGate?.name}</span>
                     </div>
                     <Badge variant={cameraStatus === "active" ? "default" : "destructive"} className="shrink-0 capitalize">

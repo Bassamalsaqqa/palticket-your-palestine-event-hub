@@ -25,7 +25,7 @@ import AccountPage from "./pages/AccountPage";
 import ScannerPage from "./pages/ScannerPage";
 import AcceptInvitePage from "./pages/AcceptInvitePage";
 import NotFound from "./pages/NotFound";
-import { RequireAdmin, RequireStaff } from "@/components/RouteGuards";
+import { RequireAdmin, RequireStaff, RequireAuth } from "@/components/RouteGuards";
 import {
   AdminDashboard,
   AdminEvents,
@@ -41,118 +41,133 @@ import {
   AdminSettings,
 } from "./pages/admin";
 
+import { useLanguage } from "@/i18n";
+
 const queryClient = new QueryClient();
+
+const AppInternal = () => {
+  const { language, t } = useLanguage();
+  
+  return (
+    <TooltipProvider>
+      <Helmet>
+        <title>{t.appTitle}</title>
+        <meta name="theme-color" content="hsl(40, 33%, 98%)" />
+        <meta name="description" content={t.appDescription} />
+        <meta property="og:title" content={t.appTitle} />
+        <meta property="og:description" content={t.appDescription} />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <link rel="alternate" hrefLang="en" href="/en" />
+        <link rel="alternate" hrefLang="ar" href="/ar" />
+      </Helmet>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to={`/${language}`} replace />} />
+          
+          {/* English Routes */}
+          <Route path="/en" element={<PublicLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="discover" element={<DiscoverPage />} />
+            <Route path="events/:slug" element={<EventDetailPage />} />
+            <Route path="about" element={<AboutPage />} />
+            <Route path="contact" element={<ContactPage />} />
+            <Route path="faq" element={<FAQPage />} />
+            <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="terms" element={<TermsPage />} />
+            <Route path="design-guidelines" element={<DesignGuidelinesPage />} />
+            <Route path="partner" element={<PartnerPage />} />
+            <Route path="past-events" element={<PastEventsPage />} />
+            <Route path="login" element={<LoginPage />} />
+            <Route path="signup" element={<SignupPage />} />
+            <Route element={<RequireAuth />}>
+              <Route path="account" element={<AccountPage />} />
+            </Route>
+            <Route path="accept-invite" element={<AcceptInvitePage />} />
+          </Route>
+
+          {/* English Scanner Route */}
+          <Route element={<RequireStaff />}>
+            <Route path="/en/scan" element={<ScannerPage />} />
+          </Route>
+
+          {/* English Admin Routes */}
+          <Route element={<RequireAdmin />}>
+            <Route path="/en/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="events" element={<AdminEvents />} />
+            <Route path="ticket-types" element={<AdminTicketTypes />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="tickets" element={<AdminTickets />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="roles" element={<AdminRoles />} />
+            <Route path="gates" element={<AdminGates />} />
+            <Route path="staff" element={<AdminStaff />} />
+            <Route path="exports" element={<AdminExports />} />
+            <Route path="audit-logs" element={<AdminAuditLogs />} />
+            <Route path="settings" element={<AdminSettings />} />
+            </Route>
+          </Route>
+          
+          {/* Arabic Routes */}
+          <Route path="/ar" element={<PublicLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="discover" element={<DiscoverPage />} />
+            <Route path="events/:slug" element={<EventDetailPage />} />
+            <Route path="about" element={<AboutPage />} />
+            <Route path="contact" element={<ContactPage />} />
+            <Route path="faq" element={<FAQPage />} />
+            <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="terms" element={<TermsPage />} />
+            <Route path="design-guidelines" element={<DesignGuidelinesPage />} />
+            <Route path="partner" element={<PartnerPage />} />
+            <Route path="past-events" element={<PastEventsPage />} />
+            <Route path="login" element={<LoginPage />} />
+            <Route path="signup" element={<SignupPage />} />
+            <Route element={<RequireAuth />}>
+              <Route path="account" element={<AccountPage />} />
+            </Route>
+            <Route path="accept-invite" element={<AcceptInvitePage />} />
+          </Route>
+
+          {/* Arabic Scanner Route */}
+          <Route element={<RequireStaff />}>
+            <Route path="/ar/scan" element={<ScannerPage />} />
+          </Route>
+
+          {/* Arabic Admin Routes */}
+          <Route element={<RequireAdmin />}>
+            <Route path="/ar/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="events" element={<AdminEvents />} />
+            <Route path="ticket-types" element={<AdminTicketTypes />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="tickets" element={<AdminTickets />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="roles" element={<AdminRoles />} />
+            <Route path="gates" element={<AdminGates />} />
+            <Route path="staff" element={<AdminStaff />} />
+            <Route path="exports" element={<AdminExports />} />
+            <Route path="audit-logs" element={<AdminAuditLogs />} />
+            <Route path="settings" element={<AdminSettings />} />
+            </Route>
+          </Route>
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
       <LanguageProvider>
         <AuthProvider>
-          <TooltipProvider>
-            <Helmet>
-              <meta name="theme-color" content="hsl(40, 33%, 98%)" />
-              <meta name="description" content="PalTicket - Your Gateway to Unforgettable Events in Palestine. Discover and book tickets to concerts, festivals, sports, and cultural events." />
-              <meta property="og:title" content="PalTicket - تذاكر فلسطين" />
-              <meta property="og:description" content="Discover and book tickets to the most exciting events across Palestine." />
-              <meta property="og:type" content="website" />
-              <meta name="twitter:card" content="summary_large_image" />
-              <link rel="alternate" hrefLang="en" href="/en" />
-              <link rel="alternate" hrefLang="ar" href="/ar" />
-            </Helmet>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Navigate to="/en" replace />} />
-                
-                {/* English Routes */}
-                <Route path="/en" element={<PublicLayout />}>
-                  <Route index element={<HomePage />} />
-                  <Route path="discover" element={<DiscoverPage />} />
-                  <Route path="events/:slug" element={<EventDetailPage />} />
-                  <Route path="about" element={<AboutPage />} />
-                  <Route path="contact" element={<ContactPage />} />
-                  <Route path="faq" element={<FAQPage />} />
-                  <Route path="privacy" element={<PrivacyPage />} />
-                  <Route path="terms" element={<TermsPage />} />
-                  <Route path="design-guidelines" element={<DesignGuidelinesPage />} />
-                  <Route path="partner" element={<PartnerPage />} />
-                  <Route path="past-events" element={<PastEventsPage />} />
-                  <Route path="login" element={<LoginPage />} />
-                  <Route path="signup" element={<SignupPage />} />
-                  <Route path="account" element={<AccountPage />} />
-                  <Route path="accept-invite" element={<AcceptInvitePage />} />
-                </Route>
-
-                {/* English Scanner Route */}
-                <Route element={<RequireStaff />}>
-                  <Route path="/en/scan" element={<ScannerPage />} />
-                </Route>
-
-                {/* English Admin Routes */}
-                <Route element={<RequireAdmin />}>
-                  <Route path="/en/admin" element={<AdminLayout />}>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="events" element={<AdminEvents />} />
-                  <Route path="ticket-types" element={<AdminTicketTypes />} />
-                  <Route path="orders" element={<AdminOrders />} />
-                  <Route path="tickets" element={<AdminTickets />} />
-                  <Route path="users" element={<AdminUsers />} />
-                  <Route path="roles" element={<AdminRoles />} />
-                  <Route path="gates" element={<AdminGates />} />
-                  <Route path="staff" element={<AdminStaff />} />
-                  <Route path="exports" element={<AdminExports />} />
-                  <Route path="audit-logs" element={<AdminAuditLogs />} />
-                  <Route path="settings" element={<AdminSettings />} />
-                  </Route>
-                </Route>
-                
-                {/* Arabic Routes */}
-                <Route path="/ar" element={<PublicLayout />}>
-                  <Route index element={<HomePage />} />
-                  <Route path="discover" element={<DiscoverPage />} />
-                  <Route path="events/:slug" element={<EventDetailPage />} />
-                  <Route path="about" element={<AboutPage />} />
-                  <Route path="contact" element={<ContactPage />} />
-                  <Route path="faq" element={<FAQPage />} />
-                  <Route path="privacy" element={<PrivacyPage />} />
-                  <Route path="terms" element={<TermsPage />} />
-                  <Route path="design-guidelines" element={<DesignGuidelinesPage />} />
-                  <Route path="partner" element={<PartnerPage />} />
-                  <Route path="past-events" element={<PastEventsPage />} />
-                  <Route path="login" element={<LoginPage />} />
-                  <Route path="signup" element={<SignupPage />} />
-                  <Route path="account" element={<AccountPage />} />
-                  <Route path="accept-invite" element={<AcceptInvitePage />} />
-                </Route>
-
-                {/* Arabic Scanner Route */}
-                <Route element={<RequireStaff />}>
-                  <Route path="/ar/scan" element={<ScannerPage />} />
-                </Route>
-
-                {/* Arabic Admin Routes */}
-                <Route element={<RequireAdmin />}>
-                  <Route path="/ar/admin" element={<AdminLayout />}>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="events" element={<AdminEvents />} />
-                  <Route path="ticket-types" element={<AdminTicketTypes />} />
-                  <Route path="orders" element={<AdminOrders />} />
-                  <Route path="tickets" element={<AdminTickets />} />
-                  <Route path="users" element={<AdminUsers />} />
-                  <Route path="roles" element={<AdminRoles />} />
-                  <Route path="gates" element={<AdminGates />} />
-                  <Route path="staff" element={<AdminStaff />} />
-                  <Route path="exports" element={<AdminExports />} />
-                  <Route path="audit-logs" element={<AdminAuditLogs />} />
-                  <Route path="settings" element={<AdminSettings />} />
-                  </Route>
-                </Route>
-
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
+          <AppInternal />
         </AuthProvider>
       </LanguageProvider>
     </HelmetProvider>

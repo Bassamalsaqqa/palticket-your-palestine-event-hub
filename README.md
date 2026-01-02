@@ -39,7 +39,10 @@ To connect the UI to the backend APIs, set the following environment variables b
 - `VITE_ORGANIZATION_ID` (tenant org UUID; required for org-scoped endpoints)
 
 Invite acceptance uses `/accept-invite?token=...` and only requires `VITE_API_BASE_URL` + `VITE_API_TOKEN` (no organization ID).
-Mock content in `src/data/mockEvents.ts` is generated from `public/English.json` and `public/Arabic.json` for local-only development.
+Mock content in `src/data/mockEvents.ts` is generated from `public/English.json` and `public/Arabic.json` for local-only development. 
+Note: If you update the JSON source files, you must manually regenerate `mockEvents.ts` or ensure the mapping logic in `eventsService.ts` is updated. 
+Avoid hand-editing `src/data/mockEvents.ts` directly to prevent inconsistency. 
+The getLocalizedText helper in `src/i19n/localize.ts` is the preferred path for localized UI display.
 
 ### Backend Installation
 The backend is located in `/backend`.

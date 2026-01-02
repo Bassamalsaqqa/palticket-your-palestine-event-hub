@@ -155,15 +155,20 @@ const mapEvent = (event: ApiEvent, lang: "en" | "ar", ticketTiers: TicketTier[] 
 };
 
 const fetchTicketTiers = async (eventId: string): Promise<TicketTier[]> => {
+  const config = getApiConfig();
+  if (!config) {
+    const mockEvent = mockEvents.find((e) => e.id === eventId);
+    return mockEvent?.ticketTiers || [];
+  }
+  
   try {
-    const config = getApiConfig();
-    if (!config) return [];
     const tickets = await apiFetch<ApiTicketType[]>(
       `/ticket-types?eventId=${encodeURIComponent(eventId)}&skip=0&take=100`,
     );
     return tickets.map(mapTicketTier);
   } catch {
-    return [];
+    const mockEvent = mockEvents.find((e) => e.id === eventId);
+    return mockEvent?.ticketTiers || [];
   }
 };
 

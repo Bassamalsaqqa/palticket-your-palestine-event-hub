@@ -2,7 +2,26 @@ export const translations = {
   en: {
     // Brand
     appName: "PalTicket",
+    appTitle: "PalTicket | Your Gateway to Unforgettable Events in Palestine",
+    appDescription: "Discover and book tickets to the most exciting events across Palestine. Concerts, festivals, sports, cultural events and more.",
     tagline: "Your Gateway to Unforgettable Events",
+
+    roleNames: {
+      admin: "Admin",
+      staff: "Staff",
+    },
+
+    permissions: {
+      events_manage: "Manage Events",
+      tickets_view: "View Tickets",
+      tickets_checkin: "Check-in Tickets",
+      orders_view: "View Orders",
+      orders_manage: "Manage Orders",
+      users_view: "View Users",
+      users_manage: "Manage Users",
+      exports_create: "Create Exports",
+      scanner_use: "Use Scanner",
+    },
     
     // Navigation
     nav: {
@@ -17,6 +36,11 @@ export const translations = {
       account: "My Account",
       admin: "Admin",
       scanner: "Scanner",
+    },
+
+    languages: {
+      en: "English",
+      ar: "العربية",
     },
     
     // Home
@@ -51,6 +75,7 @@ export const translations = {
     // Discover
     discover: {
       title: "Discover Events",
+      metaDescription: "Discover and book tickets to the most exciting events in Palestine. Browse concerts, festivals, sports, and cultural events.",
       filters: "Filters",
       clearFilters: "Clear Filters",
       dateRange: "Date Range",
@@ -90,6 +115,11 @@ export const translations = {
       startingAt: "Starting at",
       shareEvent: "Share Event",
       relatedEvents: "You May Also Like",
+      status_upcoming: "Upcoming",
+      openInMaps: "Open in Maps",
+      ticketType: "Ticket Type",
+      price: "Price",
+      available_header: "Available",
       ticketTiers: {
         vip: "VIP",
         regular: "Regular",
@@ -105,6 +135,11 @@ export const translations = {
       name: "Full Name",
       email: "Email Address",
       phone: "Phone Number",
+      placeholders: {
+        name: "Enter your full name",
+        email: "Enter your email",
+        phone: "Enter your phone number",
+      },
       subtotal: "Subtotal",
       serviceFee: "Service Fee",
       total: "Total",
@@ -133,6 +168,7 @@ export const translations = {
       password: "Password",
       confirmPassword: "Confirm Password",
       passwordPlaceholder: "••••••••",
+      rememberMe: "Remember me",
       forgotPassword: "Forgot Password?",
       noAccount: "Don't have an account?",
       hasAccount: "Already have an account?",
@@ -691,8 +727,32 @@ export const translations = {
   ar: {
     // Brand
     appName: "تذاكر فلسطين",
+    appTitle: "تذاكر فلسطين | بوابتك للفعاليات المميزة في فلسطين",
+    appDescription: "اكتشف واحجز تذاكر لأبرز الفعاليات في فلسطين. حفلات، مهرجانات، رياضة، فعاليات ثقافية والمزيد.",
     tagline: "بوابتك إلى فعاليات لا تُنسى",
+
+    roleNames: {
+      admin: "مسؤول",
+      staff: "طاقم عمل",
+    },
+
+    permissions: {
+      events_manage: "إدارة الفعاليات",
+      tickets_view: "عرض التذاكر",
+      tickets_checkin: "تسجيل دخول التذاكر",
+      orders_view: "عرض الطلبات",
+      orders_manage: "إدارة الطلبات",
+      users_view: "عرض المستخدمين",
+      users_manage: "إدارة المستخدمين",
+      exports_create: "إنشاء التصديرات",
+      scanner_use: "استخدام الماسح",
+    },
     
+    languages: {
+      en: "English",
+      ar: "العربية",
+    },
+
     // Navigation
     nav: {
       home: "الرئيسية",
@@ -740,6 +800,7 @@ export const translations = {
     // Discover
     discover: {
       title: "اكتشف الفعاليات",
+      metaDescription: "اكتشف واحجز تذاكر لأبرز الفعاليات في فلسطين. تصفح الحفلات والمهرجانات والرياضة والفعاليات الثقافية.",
       filters: "الفلاتر",
       clearFilters: "مسح الفلاتر",
       dateRange: "نطاق التاريخ",
@@ -779,6 +840,11 @@ export const translations = {
       startingAt: "تبدأ من",
       shareEvent: "شارك الفعالية",
       relatedEvents: "قد يعجبك أيضاً",
+      status_upcoming: "قادم",
+      openInMaps: "فتح في الخرائط",
+      ticketType: "نوع التذكرة",
+      price: "السعر",
+      available_header: "المتاح",
       ticketTiers: {
         vip: "VIP",
         regular: "عادي",
@@ -794,6 +860,11 @@ export const translations = {
       name: "الاسم الكامل",
       email: "البريد الإلكتروني",
       phone: "رقم الهاتف",
+      placeholders: {
+        name: "أدخل اسمك الكامل",
+        email: "أدخل بريدك الإلكتروني",
+        phone: "أدخل رقم هاتفك",
+      },
       subtotal: "المجموع الفرعي",
       serviceFee: "رسوم الخدمة",
       total: "المجموع",
@@ -822,6 +893,7 @@ export const translations = {
       password: "كلمة المرور",
       confirmPassword: "تأكيد كلمة المرور",
       passwordPlaceholder: "••••••••",
+      rememberMe: "تذكرني",
       forgotPassword: "نسيت كلمة المرور؟",
       noAccount: "ليس لديك حساب؟",
       hasAccount: "لديك حساب بالفعل؟",

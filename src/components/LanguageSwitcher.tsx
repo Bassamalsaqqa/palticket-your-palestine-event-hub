@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function LanguageSwitcher() {
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
 
   return (
     <DropdownMenu>
@@ -32,14 +32,14 @@ export function LanguageSwitcher() {
           className={language === "en" ? "bg-muted" : ""}
         >
           <span className="mr-2">🇬🇧</span>
-          English
+          {t.languages.en}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setLanguage("ar")}
           className={language === "ar" ? "bg-muted" : ""}
         >
           <span className="mr-2">🇵🇸</span>
-          العربية
+          {t.languages.ar}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

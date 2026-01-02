@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useLanguage } from "@/i18n";
+import { getLocalizedText } from "@/i18n/localize";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -175,7 +176,7 @@ export default function DiscoverPage() {
             <SelectItem value="all">{t.discover.allCategories}</SelectItem>
             {categories.map((cat) => (
               <SelectItem key={cat.id} value={cat.slug}>
-                {cat.name[language]}
+                {getLocalizedText(cat.name, language, cat.slug)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -196,7 +197,7 @@ export default function DiscoverPage() {
             <SelectItem value="all">{t.discover.allCities}</SelectItem>
             {cities.map((c) => (
               <SelectItem key={c.id} value={c.slug}>
-                {c.name[language]}
+                {getLocalizedText(c.name, language, c.slug)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -260,10 +261,7 @@ export default function DiscoverPage() {
         <title>{t.discover.title} | {t.appName}</title>
         <meta 
           name="description" 
-          content={language === "ar"
-            ? "\u0627\u0643\u062a\u0634\u0641 \u0648\u0627\u062d\u062c\u0632 \u062a\u0630\u0627\u0643\u0631 \u0644\u0623\u0628\u0631\u0632 \u0627\u0644\u0641\u0639\u0627\u0644\u064a\u0627\u062a \u0641\u064a \u0641\u0644\u0633\u0637\u064a\u0646. \u062a\u0635\u0641\u062d \u0627\u0644\u062d\u0641\u0644\u0627\u062a \u0648\u0627\u0644\u0645\u0647\u0631\u062c\u0627\u0646\u0627\u062a \u0648\u0627\u0644\u0631\u064a\u0627\u0636\u0629 \u0648\u0627\u0644\u0641\u0639\u0627\u0644\u064a\u0627\u062a \u0627\u0644\u062b\u0642\u0627\u0641\u064a\u0629."
-            : "Discover and book tickets to the most exciting events in Palestine. Browse concerts, festivals, sports, and cultural events."
-          }
+          content={t.discover.metaDescription}
         />
         <link rel="canonical" href={`https://palticket.com/${language}/discover`} />
         <link rel="alternate" hrefLang="en" href="https://palticket.com/en/discover" />
@@ -384,7 +382,7 @@ export default function DiscoverPage() {
                               <div className="aspect-[16/10] overflow-hidden relative">
                                 <img
                                   src={event.images[0]}
-                                  alt={event.title[language]}
+                                  alt={getLocalizedText(event.title, language)}
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                   loading="lazy"
                                 />
@@ -393,12 +391,12 @@ export default function DiscoverPage() {
                                   className="absolute top-3 ltr:left-3 rtl:right-3 bg-background/90 backdrop-blur-sm group-hover:bg-primary-foreground/20 group-hover:text-primary-foreground"
                                 >
                                   <IconComponent className="h-3 w-3 ltr:mr-1 rtl:ml-1" />
-                                  {categoryData?.name[language]}
+                                  {getLocalizedText(categoryData?.name, language, "Category")}
                                 </Badge>
                               </div>
                               <CardContent className="p-5">
                                 <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary-foreground">
-                                  {event.title[language]}
+                                  {getLocalizedText(event.title, language)}
                                 </h3>
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground group-hover:text-primary-foreground/70">
                                   <span className="flex items-center gap-1">
@@ -410,7 +408,7 @@ export default function DiscoverPage() {
                                   </span>
                                   <span className="flex items-center gap-1">
                                     <MapPin className="h-4 w-4" />
-                                    {event.venue.city[language]}
+                                    {getLocalizedText(event.venue.city, language)}
                                   </span>
                                 </div>
                                 <p className="mt-3 font-semibold text-primary group-hover:text-primary-foreground">

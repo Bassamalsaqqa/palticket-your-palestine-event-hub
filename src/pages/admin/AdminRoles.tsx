@@ -13,25 +13,21 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm, Controller } from "react-hook-form";
 
-const allPermissions = [
-  { id: "events.manage", label: "Manage Events", labelAr: "إدارة الفعاليات", icon: Calendar },
-  { id: "tickets.view", label: "View Tickets", labelAr: "عرض التذاكر", icon: QrCode },
-  { id: "tickets.checkin", label: "Check-in Tickets", labelAr: "تسجيل دخول التذاكر", icon: QrCode },
-  { id: "orders.view", label: "View Orders", labelAr: "عرض الطلبات", icon: ShoppingCart },
-  { id: "orders.manage", label: "Manage Orders", labelAr: "إدارة الطلبات", icon: ShoppingCart },
-  { id: "users.view", label: "View Users", labelAr: "عرض المستخدمين", icon: Settings },
-  { id: "users.manage", label: "Manage Users", labelAr: "إدارة المستخدمين", icon: Settings },
-  { id: "exports.create", label: "Create Exports", labelAr: "إنشاء التصديرات", icon: Settings },
-  { id: "scanner.use", label: "Use Scanner", labelAr: "استخدام الماسح", icon: Shield },
-];
-
-interface ChangeRoleForm {
-  memberId: string;
-  role: "ADMIN" | "STAFF";
-}
-
-export default function AdminRoles() {
+const AdminRoles = () => {
   const { language, t } = useLanguage();
+  
+  const allPermissions = [
+    { id: "events.manage", label: t.permissions.events_manage, icon: Calendar },
+    { id: "tickets.view", label: t.permissions.tickets_view, icon: QrCode },
+    { id: "tickets.checkin", label: t.permissions.tickets_checkin, icon: QrCode },
+    { id: "orders.view", label: t.permissions.orders_view, icon: ShoppingCart },
+    { id: "orders.manage", label: t.permissions.orders_manage, icon: ShoppingCart },
+    { id: "users.view", label: t.permissions.users_view, icon: Settings },
+    { id: "users.manage", label: t.permissions.users_manage, icon: Settings },
+    { id: "exports.create", label: t.permissions.exports_create, icon: Settings },
+    { id: "scanner.use", label: t.permissions.scanner_use, icon: Shield },
+  ];
+
   const queryClient = useQueryClient();
   const [changingMember, setChangingMember] = useState<OrganizationMember | null>(null);
   
@@ -57,16 +53,14 @@ export default function AdminRoles() {
   const roles = [
     {
       id: "ADMIN",
-      name: "Admin",
-      nameAr: "مسؤول",
+      name: t.roleNames.admin,
       users: members.filter(m => m.role === "ADMIN").length,
       color: "#ef4444",
       permissions: ["all"],
     },
     {
       id: "STAFF",
-      name: "Staff",
-      nameAr: "طاقم عمل",
+      name: t.roleNames.staff,
       users: members.filter(m => m.role === "STAFF").length,
       color: "#3b82f6",
       permissions: ["scanner.use", "tickets.checkin", "tickets.view"],
@@ -121,7 +115,7 @@ export default function AdminRoles() {
                     </div>
                     <div>
                       <CardTitle className="text-lg">
-                        {language === "ar" ? role.nameAr : role.name}
+                        {role.name}
                       </CardTitle>
                       <CardDescription>
                         {role.users} {t.admin.users}
@@ -150,7 +144,7 @@ export default function AdminRoles() {
                         if (!permission) return null;
                         return (
                           <Badge key={perm} variant="secondary">
-                            {language === "ar" ? permission.labelAr : permission.label}
+                            {permission.label}
                           </Badge>
                         );
                       })}
@@ -177,7 +171,7 @@ export default function AdminRoles() {
                   <th className="text-left rtl:text-right p-3 font-medium">{t.admin.permission}</th>
                   {roles.map((role) => (
                     <th key={role.id} className="p-3 text-center font-medium">
-                      {language === "ar" ? role.nameAr : role.name}
+                      {role.name}
                     </th>
                   ))}
                 </tr>
@@ -188,7 +182,7 @@ export default function AdminRoles() {
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <permission.icon className="h-4 w-4 text-muted-foreground" />
-                        <span>{language === "ar" ? permission.labelAr : permission.label}</span>
+                        <span>{permission.label}</span>
                       </div>
                     </td>
                     {roles.map((role) => (
@@ -245,4 +239,6 @@ export default function AdminRoles() {
       </Dialog>
     </div>
   );
-}
+};
+
+export default AdminRoles;

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/i18n";
+import { getLocalizedText } from "@/i18n/localize";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -90,16 +91,16 @@ export default function HomePage() {
                     <div className="aspect-[16/10] overflow-hidden">
                       <img
                         src={event.images[0]}
-                        alt={event.title[language]}
+                        alt={getLocalizedText(event.title, language)}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                     </div>
                     <CardContent className="p-5">
                       <Badge variant="secondary" className="mb-3 group-hover:bg-primary-foreground/20 group-hover:text-primary-foreground">
-                        {categories.find(c => c.id === event.category)?.name[language]}
+                        {getLocalizedText(categories.find(c => c.id === event.category)?.name, language, event.category)}
                       </Badge>
                       <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary-foreground">
-                        {event.title[language]}
+                        {getLocalizedText(event.title, language)}
                       </h3>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground group-hover:text-primary-foreground/70">
                         <span className="flex items-center gap-1">
@@ -108,7 +109,7 @@ export default function HomePage() {
                         </span>
                         <span className="flex items-center gap-1">
                           <MapPin className="h-4 w-4" />
-                          {event.venue.city[language]}
+                          {getLocalizedText(event.venue.city, language)}
                         </span>
                       </div>
                       <p className="mt-3 font-semibold text-primary group-hover:text-primary-foreground">
@@ -142,7 +143,7 @@ export default function HomePage() {
                       <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary-foreground/20">
                         <IconComponent className="h-6 w-6 text-primary group-hover:text-primary-foreground" />
                       </div>
-                      <span className="font-medium">{category.name[language]}</span>
+                      <span className="font-medium">{getLocalizedText(category.name, language, category.slug)}</span>
                     </Card>
                   </Link>
                 </motion.div>

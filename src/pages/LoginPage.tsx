@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/i18n";
@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").max(255),
   password: z.string().min(6, "Password must be at least 6 characters").max(100),
+  rememberMe: z.boolean().default(true),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -30,7 +32,7 @@ type LocationState = {
 
 export default function LoginPage() {
   const { language, t } = useLanguage();
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState | null;
@@ -38,20 +40,26 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const baseUrl = "https://palticket.com";
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = state?.from?.pathname || `/${language}/account`;
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, language, state]);
+
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
+      rememberMe: true,
     },
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    const result = await login(data.email, data.password);
+    const result = await login(data.email, data.password, data.rememberMe);
     if (result.success) {
       toast.success(t.auth.loginSuccess);
-      const from = state?.from?.pathname || `/${language}/account`;
-      navigate(from, { replace: true });
     } else {
       toast.error(result.error || t.auth.loginError);
     }
@@ -123,7 +131,26 @@ export default function LoginPage() {
                     </FormItem>
                   )}
                 />
-                <div className="flex justify-end">
+                
+                <div className="flex items-center justify-between">
+                  <FormField
+                    control={form.control}
+                    name="rememberMe"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-2 rtl:space-x-reverse space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm font-normal cursor-pointer">
+                          {t.auth.rememberMe}
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  
                   <Link
                     to={`/${language}/forgot-password`}
                     className="text-sm text-primary hover:underline"
@@ -131,6 +158,7 @@ export default function LoginPage() {
                     {t.auth.forgotPassword}
                   </Link>
                 </div>
+
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
                     <>

@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useLanguage } from "@/i18n";
+import { getLocalizedText } from "@/i18n/localize";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -271,8 +272,8 @@ export default function AdminEvents() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2"><Label>Venue</Label><Controller name="venueId" control={createForm.control} render={({ field }) => (<Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select venue" /></SelectTrigger><SelectContent>{venues.map((v) => (<SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>))}</SelectContent></Select>)} /></div>
-                <div className="space-y-2"><Label>Category</Label><Controller name="categoryId" control={createForm.control} render={({ field }) => (<Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent>{categories.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name[language] || c.name.en}</SelectItem>))}</SelectContent></Select>)} /></div>
-                <div className="space-y-2"><Label>City</Label><Controller name="cityId" control={createForm.control} render={({ field }) => (<Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger><SelectContent>{cities.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name[language] || c.name.en}</SelectItem>))}</SelectContent></Select>)} /></div>
+                <div className="space-y-2"><Label>Category</Label><Controller name="categoryId" control={createForm.control} render={({ field }) => (<Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent>{categories.map((c) => (<SelectItem key={c.id} value={c.id}>{getLocalizedText(c.name, language, c.slug)}</SelectItem>))}</SelectContent></Select>)} /></div>
+                <div className="space-y-2"><Label>City</Label><Controller name="cityId" control={createForm.control} render={({ field }) => (<Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger><SelectContent>{cities.map((c) => (<SelectItem key={c.id} value={c.id}>{getLocalizedText(c.name, language, c.slug)}</SelectItem>))}</SelectContent></Select>)} /></div>
               </div>
               <div className="space-y-4 border-t pt-4">
                 <h3 className="font-semibold">English Details</h3>
@@ -323,11 +324,11 @@ export default function AdminEvents() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <img src={event.images[0]} alt="" className="w-10 h-10 rounded object-cover" />
-                          <span className="font-medium">{language === "ar" ? event.title.ar : event.title.en}</span>
+                          <span className="font-medium">{getLocalizedText(event.title, language, event.slug)}</span>
                         </div>
                       </TableCell>
                       <TableCell>{event.date}</TableCell>
-                      <TableCell>{language === "ar" ? event.venue.city.ar : event.venue.city.en}</TableCell>
+                      <TableCell>{getLocalizedText(event.venue.city, language)}</TableCell>
                       <TableCell><Badge className={getStatusColor(event.status)}>{event.status}</Badge></TableCell>
                       <TableCell>{event.ticketTiers.reduce((sum, t) => sum + (t.total - t.available), 0)} / {event.ticketTiers.reduce((sum, t) => sum + t.total, 0)}</TableCell>
                       <TableCell>
@@ -390,8 +391,8 @@ export default function AdminEvents() {
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2"><Label>Venue</Label><Controller name="venueId" control={editForm.control} render={({ field }) => (<Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select venue" /></SelectTrigger><SelectContent>{venues.map((v) => (<SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>))}</SelectContent></Select>)} /></div>
-              <div className="space-y-2"><Label>Category</Label><Controller name="categoryId" control={editForm.control} render={({ field }) => (<Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent>{categories.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name[language] || c.name.en}</SelectItem>))}</SelectContent></Select>)} /></div>
-              <div className="space-y-2"><Label>City</Label><Controller name="cityId" control={editForm.control} render={({ field }) => (<Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger><SelectContent>{cities.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name[language] || c.name.en}</SelectItem>))}</SelectContent></Select>)} /></div>
+              <div className="space-y-2"><Label>Category</Label><Controller name="categoryId" control={editForm.control} render={({ field }) => (<Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent>{categories.map((c) => (<SelectItem key={c.id} value={c.id}>{getLocalizedText(c.name, language, c.slug)}</SelectItem>))}</SelectContent></Select>)} /></div>
+              <div className="space-y-2"><Label>City</Label><Controller name="cityId" control={editForm.control} render={({ field }) => (<Select onValueChange={field.onChange} value={field.value}><SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger><SelectContent>{cities.map((c) => (<SelectItem key={c.id} value={c.id}>{getLocalizedText(c.name, language, c.slug)}</SelectItem>))}</SelectContent></Select>)} /></div>
             </div>
             <div className="space-y-4 border-t pt-4">
               <h3 className="font-semibold">English Details</h3>
