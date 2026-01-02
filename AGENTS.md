@@ -10,11 +10,12 @@ Repository
 - State/query: React Query used across pages
 - Backend: NestJS + Prisma + PostgreSQL in /backend
 
-Auth and RBAC (mock)
-- Auth is mock and role-based by email prefix:
+Auth and RBAC
+- Frontend auth is mock and role-based by email prefix:
   - admin: email starts with "admin"
   - staff: email starts with "staff"
   - user: any other email
+- Backend auth is real (JWT) and scoped by organization membership.
 - Protected routes:
   - Admin: /en/admin, /ar/admin (RequireAdmin)
   - Scanner: /en/scan, /ar/scan (RequireStaff)
@@ -30,12 +31,15 @@ Auth implementation
   - Collisions are possible but acceptable for mock/demo data.
 
 Seeded demo data
+- Backend seed: `backend/prisma/seed.ts` embeds a demo list (UTF-8 Arabic + English).
+- Mock events: `src/data/mockEvents.ts` is generated from `public/English.json` + `public/Arabic.json`.
+  - Do not hand-edit mockEvents; update the JSON sources and re-generate.
 - Orders/tickets seeded with a stable admin user ID (matches deterministic hash for admin@palticket.com).
-- README.md and GEMINI.md mention that seeded data belongs to admin demo account.
 
-Service layer (mocked APIs)
+Service layer (mocked + real APIs)
 - Service layer wraps mock data in Promise-based functions with simulated latency.
-- Events, categories, and cities now support backend API calls when configured (see API env vars below).
+- When API config is present, services call the backend and fall back to mock data on failure.
+- API config (frontend): `VITE_API_BASE_URL`, `VITE_API_TOKEN`, `VITE_ORGANIZATION_ID` (or localStorage overrides).
 - Files:
   - src/services/eventsService.ts
   - src/services/ordersService.ts
@@ -43,6 +47,9 @@ Service layer (mocked APIs)
   - src/services/gatesService.ts
   - src/services/ticketTypesService.ts
   - src/services/venuesService.ts
+  - src/services/scansService.ts
+  - src/services/membersService.ts
+  - src/services/usersService.ts
 - Pages use React Query to call services (Home, Discover, EventDetail, Account, Admin modules, Scanner, PastEvents).
 
 Domain types
@@ -67,6 +74,7 @@ UI and lint refactors
   - src/i18n/translations.ts -> t.auth.passwordPlaceholder
 
 Lint status
+- Root lint covers both frontend and backend (backend/dist is ignored).
 - eslint runs clean (zero errors and warnings after recent refactors).
 
 Open items and conventions
@@ -81,10 +89,10 @@ Common access for admin panel (mock)
 - Staff access to scanner uses staff@palticket.com with the same password.
 
 Notes
-- The project uses backend APIs for events/categories/cities when API config is provided; otherwise it falls back to mock data.
-- API config (frontend): `VITE_API_BASE_URL`, `VITE_API_TOKEN`, `VITE_ORGANIZATION_ID` (or localStorage overrides).
+- The project uses backend APIs when API config is provided; otherwise it falls back to mock data.
 - Scanner uses camera access; mobile browsers require HTTPS or localhost for camera permissions.
-- Localization: backend returns translations for requested locale with English fallback when missing.
+- Scanner includes manual entry, session export, and camera control buttons.
+- Localization: backend returns translations for requested locale; fallback behavior is limited.
 
 Backend architecture and rules
 - Backend runtime: http://localhost:3001
@@ -99,6 +107,8 @@ Backend architecture and rules
   - Events/Venues/Gates/TicketTypes CRUD (Events use translations; slug endpoint: `GET /events/slug/:slug?lang=en|ar`)
   - Categories/Cities read-only (global + org-specific, localized via `?lang=en|ar`)
   - Orders create + read; Tickets read-only
+  - Scan logs: `GET /scan/logs` (admin/staff), `POST /scan`
+  - Exports: `GET /exports/orders.csv`, `GET /exports/tickets.csv`
 - **Services MUST use explicit Prisma `select`** to avoid over-fetching and leaking PII. Do not rely on default model return.
 - **Pagination:** List endpoints must support `skip`/`take` via Query DTOs. Max take is 100.
 - Scan endpoint: `POST /scan` with atomic update + ScanLog; invalid codes are not logged (ticketId FK required).
@@ -107,6 +117,10 @@ Backend architecture and rules
 - Currency: Order currency derived from TicketTypes; helper `backend/src/common/currency.ts` maps currency to symbol.
 - Seed data: `backend/prisma/seed.ts` contains an embedded demo list and creates a demo org/user plus venues, cities, events, and ticket types.
 - Admin UI: Event, Ticket Type, and Gate creation forms are wired to backend APIs.
+- Admin UI: Ticket Types/Gates editing are wired; Users/Roles/Staff editing are wired (invites/deletes not yet).
+- Admin UI: Order details modal, audit logs, and exports are wired.
+- Image upload: `POST /events/:id/image` with storage settings in backend `.env`.
+- Storage config: `STORAGE_DRIVER`, `STORAGE_LOCAL_ROOT`, `STORAGE_PUBLIC_URL` (local disk default).
 - Exports: `/exports/orders.csv` and `/exports/tickets.csv` support optional `eventId` filtering.
 
 Role separation

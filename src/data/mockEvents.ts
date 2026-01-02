@@ -3,13 +3,13 @@ import { City, Category, Event, EventFilters } from "@/types/domain";
 export type { City, Category, Event, EventFilters, TicketTier } from "@/types/domain";
 
 export const cities: City[] = [
-  { id: "jerusalem", slug: "jerusalem", name: { en: "Jerusalem", ar: "\u0645\u0624\u0633\u0633\u0629 \u0627\u0644\u0645\u0639\u0645\u0644 \u0644\u0644\u0641\u0646 \u0627\u0644\u0645\u0639\u0627\u0635\u0631\u060c \u0627\u0644\u0642\u062f\u0633" } },
-  { id: "berlin", slug: "berlin", name: { en: "Berlin", ar: "\u0628\u064a\u0622\u062a\u0647 \u0623\u0648\u0641\u0647\u060c \u0628\u0631\u0644\u064a\u0646" } },
-  { id: "haifa", slug: "haifa", name: { en: "Haifa", ar: "\u0641\u062a\u0648\u0634 \u0628\u0627\u0631\u060c \u062d\u064a\u0641\u0627" } },
-  { id: "amman", slug: "amman", name: { en: "Amman", ar: "\u0645\u0633\u0631\u062d \u0634\u0645\u0633\u060c \u0639\u0645\u0627\u0646" } },
-  { id: "tel-aviv", slug: "tel-aviv", name: { en: "Tel Aviv", ar: "\u0628\u0627\u0628\u0648 \u0628\u0627\u0631\u060c \u062a\u0644 \u0623\u0628\u064a\u0628" } },
-  { id: "nazareth", slug: "nazareth", name: { en: "Nazareth", ar: "\u0645\u0633\u0631\u062d \u0633\u064a\u0646\u0645\u0627\u0646\u0627\u060c \u0627\u0644\u0646\u0627\u0635\u0631\u0629" } },
-  { id: "amsterdam", slug: "amsterdam", name: { en: "Amsterdam", ar: "\u0628\u0627\u0631 \u0628\u0627\u0631\u064a\u0648\u060c \u0623\u0645\u0633\u062a\u0631\u062f\u0627\u0645" } },
+  { id: "jerusalem", slug: "jerusalem", name: { en: "Jerusalem", ar: "\u0627\u0644\u0642\u062f\u0633" } },
+  { id: "berlin", slug: "berlin", name: { en: "Berlin", ar: "\u0628\u0631\u0644\u064a\u0646" } },
+  { id: "haifa", slug: "haifa", name: { en: "Haifa", ar: "\u062d\u064a\u0641\u0627" } },
+  { id: "amman", slug: "amman", name: { en: "Amman", ar: "\u0639\u0645\u0627\u0646" } },
+  { id: "tel-aviv", slug: "tel-aviv", name: { en: "Tel Aviv", ar: "\u062a\u0644 \u0623\u0628\u064a\u0628" } },
+  { id: "nazareth", slug: "nazareth", name: { en: "Nazareth", ar: "\u0627\u0644\u0646\u0627\u0635\u0631\u0629" } },
+  { id: "amsterdam", slug: "amsterdam", name: { en: "Amsterdam", ar: "\u0623\u0645\u0633\u062a\u0631\u062f\u0627\u0645" } },
 ];
 
 export const categories: Category[] = [
@@ -46,9 +46,9 @@ export const mockEvents: Event[] = [
     date: "2026-01-03",
     time: "20:00",
     venue: {
-      name: { en: "Al Ma'mal Foundation", ar: "\u0645\u0624\u0633\u0633\u0629 \u0627\u0644\u0645\u0639\u0645\u0644 \u0644\u0644\u0641\u0646 \u0627\u0644\u0645\u0639\u0627\u0635\u0631\u060c \u0627\u0644\u0642\u062f\u0633" },
-      address: { en: "Al Ma'mal Foundation", ar: "\u0645\u0624\u0633\u0633\u0629 \u0627\u0644\u0645\u0639\u0645\u0644 \u0644\u0644\u0641\u0646 \u0627\u0644\u0645\u0639\u0627\u0635\u0631\u060c \u0627\u0644\u0642\u062f\u0633" },
-      city: { en: "Jerusalem", ar: "\u0645\u0624\u0633\u0633\u0629 \u0627\u0644\u0645\u0639\u0645\u0644 \u0644\u0644\u0641\u0646 \u0627\u0644\u0645\u0639\u0627\u0635\u0631\u060c \u0627\u0644\u0642\u062f\u0633" },
+      name: { en: "Al Ma'mal Foundation", ar: "\u0645\u0624\u0633\u0633\u0629 \u0627\u0644\u0645\u0639\u0645\u0644 \u0644\u0644\u0641\u0646 \u0627\u0644\u0645\u0639\u0627\u0635\u0631" },
+      address: { en: "Al Ma'mal Foundation", ar: "\u0645\u0624\u0633\u0633\u0629 \u0627\u0644\u0645\u0639\u0645\u0644 \u0644\u0644\u0641\u0646 \u0627\u0644\u0645\u0639\u0627\u0635\u0631" },
+      city: { en: "Jerusalem", ar: "\u0627\u0644\u0642\u062f\u0633" },
     },
     organizer: {
       name: { en: "PalTicket", ar: "PalTicket" },
@@ -85,9 +85,9 @@ export const mockEvents: Event[] = [
     date: "2026-01-13",
     time: "20:00",
     venue: {
-      name: { en: "Beate Uwe", ar: "\u0628\u064a\u0622\u062a\u0647 \u0623\u0648\u0641\u0647\u060c \u0628\u0631\u0644\u064a\u0646" },
-      address: { en: "Beate Uwe", ar: "\u0628\u064a\u0622\u062a\u0647 \u0623\u0648\u0641\u0647\u060c \u0628\u0631\u0644\u064a\u0646" },
-      city: { en: "Berlin", ar: "\u0628\u064a\u0622\u062a\u0647 \u0623\u0648\u0641\u0647\u060c \u0628\u0631\u0644\u064a\u0646" },
+      name: { en: "Beate Uwe", ar: "\u0628\u064a\u0622\u062a\u0647 \u0623\u0648\u0641\u0647" },
+      address: { en: "Beate Uwe", ar: "\u0628\u064a\u0622\u062a\u0647 \u0623\u0648\u0641\u0647" },
+      city: { en: "Berlin", ar: "\u0628\u0631\u0644\u064a\u0646" },
     },
     organizer: {
       name: { en: "PalTicket", ar: "PalTicket" },
@@ -124,9 +124,9 @@ export const mockEvents: Event[] = [
     date: "2026-01-14",
     time: "20:00",
     venue: {
-      name: { en: "Fattoush Bar", ar: "\u0641\u062a\u0648\u0634 \u0628\u0627\u0631\u060c \u062d\u064a\u0641\u0627" },
-      address: { en: "Fattoush Bar", ar: "\u0641\u062a\u0648\u0634 \u0628\u0627\u0631\u060c \u062d\u064a\u0641\u0627" },
-      city: { en: "Haifa", ar: "\u0641\u062a\u0648\u0634 \u0628\u0627\u0631\u060c \u062d\u064a\u0641\u0627" },
+      name: { en: "Fattoush Bar", ar: "\u0641\u062a\u0648\u0634 \u0628\u0627\u0631" },
+      address: { en: "Fattoush Bar", ar: "\u0641\u062a\u0648\u0634 \u0628\u0627\u0631" },
+      city: { en: "Haifa", ar: "\u062d\u064a\u0641\u0627" },
     },
     organizer: {
       name: { en: "PalTicket", ar: "PalTicket" },
@@ -163,9 +163,9 @@ export const mockEvents: Event[] = [
     date: "2026-01-15",
     time: "20:00",
     venue: {
-      name: { en: "Al Yakhour Hostel", ar: "\u0627\u0644\u064a\u0627\u062e\u0648\u0631\u060c \u062d\u064a\u0641\u0627" },
-      address: { en: "Al Yakhour Hostel", ar: "\u0627\u0644\u064a\u0627\u062e\u0648\u0631\u060c \u062d\u064a\u0641\u0627" },
-      city: { en: "Haifa", ar: "\u0627\u0644\u064a\u0627\u062e\u0648\u0631\u060c \u062d\u064a\u0641\u0627" },
+      name: { en: "Al Yakhour Hostel", ar: "\u0627\u0644\u064a\u0627\u062e\u0648\u0631" },
+      address: { en: "Al Yakhour Hostel", ar: "\u0627\u0644\u064a\u0627\u062e\u0648\u0631" },
+      city: { en: "Haifa", ar: "\u062d\u064a\u0641\u0627" },
     },
     organizer: {
       name: { en: "PalTicket", ar: "PalTicket" },
@@ -202,9 +202,9 @@ export const mockEvents: Event[] = [
     date: "2026-01-16",
     time: "20:00",
     venue: {
-      name: { en: "Shams Theatre", ar: "\u0645\u0633\u0631\u062d \u0634\u0645\u0633\u060c \u0639\u0645\u0627\u0646" },
-      address: { en: "Shams Theatre", ar: "\u0645\u0633\u0631\u062d \u0634\u0645\u0633\u060c \u0639\u0645\u0627\u0646" },
-      city: { en: "Amman", ar: "\u0645\u0633\u0631\u062d \u0634\u0645\u0633\u060c \u0639\u0645\u0627\u0646" },
+      name: { en: "Shams Theatre", ar: "\u0645\u0633\u0631\u062d \u0634\u0645\u0633" },
+      address: { en: "Shams Theatre", ar: "\u0645\u0633\u0631\u062d \u0634\u0645\u0633" },
+      city: { en: "Amman", ar: "\u0639\u0645\u0627\u0646" },
     },
     organizer: {
       name: { en: "PalTicket", ar: "PalTicket" },
@@ -241,9 +241,9 @@ export const mockEvents: Event[] = [
     date: "2026-01-16",
     time: "20:00",
     venue: {
-      name: { en: "Babu Bar", ar: "\u0628\u0627\u0628\u0648 \u0628\u0627\u0631\u060c \u062a\u0644 \u0623\u0628\u064a\u0628" },
-      address: { en: "Babu Bar", ar: "\u0628\u0627\u0628\u0648 \u0628\u0627\u0631\u060c \u062a\u0644 \u0623\u0628\u064a\u0628" },
-      city: { en: "Tel Aviv", ar: "\u0628\u0627\u0628\u0648 \u0628\u0627\u0631\u060c \u062a\u0644 \u0623\u0628\u064a\u0628" },
+      name: { en: "Babu Bar", ar: "\u0628\u0627\u0628\u0648 \u0628\u0627\u0631" },
+      address: { en: "Babu Bar", ar: "\u0628\u0627\u0628\u0648 \u0628\u0627\u0631" },
+      city: { en: "Tel Aviv", ar: "\u062a\u0644 \u0623\u0628\u064a\u0628" },
     },
     organizer: {
       name: { en: "PalTicket", ar: "PalTicket" },
@@ -280,9 +280,9 @@ export const mockEvents: Event[] = [
     date: "2026-01-16",
     time: "20:00",
     venue: {
-      name: { en: "Krieger Hall", ar: "\u0642\u0627\u0639\u0629 \u0643\u0631\u064a\u062c\u0631\u060c \u062d\u064a\u0641\u0627" },
-      address: { en: "Krieger Hall", ar: "\u0642\u0627\u0639\u0629 \u0643\u0631\u064a\u062c\u0631\u060c \u062d\u064a\u0641\u0627" },
-      city: { en: "Haifa", ar: "\u0642\u0627\u0639\u0629 \u0643\u0631\u064a\u062c\u0631\u060c \u062d\u064a\u0641\u0627" },
+      name: { en: "Krieger Hall", ar: "\u0642\u0627\u0639\u0629 \u0643\u0631\u064a\u062c\u0631" },
+      address: { en: "Krieger Hall", ar: "\u0642\u0627\u0639\u0629 \u0643\u0631\u064a\u062c\u0631" },
+      city: { en: "Haifa", ar: "\u062d\u064a\u0641\u0627" },
     },
     organizer: {
       name: { en: "PalTicket", ar: "PalTicket" },
@@ -319,9 +319,9 @@ export const mockEvents: Event[] = [
     date: "2026-01-17",
     time: "20:00",
     venue: {
-      name: { en: "Cinemana Nazareth", ar: "\u0645\u0633\u0631\u062d \u0633\u064a\u0646\u0645\u0627\u0646\u0627\u060c \u0627\u0644\u0646\u0627\u0635\u0631\u0629" },
-      address: { en: "Cinemana Nazareth", ar: "\u0645\u0633\u0631\u062d \u0633\u064a\u0646\u0645\u0627\u0646\u0627\u060c \u0627\u0644\u0646\u0627\u0635\u0631\u0629" },
-      city: { en: "Nazareth", ar: "\u0645\u0633\u0631\u062d \u0633\u064a\u0646\u0645\u0627\u0646\u0627\u060c \u0627\u0644\u0646\u0627\u0635\u0631\u0629" },
+      name: { en: "Cinemana Nazareth", ar: "\u0645\u0633\u0631\u062d \u0633\u064a\u0646\u0645\u0627\u0646\u0627" },
+      address: { en: "Cinemana Nazareth", ar: "\u0645\u0633\u0631\u062d \u0633\u064a\u0646\u0645\u0627\u0646\u0627" },
+      city: { en: "Nazareth", ar: "\u0627\u0644\u0646\u0627\u0635\u0631\u0629" },
     },
     organizer: {
       name: { en: "PalTicket", ar: "PalTicket" },
@@ -358,9 +358,9 @@ export const mockEvents: Event[] = [
     date: "2026-01-17",
     time: "20:00",
     venue: {
-      name: { en: "Bar Bario", ar: "\u0628\u0627\u0631 \u0628\u0627\u0631\u064a\u0648\u060c \u0623\u0645\u0633\u062a\u0631\u062f\u0627\u0645" },
-      address: { en: "Bar Bario", ar: "\u0628\u0627\u0631 \u0628\u0627\u0631\u064a\u0648\u060c \u0623\u0645\u0633\u062a\u0631\u062f\u0627\u0645" },
-      city: { en: "Amsterdam", ar: "\u0628\u0627\u0631 \u0628\u0627\u0631\u064a\u0648\u060c \u0623\u0645\u0633\u062a\u0631\u062f\u0627\u0645" },
+      name: { en: "Bar Bario", ar: "\u0628\u0627\u0631 \u0628\u0627\u0631\u064a\u0648" },
+      address: { en: "Bar Bario", ar: "\u0628\u0627\u0631 \u0628\u0627\u0631\u064a\u0648" },
+      city: { en: "Amsterdam", ar: "\u0623\u0645\u0633\u062a\u0631\u062f\u0627\u0645" },
     },
     organizer: {
       name: { en: "PalTicket", ar: "PalTicket" },
@@ -397,9 +397,9 @@ export const mockEvents: Event[] = [
     date: "2026-01-17",
     time: "20:00",
     venue: {
-      name: { en: "Krieger Hall", ar: "\u0642\u0627\u0639\u0629 \u0643\u0631\u064a\u062c\u0631\u060c \u062d\u064a\u0641\u0627" },
-      address: { en: "Krieger Hall", ar: "\u0642\u0627\u0639\u0629 \u0643\u0631\u064a\u062c\u0631\u060c \u062d\u064a\u0641\u0627" },
-      city: { en: "Haifa", ar: "\u0642\u0627\u0639\u0629 \u0643\u0631\u064a\u062c\u0631\u060c \u062d\u064a\u0641\u0627" },
+      name: { en: "Krieger Hall", ar: "\u0642\u0627\u0639\u0629 \u0643\u0631\u064a\u062c\u0631" },
+      address: { en: "Krieger Hall", ar: "\u0642\u0627\u0639\u0629 \u0643\u0631\u064a\u062c\u0631" },
+      city: { en: "Haifa", ar: "\u062d\u064a\u0641\u0627" },
     },
     organizer: {
       name: { en: "PalTicket", ar: "PalTicket" },
@@ -436,9 +436,9 @@ export const mockEvents: Event[] = [
     date: "2026-01-22",
     time: "20:00",
     venue: {
-      name: { en: "Nasraoui Cultural Palace", ar: "\u0642\u0635\u0631 \u0627\u0644\u062b\u0642\u0627\u0641\u0629 \u0627\u0644\u0646\u0635\u0631\u0627\u0648\u064a\u060c \u0627\u0644\u0646\u0627\u0635\u0631\u0629" },
-      address: { en: "Nasraoui Cultural Palace", ar: "\u0642\u0635\u0631 \u0627\u0644\u062b\u0642\u0627\u0641\u0629 \u0627\u0644\u0646\u0635\u0631\u0627\u0648\u064a\u060c \u0627\u0644\u0646\u0627\u0635\u0631\u0629" },
-      city: { en: "Nazareth", ar: "\u0642\u0635\u0631 \u0627\u0644\u062b\u0642\u0627\u0641\u0629 \u0627\u0644\u0646\u0635\u0631\u0627\u0648\u064a\u060c \u0627\u0644\u0646\u0627\u0635\u0631\u0629" },
+      name: { en: "Nasraoui Cultural Palace", ar: "\u0642\u0635\u0631 \u0627\u0644\u062b\u0642\u0627\u0641\u0629 \u0627\u0644\u0646\u0635\u0631\u0627\u0648\u064a" },
+      address: { en: "Nasraoui Cultural Palace", ar: "\u0642\u0635\u0631 \u0627\u0644\u062b\u0642\u0627\u0641\u0629 \u0627\u0644\u0646\u0635\u0631\u0627\u0648\u064a" },
+      city: { en: "Nazareth", ar: "\u0627\u0644\u0646\u0627\u0635\u0631\u0629" },
     },
     organizer: {
       name: { en: "PalTicket", ar: "PalTicket" },
@@ -475,9 +475,9 @@ export const mockEvents: Event[] = [
     date: "2026-01-20",
     time: "20:00",
     venue: {
-      name: { en: "The Special Reserve", ar: "The Special Reserve\u060c \u062d\u064a\u0641\u0627" },
-      address: { en: "The Special Reserve", ar: "The Special Reserve\u060c \u062d\u064a\u0641\u0627" },
-      city: { en: "Haifa", ar: "The Special Reserve\u060c \u062d\u064a\u0641\u0627" },
+      name: { en: "The Special Reserve", ar: "The Special Reserve" },
+      address: { en: "The Special Reserve", ar: "The Special Reserve" },
+      city: { en: "Haifa", ar: "\u062d\u064a\u0641\u0627" },
     },
     organizer: {
       name: { en: "PalTicket", ar: "PalTicket" },

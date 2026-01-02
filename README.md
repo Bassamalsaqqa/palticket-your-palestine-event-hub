@@ -37,6 +37,7 @@ To connect the UI to the backend APIs, set the following environment variables b
 - `VITE_API_BASE_URL` (e.g. `http://localhost:3001`)
 - `VITE_API_TOKEN` (JWT access token)
 - `VITE_ORGANIZATION_ID` (tenant org UUID)
+Mock content in `src/data/mockEvents.ts` is generated from `public/English.json` and `public/Arabic.json` for local-only development.
 
 ### Backend Installation
 The backend is located in `/backend`.
@@ -59,7 +60,7 @@ npm run start:dev
 ## Authentication & Roles
 
 ### Frontend (Mock)
-The frontend uses a mock authentication system for UI testing.
+The frontend uses a mock authentication system for UI testing. Backend APIs can still be used if API env vars are provided.
 *   **Admin:** `admin@palticket.com` (Full access)
 *   **Staff:** `staff@event.com` (Scanner access)
 *   **User:** `user@example.com` (Public access)
@@ -96,7 +97,7 @@ The project adheres to strict **ESLint** rules. The root lint configuration cove
 ## Known Issues & Troubleshooting
 
 *   **Data Persistence**: Frontend data vanishes on reload (unless connected to Backend).
-*   **Backend Connection**: The frontend supports connecting to the backend API for Events, Orders, and Tickets when environment variables are provided. Otherwise, it falls back to mock data.
+*   **Backend Connection**: The frontend supports connecting to backend APIs when environment variables are provided. Otherwise, it falls back to mock data.
 
 ## Admin & Staff Testing Guide
 
@@ -153,10 +154,11 @@ PalTicket has evolved into a multi-tenant, localized ticketing platform with ord
 - **Admin UI:** Create flows for Events/Ticket Types/Gates are wired to backend.
 - **Scanner:** Uses `/scan`, returns ScanResult, camera lifecycle handled; requires HTTPS on mobile.
 - **Admin Dashboard:** Uses `/admin/stats` and API-backed orders/events.
+- **Admin Tools:** Audit logs, exports, order details, and edit flows are wired to the backend.
 
 ### Known Gaps
 - **Payments/Notifications**: Payment provider, commissions, payouts, and delivery channels are not implemented.
-- **Admin flows**: Event image management and core entity editing (Tiers, Gates, Profiles) are functional. Invites and deletion for organization members are not yet implemented. Audit logs and exports are functional.
+- **Admin flows**: Invites and deletion for organization members are not yet implemented.
 
 ### Next Steps
 - Update scan tests to assert `result: ScanResult`.
