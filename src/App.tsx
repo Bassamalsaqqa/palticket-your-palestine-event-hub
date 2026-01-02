@@ -37,6 +37,7 @@ import {
   AdminStaff,
   AdminExports,
   AdminAuditLogs,
+  AdminSettings,
 } from "./pages/admin";
 
 const queryClient = new QueryClient();
@@ -100,6 +101,7 @@ const App = () => (
                   <Route path="staff" element={<AdminStaff />} />
                   <Route path="exports" element={<AdminExports />} />
                   <Route path="audit-logs" element={<AdminAuditLogs />} />
+                  <Route path="settings" element={<AdminSettings />} />
                   </Route>
                 </Route>
                 
@@ -140,6 +142,7 @@ const App = () => (
                   <Route path="staff" element={<AdminStaff />} />
                   <Route path="exports" element={<AdminExports />} />
                   <Route path="audit-logs" element={<AdminAuditLogs />} />
+                  <Route path="settings" element={<AdminSettings />} />
                   </Route>
                 </Route>
 

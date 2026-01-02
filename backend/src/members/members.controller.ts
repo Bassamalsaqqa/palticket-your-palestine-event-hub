@@ -8,9 +8,11 @@ import {
   ParseUUIDPipe,
   Patch,
   Body,
+  Post,
+  Delete,
 } from '@nestjs/common';
 import { MembersService } from './members.service';
-import { ListMembersQueryDto, UpdateMemberRoleDto } from './dto/member.dto';
+import { ListMembersQueryDto, UpdateMemberRoleDto, InviteMemberDto } from './dto/member.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -31,6 +33,15 @@ export class MembersController {
     return this.membersService.findAll(req.orgId!, query.skip, query.take);
   }
 
+  @Post('invite')
+  @Roles(OrganizationRole.ADMIN)
+  invite(
+    @Req() req: AuthenticatedRequest,
+    @Body() inviteMemberDto: InviteMemberDto,
+  ) {
+    return this.membersService.invite(req.orgId!, inviteMemberDto);
+  }
+
   @Get(':id')
   @Roles(OrganizationRole.ADMIN)
   findOne(
@@ -48,5 +59,14 @@ export class MembersController {
     @Body() updateMemberDto: UpdateMemberRoleDto,
   ) {
     return this.membersService.update(req.orgId!, id, updateMemberDto);
+  }
+
+  @Delete(':id')
+  @Roles(OrganizationRole.ADMIN)
+  remove(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.membersService.remove(req.orgId!, id);
   }
 }

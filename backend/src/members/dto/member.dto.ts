@@ -1,4 +1,4 @@
-import { IsOptional, IsInt, Min, IsEnum } from 'class-validator';
+import { IsOptional, IsInt, Min, IsEnum, IsEmail, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrganizationRole } from '@prisma/client';
 
@@ -17,6 +17,15 @@ export class ListMembersQueryDto {
 }
 
 export class UpdateMemberRoleDto {
+  @IsEnum(OrganizationRole)
+  role: OrganizationRole;
+}
+
+export class InviteMemberDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
   @IsEnum(OrganizationRole)
   role: OrganizationRole;
 }

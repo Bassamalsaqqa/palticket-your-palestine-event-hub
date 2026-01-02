@@ -59,6 +59,18 @@ export const fetchMembers = async (): Promise<OrganizationMember[]> => {
   }
 };
 
+export const inviteMember = async (email: string, role: "ADMIN" | "STAFF"): Promise<OrganizationMember> => {
+  const config = getApiConfig();
+  if (!config) {
+    throw new Error("API not configured");
+  }
+
+  return await apiFetch<OrganizationMember>("/members/invite", {
+    method: "POST",
+    body: JSON.stringify({ email, role }),
+  });
+};
+
 export const updateMemberRole = async (id: string, role: "ADMIN" | "STAFF"): Promise<OrganizationMember> => {
   const config = getApiConfig();
   if (!config) {
@@ -68,5 +80,16 @@ export const updateMemberRole = async (id: string, role: "ADMIN" | "STAFF"): Pro
   return await apiFetch<OrganizationMember>(`/members/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: JSON.stringify({ role }),
+  });
+};
+
+export const removeMember = async (id: string): Promise<void> => {
+  const config = getApiConfig();
+  if (!config) {
+    throw new Error("API not configured");
+  }
+
+  await apiFetch<void>(`/members/${encodeURIComponent(id)}`, {
+    method: "DELETE",
   });
 };

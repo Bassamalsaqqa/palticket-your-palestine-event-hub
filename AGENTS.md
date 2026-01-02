@@ -117,11 +117,18 @@ Backend architecture and rules
 - Currency: Order currency derived from TicketTypes; helper `backend/src/common/currency.ts` maps currency to symbol.
 - Seed data: `backend/prisma/seed.ts` contains an embedded demo list and creates a demo org/user plus venues, cities, events, and ticket types.
 - Admin UI: Event, Ticket Type, and Gate creation forms are wired to backend APIs.
-- Admin UI: Ticket Types/Gates editing are wired; Users/Roles/Staff editing are wired (invites/deletes not yet).
+- Admin UI: Ticket Types/Gates editing are wired; Users/Roles/Staff editing and member invites/deletes are wired.
 - Admin UI: Order details modal, audit logs, and exports are wired.
 - Image upload: `POST /events/:id/image` with storage settings in backend `.env`.
 - Storage config: `STORAGE_DRIVER`, `STORAGE_LOCAL_ROOT`, `STORAGE_PUBLIC_URL` (local disk default).
 - Exports: `/exports/orders.csv` and `/exports/tickets.csv` support optional `eventId` filtering.
+
+## API Configuration Precedence
+The application resolves its data source in the following order:
+1. **Force Mock Flag**: If "Force Mock Mode" is enabled in Admin Settings, all other configs are ignored.
+2. **Local Storage Overrides**: Values manually set in the Admin Settings UI take precedence over environment variables.
+3. **Environment Variables**: `VITE_API_BASE_URL`, etc., defined in the `.env` file.
+4. **Fallback**: Default mock data.
 
 Role separation
 - Gemini: generates bulk changes or scaffolding

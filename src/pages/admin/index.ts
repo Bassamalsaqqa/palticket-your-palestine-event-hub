@@ -9,3 +9,4 @@ export { default as AdminGates } from "./AdminGates";
 export { default as AdminStaff } from "./AdminStaff";
 export { default as AdminExports } from "./AdminExports";
 export { default as AdminAuditLogs } from "./AdminAuditLogs";
+export { default as AdminSettings } from "./AdminSettings";

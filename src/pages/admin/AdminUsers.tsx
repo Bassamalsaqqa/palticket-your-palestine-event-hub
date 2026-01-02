@@ -19,6 +19,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -26,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -34,10 +36,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, MoreHorizontal, Edit, Shield, Loader2 } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Edit, Shield, Loader2, Trash2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchMembers, updateMemberRole, type OrganizationMember } from "@/services/membersService";
+import { fetchMembers, updateMemberRole, inviteMember, removeMember, type OrganizationMember } from "@/services/membersService";
 import { updateUserProfile } from "@/services/usersService";
 import { useForm, Controller } from "react-hook-form";
 
@@ -50,15 +52,27 @@ interface ChangeRoleForm {
   role: "ADMIN" | "STAFF";
 }
 
+interface InviteMemberForm {
+  email: string;
+  role: "ADMIN" | "STAFF";
+}
+
 export default function AdminUsers() {
   const { language, t } = useLanguage();
   const [search, setSearch] = useState("");
   const [editingMember, setEditingMember] = useState<OrganizationMember | null>(null);
   const [changingRoleMember, setChangingRoleMember] = useState<OrganizationMember | null>(null);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [deletingMember, setDeletingMember] = useState<OrganizationMember | null>(null);
   
   const queryClient = useQueryClient();
   const editForm = useForm<EditUserForm>();
   const roleForm = useForm<ChangeRoleForm>();
+  const inviteForm = useForm<InviteMemberForm>({
+    defaultValues: {
+      role: "STAFF",
+    }
+  });
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["admin", "members"],
@@ -69,11 +83,11 @@ export default function AdminUsers() {
     mutationFn: ({ id, data }: { id: string, data: EditUserForm }) => updateUserProfile(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "members"] });
-      toast.success("User profile updated");
+      toast.success(t.admin.profileUpdated);
       setEditingMember(null);
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to update profile");
+      toast.error(error.message || t.admin.profileUpdateError);
     }
   });
 
@@ -81,11 +95,36 @@ export default function AdminUsers() {
     mutationFn: ({ id, role }: { id: string, role: "ADMIN" | "STAFF" }) => updateMemberRole(id, role),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "members"] });
-      toast.success("User role updated");
+      toast.success(t.admin.roleUpdated);
       setChangingRoleMember(null);
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to update role");
+      toast.error(error.message || t.admin.roleUpdateError);
+    }
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: (data: InviteMemberForm) => inviteMember(data.email, data.role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "members"] });
+      toast.success(t.admin.userInvited);
+      setIsInviteOpen(false);
+      inviteForm.reset();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || t.admin.userInviteError);
+    }
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => removeMember(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "members"] });
+      toast.success(t.admin.memberRemoved);
+      setDeletingMember(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || t.admin.memberRemoveError);
     }
   });
 
@@ -130,6 +169,10 @@ export default function AdminUsers() {
     updateRoleMutation.mutate({ id: changingRoleMember.id, role: data.role });
   };
 
+  const handleInviteSubmit = (data: InviteMemberForm) => {
+    inviteMutation.mutate(data);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -137,9 +180,9 @@ export default function AdminUsers() {
           <h2 className="text-2xl font-bold">{t.admin.users}</h2>
           <p className="text-muted-foreground">{t.admin.usersDesc}</p>
         </div>
-        <Button onClick={() => toast.info("Invite functionality coming soon")}>
+        <Button onClick={() => setIsInviteOpen(true)}>
           <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-          {t.admin.addUser}
+          {t.admin.inviteUser}
         </Button>
       </div>
 
@@ -207,6 +250,14 @@ export default function AdminUsers() {
                               <Shield className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
                               {t.admin.changeRole}
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => setDeletingMember(member)}
+                              className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                              {t.admin.removeMember}
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -219,6 +270,67 @@ export default function AdminUsers() {
         </CardContent>
       </Card>
 
+      {/* Invite Member Dialog */}
+      <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.admin.inviteUser}</DialogTitle>
+            <DialogDescription>
+              {t.admin.inviteUserDesc}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={inviteForm.handleSubmit(handleInviteSubmit)} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">{t.admin.email}</Label>
+              <div className="relative">
+                <Mail className="absolute top-2.5 h-4 w-4 text-muted-foreground ltr:left-2 rtl:right-2" />
+                <Input 
+                  id="email" 
+                  placeholder="user@example.com" 
+                  className="ltr:pl-8 rtl:pr-8"
+                  {...inviteForm.register("email", { 
+                    required: t.admin.emailRequired,
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: t.admin.invalidEmail
+                    }
+                  })} 
+                />
+              </div>
+              {inviteForm.formState.errors.email && (
+                <p className="text-sm text-destructive">{inviteForm.formState.errors.email.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>{t.admin.role}</Label>
+              <Controller
+                name="role"
+                control={inviteForm.control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t.admin.selectRole} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ADMIN">ADMIN</SelectItem>
+                      <SelectItem value="STAFF">STAFF</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setIsInviteOpen(false)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={inviteMutation.isPending}>
+                {inviteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t.admin.inviteMember}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Profile Dialog */}
       <Dialog open={!!editingMember} onOpenChange={(open) => !open && setEditingMember(null)}>
         <DialogContent>
@@ -227,11 +339,11 @@ export default function AdminUsers() {
           </DialogHeader>
           <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">{t.admin.fullName}</Label>
               <Input id="name" {...editForm.register("name", { required: true })} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">{t.admin.phone}</Label>
               <Input id="phone" {...editForm.register("phone")} />
             </div>
             <DialogFooter>
@@ -253,7 +365,7 @@ export default function AdminUsers() {
           </DialogHeader>
           <form onSubmit={roleForm.handleSubmit(handleRoleSubmit)} className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Role</Label>
+              <Label>{t.admin.role}</Label>
               <Controller
                 name="role"
                 control={roleForm.control}
@@ -261,7 +373,7 @@ export default function AdminUsers() {
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a role" />
+                      <SelectValue placeholder={t.admin.selectRole} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ADMIN">ADMIN</SelectItem>
@@ -279,6 +391,30 @@ export default function AdminUsers() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Member Confirmation Dialog */}
+      <Dialog open={!!deletingMember} onOpenChange={(open) => !open && setDeletingMember(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.admin.removeMember}</DialogTitle>
+            <DialogDescription>
+              {t.admin.removeMemberConfirm} <strong>{deletingMember?.user.name || deletingMember?.user.email}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setDeletingMember(null)}>{t.common.cancel}</Button>
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={() => deletingMember && removeMutation.mutate(deletingMember.id)}
+              disabled={removeMutation.isPending}
+            >
+              {removeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t.common.delete}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

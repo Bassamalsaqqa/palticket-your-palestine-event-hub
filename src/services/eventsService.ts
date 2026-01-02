@@ -80,15 +80,18 @@ const makeLocalized = (value?: string | null) => {
   return { en: text, ar: text };
 };
 
-const pickTranslation = <T extends { locale?: string }>(
+const pickTranslation = <T extends { locale?: string; name?: string }>(
   translations: T[] = [],
   lang: "en" | "ar",
+  fallbackValue: string = ""
 ) => {
-  return (
+  const t =
     translations.find((t) => t.locale === lang) ||
     translations.find((t) => t.locale === "en") ||
-    translations[0]
-  );
+    translations[0];
+  
+  if (!t) return { name: fallbackValue };
+  return t;
 };
 
 const mapStatus = (status: ApiEvent["status"], startTime: string, endTime?: string | null) => {
@@ -112,10 +115,10 @@ const mapTicketTier = (ticket: ApiTicketType): TicketTier => {
 };
 
 const mapEvent = (event: ApiEvent, lang: "en" | "ar", ticketTiers: TicketTier[] = []): Event => {
-  const translation = pickTranslation(event.translations, lang);
+  const translation = pickTranslation(event.translations, lang, event.slug);
   const venueTranslation = pickTranslation(event.venue?.translations, lang);
-  const categoryTranslation = pickTranslation(event.category?.translations, lang);
-  const cityTranslation = pickTranslation(event.city?.translations, lang);
+  const categoryTranslation = pickTranslation(event.category?.translations, lang, event.category?.slug || "");
+  const cityTranslation = pickTranslation(event.city?.translations, lang, event.city?.slug || "");
   const datePart = event.startTime.split("T")[0] || "";
   const timePart = event.startTime.split("T")[1]?.slice(0, 5) || "";
   const endDatePart = event.endTime?.split("T")[0];
@@ -164,6 +167,40 @@ const fetchTicketTiers = async (eventId: string): Promise<TicketTier[]> => {
   }
 };
 
+const hasTranslation = (translations: { locale: string }[] | undefined, lang: string) => {
+  return translations?.some(t => t.locale === lang);
+};
+
+const fetchEventWithFallback = async (idOrSlug: string, isSlug: boolean, lang: "en" | "ar"): Promise<ApiEvent> => {
+  const path = isSlug 
+    ? `/events/slug/${encodeURIComponent(idOrSlug)}` 
+    : `/events/${encodeURIComponent(idOrSlug)}`;
+    
+  let event = await apiFetch<ApiEvent>(`${path}?lang=${lang}`);
+  
+  const hasRequested = hasTranslation(event.translations, lang);
+  const hasFallback = hasTranslation(event.translations, "en");
+  
+  if (!hasRequested && !hasFallback && lang !== "en") {
+    try {
+      const enEvent = await apiFetch<ApiEvent>(`${path}?lang=en`);
+      // Merge translations and other localized entities
+      if (enEvent) {
+        event = {
+          ...event,
+          translations: [...(event.translations || []), ...(enEvent.translations || [])],
+          category: enEvent.category ? { ...event.category, ...enEvent.category } : event.category,
+          city: enEvent.city ? { ...event.city, ...enEvent.city } : event.city,
+          venue: enEvent.venue ? { ...event.venue, ...enEvent.venue } : event.venue,
+        } as ApiEvent;
+      }
+    } catch (e) {
+      console.warn("Failed to fetch fallback English event", e);
+    }
+  }
+  return event;
+};
+
 export const fetchEventById = async (id: string, lang?: "en" | "ar"): Promise<Event | undefined> => {
   const activeLang = lang || getLanguage();
   const config = getApiConfig();
@@ -172,7 +209,7 @@ export const fetchEventById = async (id: string, lang?: "en" | "ar"): Promise<Ev
   }
 
   try {
-    const event = await apiFetch<ApiEvent>(`/events/${encodeURIComponent(id)}?lang=${activeLang}`);
+    const event = await fetchEventWithFallback(id, false, activeLang);
     const ticketTiers = await fetchTicketTiers(event.id);
     return mapEvent(event, activeLang, ticketTiers);
   } catch {
@@ -188,7 +225,35 @@ export const fetchAllEvents = async (lang?: "en" | "ar"): Promise<Event[]> => {
   }
 
   try {
-    const events = await apiFetch<ApiEvent[]>(`/events?lang=${activeLang}`);
+    let events = await apiFetch<ApiEvent[]>(`/events?lang=${activeLang}`);
+    
+    // Improved list fallback: check if ANY item is missing the requested language
+    if (events.length > 0 && activeLang !== "en") {
+      const needsFallback = events.some(e => !hasTranslation(e.translations, activeLang) && !hasTranslation(e.translations, "en"));
+      
+      if (needsFallback) {
+         try {
+           const enEvents = await apiFetch<ApiEvent[]>(`/events?lang=en`);
+           const enMap = new Map(enEvents.map(e => [e.id, e]));
+           events = events.map(e => {
+             const enE = enMap.get(e.id);
+             if (enE) {
+               return {
+                 ...e,
+                 translations: [...(e.translations || []), ...(enE.translations || [])],
+                 category: enE.category ? { ...e.category, ...enE.category } : e.category,
+                 city: enE.city ? { ...e.city, ...enE.city } : e.city,
+                 venue: enE.venue ? { ...e.venue, ...enE.venue } : e.venue,
+               } as ApiEvent;
+             }
+             return e;
+           });
+         } catch (e) {
+           console.warn("Failed to fetch fallback English events list", e);
+         }
+      }
+    }
+
     const enriched = await Promise.all(
       events.map(async (event) => {
         const ticketTiers = await fetchTicketTiers(event.id);
@@ -214,7 +279,7 @@ export const fetchEventBySlug = async (slug: string, lang?: "en" | "ar"): Promis
   }
 
   try {
-    const event = await apiFetch<ApiEvent>(`/events/slug/${encodeURIComponent(slug)}?lang=${activeLang}`);
+    const event = await fetchEventWithFallback(slug, true, activeLang);
     const ticketTiers = await fetchTicketTiers(event.id);
     return mapEvent(event, activeLang, ticketTiers);
   } catch {
@@ -230,9 +295,31 @@ export const fetchCategories = async (lang?: "en" | "ar"): Promise<Category[]> =
   }
 
   try {
-    const categories = await apiFetch<ApiCategory[]>(`/categories?lang=${activeLang}`);
+    let categories = await apiFetch<ApiCategory[]>(`/categories?lang=${activeLang}`);
+    
+    if (categories.length > 0 && activeLang !== "en") {
+      const needsFallback = categories.some(c => !hasTranslation(c.translations, activeLang) && !hasTranslation(c.translations, "en"));
+      
+      if (needsFallback) {
+         try {
+           const enCategories = await apiFetch<ApiCategory[]>(`/categories?lang=en`);
+           const enMap = new Map(enCategories.map(c => [c.id, c]));
+           categories = categories.map(c => {
+             const enC = enMap.get(c.id);
+             if (enC) {
+               return {
+                 ...c,
+                 translations: [...(c.translations || []), ...(enC.translations || [])]
+               } as ApiCategory;
+             }
+             return c;
+           });
+         } catch (e) { console.warn("Fallback categories fetch failed", e); }
+      }
+    }
+
     return categories.map((category) => {
-      const translation = pickTranslation(category.translations, activeLang);
+      const translation = pickTranslation(category.translations, activeLang, category.slug);
       const style = CATEGORY_STYLE_BY_SLUG[category.slug] || {
         icon: "Tag",
         color: "hsl(var(--primary))",
@@ -258,9 +345,31 @@ export const fetchCities = async (lang?: "en" | "ar"): Promise<City[]> => {
   }
 
   try {
-    const cities = await apiFetch<ApiCity[]>(`/cities?lang=${activeLang}`);
+    let cities = await apiFetch<ApiCity[]>(`/cities?lang=${activeLang}`);
+    
+    if (cities.length > 0 && activeLang !== "en") {
+       const needsFallback = cities.some(c => !hasTranslation(c.translations, activeLang) && !hasTranslation(c.translations, "en"));
+       
+       if (needsFallback) {
+          try {
+            const enCities = await apiFetch<ApiCity[]>(`/cities?lang=en`);
+            const enMap = new Map(enCities.map(c => [c.id, c]));
+            cities = cities.map(c => {
+              const enC = enMap.get(c.id);
+              if (enC) {
+                return { 
+                  ...c, 
+                  translations: [...(c.translations || []), ...(enC.translations || [])] 
+                } as ApiCity;
+              }
+              return c;
+            });
+          } catch(e) { console.warn("Fallback cities fetch failed", e); }
+       }
+    }
+
     return cities.map((city) => {
-      const translation = pickTranslation(city.translations, activeLang);
+      const translation = pickTranslation(city.translations, activeLang, city.slug);
       return {
         id: city.id,
         slug: city.slug,

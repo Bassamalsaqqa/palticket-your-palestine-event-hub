@@ -9,18 +9,25 @@ export const getLanguage = (): "en" | "ar" => {
   return saved === "ar" ? "ar" : "en";
 };
 
+const FORCE_MOCK_KEY = "palticket-force-mock";
+
 export const getApiConfig = (): ApiConfig | null => {
+  const isForceMock = localStorage.getItem(FORCE_MOCK_KEY) === "true";
+  if (isForceMock) {
+    return null;
+  }
+
   const baseUrl =
-    (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
     localStorage.getItem("palticket-api-base-url") ||
+    (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
     "";
   const token =
-    (import.meta.env.VITE_API_TOKEN as string | undefined) ||
     localStorage.getItem("palticket-api-token") ||
+    (import.meta.env.VITE_API_TOKEN as string | undefined) ||
     "";
   const organizationId =
-    (import.meta.env.VITE_ORGANIZATION_ID as string | undefined) ||
     localStorage.getItem("palticket-org-id") ||
+    (import.meta.env.VITE_ORGANIZATION_ID as string | undefined) ||
     "";
 
   if (!baseUrl || !token || !organizationId) {
@@ -28,6 +35,30 @@ export const getApiConfig = (): ApiConfig | null => {
   }
 
   return { baseUrl, token, organizationId };
+};
+
+export const setApiConfig = (config: ApiConfig) => {
+  localStorage.setItem("palticket-api-base-url", config.baseUrl);
+  localStorage.setItem("palticket-api-token", config.token);
+  localStorage.setItem("palticket-org-id", config.organizationId);
+};
+
+export const clearApiConfig = () => {
+  localStorage.removeItem("palticket-api-base-url");
+  localStorage.removeItem("palticket-api-token");
+  localStorage.removeItem("palticket-org-id");
+};
+
+export const setForceMock = (enabled: boolean) => {
+  if (enabled) {
+    localStorage.setItem(FORCE_MOCK_KEY, "true");
+  } else {
+    localStorage.removeItem(FORCE_MOCK_KEY);
+  }
+};
+
+export const getForceMock = () => {
+  return localStorage.getItem(FORCE_MOCK_KEY) === "true";
 };
 
 export const apiFetch = async <T>(

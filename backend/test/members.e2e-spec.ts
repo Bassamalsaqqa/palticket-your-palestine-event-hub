@@ -7,36 +7,28 @@ import {
 import { ConfigModule } from '@nestjs/config';
 import { validate } from '../src/config/env';
 import { PrismaModule } from '../src/prisma/prisma.module';
-import { OrdersModule } from '../src/orders/orders.module';
+import { MembersModule } from '../src/members/members.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../src/auth/roles.guard';
 import { OrganizationRole } from '@prisma/client';
 import request from 'supertest';
-import type { Response } from 'supertest';
 import { Server } from 'http';
 import { randomUUID } from 'crypto';
 
-type OrderCreateResponse = {
-  id: string;
-  totalCents: number;
-  currency: string;
-  paymentStatus: string;
-  tickets: Array<{ id: string }>;
-};
-
-describe('OrdersController (e2e)', () => {
+describe('MembersController (e2e)', () => {
   let app: INestApplication;
   let httpServer: Server;
   let prisma: PrismaService;
-  let orderId: string | null = null;
 
   const orgId = randomUUID();
-  const userId = randomUUID();
-  const memberId = randomUUID();
-  const eventId = randomUUID();
-  const ticketTypeId = randomUUID();
-  const orgSlug = `org-${Date.now()}`;
+  const adminUserId = randomUUID();
+  const targetUserId = randomUUID();
+  const targetUserEmail = `target-${Date.now()}@example.com`;
+  const nonExistentEmail = `nobody-${Date.now()}@example.com`;
+  
+  // To track created member ID for removal
+  let createdMemberId: string | null = null;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -46,7 +38,7 @@ describe('OrdersController (e2e)', () => {
           validate,
         }),
         PrismaModule,
-        OrdersModule,
+        MembersModule,
       ],
     })
       .overrideGuard(AuthGuard('jwt'))
@@ -55,7 +47,7 @@ describe('OrdersController (e2e)', () => {
           const req = ctx
             .switchToHttp()
             .getRequest<{ user?: { id: string } }>();
-          req.user = { id: userId };
+          req.user = { id: adminUserId };
           return true;
         },
       })
@@ -82,86 +74,100 @@ describe('OrdersController (e2e)', () => {
     httpServer = app.getHttpServer() as Server;
     prisma = moduleFixture.get(PrismaService);
 
+    // Setup DB
     await prisma.organization.create({
       data: {
         id: orgId,
-        name: 'Test Org',
-        slug: orgSlug,
+        name: 'Members Test Org',
+        slug: `members-test-${Date.now()}`,
       },
     });
 
     await prisma.user.create({
       data: {
-        id: userId,
-        email: `orders-e2e-${Date.now()}@example.com`,
+        id: adminUserId,
+        email: `admin-${Date.now()}@example.com`,
         passwordHash: 'hash',
+        name: 'Admin User',
       },
     });
 
     await prisma.organizationMember.create({
       data: {
-        id: memberId,
         organizationId: orgId,
-        userId,
+        userId: adminUserId,
         role: OrganizationRole.ADMIN,
       },
     });
 
-    await prisma.event.create({
+    await prisma.user.create({
       data: {
-        id: eventId,
-        organizationId: orgId,
-        startTime: new Date(),
-        slug: `order-event-${Date.now()}`,
-      },
-    });
-
-    await prisma.ticketType.create({
-      data: {
-        id: ticketTypeId,
-        eventId,
-        name: 'General',
-        sellPriceCents: 1000,
-        partnerPriceCents: 800,
-        currency: 'ILS',
-        quantity: 10,
+        id: targetUserId,
+        email: targetUserEmail,
+        passwordHash: 'hash',
+        name: 'Target User',
       },
     });
   });
 
   afterAll(async () => {
-    if (orderId) {
-      await prisma.ticket.deleteMany({ where: { orderId } });
-      await prisma.orderItem.deleteMany({ where: { orderId } });
-      await prisma.order.deleteMany({ where: { id: orderId } });
-    }
-
-    await prisma.ticketType.deleteMany({ where: { id: ticketTypeId } });
-    await prisma.event.deleteMany({ where: { id: eventId } });
-    await prisma.organizationMember.deleteMany({ where: { id: memberId } });
-    await prisma.user.deleteMany({ where: { id: userId } });
+    // Cleanup
+    await prisma.organizationMember.deleteMany({ where: { organizationId: orgId } });
+    await prisma.user.deleteMany({ where: { id: { in: [adminUserId, targetUserId] } } });
     await prisma.organization.deleteMany({ where: { id: orgId } });
-
     await app.close();
   });
 
-  it('/orders (POST) creates order and tickets', async () => {
+  it('/members/invite (POST) invites a user', async () => {
     const response = await request(httpServer)
-      .post('/orders')
+      .post('/members/invite')
       .set('x-organization-id', orgId)
       .send({
-        eventId,
-        items: [{ ticketTypeId, quantity: 2 }],
-        attendeeName: 'Test Attendee',
+        email: targetUserEmail,
+        role: 'STAFF',
       })
       .expect(201);
 
-    const body = response.body as OrderCreateResponse;
-    orderId = body.id;
+    expect(response.body.userId).toBe(targetUserId);
+    expect(response.body.role).toBe('STAFF');
+    expect(response.body.organizationId).toBe(orgId);
+    createdMemberId = response.body.id;
+  });
 
-    expect(body.totalCents).toBe(2000);
-    expect(body.currency).toBe('ILS');
-    expect(body.paymentStatus).toBe('PENDING');
-    expect(body.tickets).toHaveLength(2);
+  it('/members/invite (POST) fails if user already member', async () => {
+    await request(httpServer)
+      .post('/members/invite')
+      .set('x-organization-id', orgId)
+      .send({
+        email: targetUserEmail,
+        role: 'STAFF',
+      })
+      .expect(409);
+  });
+
+  it('/members/invite (POST) fails if user not found', async () => {
+    await request(httpServer)
+      .post('/members/invite')
+      .set('x-organization-id', orgId)
+      .send({
+        email: nonExistentEmail,
+        role: 'STAFF',
+      })
+      .expect(404);
+  });
+
+  it('/members/:id (DELETE) removes a member', async () => {
+    expect(createdMemberId).toBeDefined();
+    
+    await request(httpServer)
+      .delete(`/members/${createdMemberId}`)
+      .set('x-organization-id', orgId)
+      .expect(200);
+
+    // Verify removal
+    const member = await prisma.organizationMember.findUnique({
+      where: { id: createdMemberId! },
+    });
+    expect(member).toBeNull();
   });
 });

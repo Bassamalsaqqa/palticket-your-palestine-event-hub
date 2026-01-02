@@ -55,6 +55,7 @@ export function AdminLayout() {
     { id: "staff", label: t.admin.staff, icon: UserCog, href: `/${language}/admin/staff` },
     { id: "exports", label: t.admin.exports, icon: Download, href: `/${language}/admin/exports` },
     { id: "audit-logs", label: t.admin.auditLogs, icon: FileText, href: `/${language}/admin/audit-logs` },
+    { id: "settings", label: t.settings?.title || "Settings", icon: Settings, href: `/${language}/admin/settings` },
   ];
 
   const isActive = (href: string) => {

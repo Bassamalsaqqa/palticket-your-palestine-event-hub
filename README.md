@@ -158,9 +158,16 @@ PalTicket has evolved into a multi-tenant, localized ticketing platform with ord
 
 ### Known Gaps
 - **Payments/Notifications**: Payment provider, commissions, payouts, and delivery channels are not implemented.
-- **Admin flows**: Invites and deletion for organization members are not yet implemented.
 
 ### Next Steps
-- Update scan tests to assert `result: ScanResult`.
-- Add translation fallback to English when missing.
 - Implement payment provider integration and notifications.
+
+## API Configuration Precedence
+The application resolves its data source in the following order:
+1. **Force Mock Flag**: If "Force Mock Mode" is enabled in Admin Settings, all other configs are ignored.
+2. **Local Storage Overrides**: Values manually set in the Admin Settings UI.
+3. **Environment Variables**: `VITE_API_BASE_URL`, etc., defined in your `.env` file.
+4. **Fallback**: Default mock data.
+
+## Mock Mode
+You can force the frontend to use mock data even if API environment variables or local storage overrides are present. Go to **Admin > Settings** and enable "Force Mock Mode". When enabled, this flag takes absolute precedence and will keep the application in mock mode until it is manually disabled.
