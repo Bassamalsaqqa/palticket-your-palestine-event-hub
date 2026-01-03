@@ -87,6 +87,7 @@ Open items and conventions
 - Use ASCII by default in new files unless existing file already uses Unicode.
 - Keep future changes aligned with the service layer and React Query for data access.
 - Backend audit priorities: inventory enforcement, scan rate limiting + idempotency, tenant isolation, CSV export safety, ScanLog indexing/retention.
+- Prisma config lives in `backend/prisma.config.ts` and loads env vars via `dotenv/config`.
 
 Common access for admin panel (mock)
 - Use /en/login or /ar/login and sign in with admin email:
