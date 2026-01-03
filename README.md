@@ -63,7 +63,7 @@ npm run start:dev
 ```
 
 ### Prisma Configuration
-Prisma uses `backend/prisma.config.ts`. It loads environment variables via `dotenv/config` before running Prisma commands.
+Prisma uses `backend/prisma.config.ts`. It loads environment variables via `dotenv/config` before running Prisma commands. `@prisma/config` is a backend devDependency.
 
 ## Authentication & Roles
 
