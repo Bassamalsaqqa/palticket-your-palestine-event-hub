@@ -10,6 +10,14 @@ import {
 import { randomBytes } from 'crypto';
 import { getCurrencySymbol } from '../common/currency';
 
+interface Inventory {
+  id: string;
+  ticketTypeId: string;
+  capacity: number;
+  sold: number;
+  reserved: number;
+}
+
 @Injectable()
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
@@ -28,8 +36,35 @@ export class OrdersService {
         throw new BadRequestException('Event not found or access denied');
       }
 
-      // 2. Validate all TicketTypes belong to this Event and get prices
-      const ticketTypeIds = items.map((item) => item.ticketTypeId);
+      // Aggregate quantities
+      const quantities = items.reduce((acc, item) => {
+        acc[item.ticketTypeId] = (acc[item.ticketTypeId] || 0) + item.quantity;
+        return acc;
+      }, {} as Record<string, number>);
+      const ticketTypeIds = Object.keys(quantities).sort();
+
+      // 2. Lock Inventory Rows
+      const query = Prisma.sql`
+        SELECT * FROM "TicketTypeInventory"
+        WHERE "ticketTypeId" IN (${Prisma.join(ticketTypeIds)})
+        FOR UPDATE
+      `;
+
+      const inventoriesRaw = await tx.$queryRaw<any[]>(query); // Using any[] to avoid strict type issues locally, mapped below
+
+      const inventories: Inventory[] = inventoriesRaw.map((inv) => ({
+        id: inv.id,
+        ticketTypeId: inv.ticketTypeId,
+        capacity: inv.capacity,
+        sold: inv.sold,
+        reserved: inv.reserved,
+      }));
+
+      if (inventories.length !== ticketTypeIds.length) {
+        throw new BadRequestException('Inventory record missing for one or more ticket types');
+      }
+
+      // 3. Fetch Pricing & Validate
       const ticketTypes = await tx.ticketType.findMany({
         where: {
           id: { in: ticketTypeIds },
@@ -38,7 +73,7 @@ export class OrdersService {
         select: { id: true, sellPriceCents: true, name: true, currency: true },
       });
 
-      if (ticketTypes.length !== Array.from(new Set(ticketTypeIds)).length) {
+      if (ticketTypes.length !== ticketTypeIds.length) {
         throw new BadRequestException(
           'One or more ticket types are invalid for this event',
         );
@@ -55,7 +90,7 @@ export class OrdersService {
         );
       }
 
-      // 3. Decrement Inventory & Calculate Totals
+      // 4. Check Capacity & Increment Sold
       let totalCents = 0;
       const orderItemsData: {
         ticketTypeId: string;
@@ -63,36 +98,36 @@ export class OrdersService {
         priceCents: number;
       }[] = [];
 
-      for (const item of items) {
-        const type = ticketTypes.find((t) => t.id === item.ticketTypeId)!;
+      for (const typeId of ticketTypeIds) {
+        const inventory = inventories.find((inv) => inv.ticketTypeId === typeId);
+        const typeInfo = ticketTypes.find((t) => t.id === typeId);
+        const qty = quantities[typeId];
 
-        // Atomic decrement with capacity check
-        const updateResult = await tx.ticketType.updateMany({
-          where: {
-            id: item.ticketTypeId,
-            quantity: { gte: item.quantity },
-          },
-          data: {
-            quantity: { decrement: item.quantity },
-          },
-        });
+        if (!inventory || !typeInfo) {
+           throw new BadRequestException(`Invalid ticket type: ${typeId}`);
+        }
 
-        if (updateResult.count === 0) {
+        if (inventory.sold + inventory.reserved + qty > inventory.capacity) {
           throw new BadRequestException(
-            `Insufficient capacity for ticket type: ${type.name}`,
+            `Insufficient capacity for ticket type: ${typeInfo.name}`,
           );
         }
 
-        const lineTotal = type.sellPriceCents * item.quantity;
-        totalCents += lineTotal;
+        // Increment sold
+        await tx.ticketTypeInventory.update({
+          where: { id: inventory.id },
+          data: { sold: { increment: qty } },
+        });
+
+        totalCents += typeInfo.sellPriceCents * qty;
         orderItemsData.push({
-          ticketTypeId: item.ticketTypeId,
-          quantity: item.quantity,
-          priceCents: type.sellPriceCents,
+          ticketTypeId: typeId,
+          quantity: qty,
+          priceCents: typeInfo.sellPriceCents,
         });
       }
 
-      // 4. Create the Order
+      // 5. Create the Order
       const order = await tx.order.create({
         data: {
           organizationId,
@@ -122,17 +157,17 @@ export class OrdersService {
         },
       });
 
-      // 5. Generate Tickets
+      // 6. Generate Tickets (PENDING)
       const ticketsToCreate: Prisma.TicketCreateManyInput[] = [];
-      for (const item of items) {
+      for (const item of orderItemsData) {
         for (let i = 0; i < item.quantity; i++) {
           ticketsToCreate.push({
             organizationId,
             eventId,
             orderId: order.id,
             ticketTypeId: item.ticketTypeId,
-            code: randomBytes(8).toString('hex').toUpperCase(), // 16 char unique code
-            status: TicketStatus.ISSUED,
+            code: randomBytes(8).toString('hex').toUpperCase(),
+            status: TicketStatus.PENDING, // Tickets are PENDING until paid
             attendeeName,
             attendeeEmail,
             attendeePhone,
@@ -144,7 +179,7 @@ export class OrdersService {
         data: ticketsToCreate,
       });
 
-      // 6. Return explicit select
+      // 7. Return explicit select
       const createdTickets = await tx.ticket.findMany({
         where: { orderId: order.id },
         select: {
