@@ -184,11 +184,7 @@ PalTicket has evolved into a multi-tenant, localized ticketing platform with ord
 - **Security:** CSV export injection protection and strict tenant isolation checks.
 
 ### Database Migrations
-New features require schema changes. Run the following to apply:
-```bash
-cd backend
-npx prisma migrate dev --name idempotency_and_indexes
-```
+Database schema is up to date with idempotency and indexing improvements.
 
 ## API Configuration Precedence
 The application resolves its data source in the following order:
