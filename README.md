@@ -187,6 +187,11 @@ PalTicket has evolved into a multi-tenant, localized ticketing platform with ord
 - **Indexes:** ScanLog indexed by `organizationId, scannedAt` to support reporting and cleanup.
 - **Security:** CSV export injection protection and enhanced tenant isolation checks.
 
+### Next Session Focus
+- Verify tenant isolation across admin and export endpoints.
+- Confirm idempotency replay behavior and throttling via E2E tests.
+- Review export PII minimization requirements.
+
 ### Database Migrations
 Database schema is up to date with idempotency and indexing improvements.
 

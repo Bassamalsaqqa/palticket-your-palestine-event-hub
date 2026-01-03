@@ -51,6 +51,13 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Filters:** Optional `eventId` query parameter to export a single event.
 - **Access**: ADMIN only
 
+## Recent Hardening (Jan 2026)
+- **Inventory:** Orders enforce ticket type capacity with atomic decrements.
+- **Idempotency:** `POST /orders` supports `Idempotency-Key` scoped by org/user/method/path.
+- **Rate Limiting:** Global throttling (100/min); orders (5/min); scans (60/min).
+- **Log Retention:** Daily cleanup of scan logs older than 6 months.
+- **ScanLog Indexing:** Composite index on `organizationId, scannedAt`.
+
 ## Admin/Staff Testing (E2E)
 
 1. **Get Authenticated**:

@@ -69,6 +69,12 @@
 *   **Localized Display**: Prefer `getLocalizedText` from `src/i18n/localize.ts` instead of direct `name[language]` access.
 *   **Auth Persistence**: Mock auth persists only when "Remember me" is checked; localStorage is optional and guarded.
 
+## Current Priorities (Next Session)
+1. Verify tenant isolation for admin and export endpoints.
+2. Confirm idempotency replay and throttling via E2E tests.
+3. Review CSV export PII minimization requirements.
+4. Continue payments/notifications roadmap after security hardening.
+
 ## Common Pitfalls
 1.  **UUID vs Slug**: Always use UUIDs for relationships/updates and slugs for filtering/URLs.
 2.  **Camera Lifecycle**: Ensure all media tracks are stopped (`track.stop()`) on component unmount or step change.

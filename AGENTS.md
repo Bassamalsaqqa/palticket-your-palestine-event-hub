@@ -88,6 +88,7 @@ Open items and conventions
 - Keep future changes aligned with the service layer and React Query for data access.
 - Backend audit priorities: inventory enforcement, scan rate limiting + idempotency, tenant isolation, CSV export safety, ScanLog indexing/retention.
 - Prisma config lives in `backend/prisma.config.ts` and loads env vars via `dotenv/config` (uses `@prisma/config` devDependency).
+ - Pending follow-ups: verify tenant isolation across admin/exports, add PII minimization in exports where required, and confirm idempotency/ratelimit behavior via e2e tests.
 
 Common access for admin panel (mock)
 - Use /en/login or /ar/login and sign in with admin email:
