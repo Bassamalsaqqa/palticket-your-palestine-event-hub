@@ -279,7 +279,7 @@ const run = async () => {
     const price = parsePrice(event.price);
     let ticketType = await prisma.ticketType.findFirst({
       where: { eventId: eventRecord.id, name: 'General' },
-      select: { id: true },
+      select: { id: true, quantity: true },
     });
 
     if (ticketType) {
@@ -301,17 +301,17 @@ const run = async () => {
           currency: price.currency,
           quantity: 100,
         },
-        select: { id: true },
+        select: { id: true, quantity: true },
       });
     }
 
     await prisma.ticketTypeInventory.upsert({
       where: { ticketTypeId: ticketType.id },
-      update: { capacity: 100 },
+      update: { capacity: ticketType.quantity },
       create: {
         organizationId: organization.id,
         ticketTypeId: ticketType.id,
-        capacity: 100,
+        capacity: ticketType.quantity,
         sold: 0,
         reserved: 0,
       },

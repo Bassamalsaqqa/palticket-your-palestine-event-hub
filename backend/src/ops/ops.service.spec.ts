@@ -139,36 +139,17 @@ describe('OpsService', () => {
     });
 
     it('should throw BadRequestException if ticket type does not belong to event', async () => {
-      prisma.organizationMember.findUnique.mockResolvedValue({
-        id: 'mem-1',
-      } as any);
+      prisma.organizationMember.findUnique.mockResolvedValue({ id: 'mem-1' } as any);
       prisma.event.findFirst.mockResolvedValue({ id: eventId } as any);
-      prisma.$queryRaw.mockResolvedValue([
-        {
-          id: 'inv-1',
-          ticketTypeId,
-          capacity: 10,
-          sold: 0,
-          reserved: 0,
-        },
-      ]);
+      
+      // Capacity check not reached if validation fails
+      prisma.$queryRaw.mockResolvedValue([]);
 
-      prisma.ticketType.findMany.mockResolvedValue([
-        {
-          id: ticketTypeId,
-          sellPriceCents: 1000,
-          currency: 'ILS',
-          eventId: 'other-event', // Mismatch
-        },
-      ] as any);
+      // Simulate no ticket types found for this event
+      prisma.ticketType.findMany.mockResolvedValue([]);
 
-      // Mock order creation to prevent crash if validation fails (though it shouldn't reach here)
-      prisma.order.create.mockResolvedValue({ id: 'order-1' } as any);
-
-      await expect(
-        service.createPosOrder(orgId, userId, mockDto),
-      ).rejects.toThrow(
-        `Ticket type ${ticketTypeId} does not belong to event ${eventId}`,
+      await expect(service.createPosOrder(orgId, userId, mockDto)).rejects.toThrow(
+        'One or more ticket types are invalid or do not belong to this event'
       );
     });
 

@@ -18,12 +18,24 @@ interface Inventory {
   reserved: number;
 }
 
+interface RawInventory {
+  id: string;
+  ticketTypeId: string;
+  capacity: number;
+  sold: number;
+  reserved: number;
+}
+
 @Injectable()
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
   async create(organizationId: string, userId: string, data: CreateOrderDto) {
     const { eventId, items, attendeeName, attendeeEmail, attendeePhone } = data;
+
+    if (!items || items.length === 0) {
+      throw new BadRequestException('Order must contain at least one item');
+    }
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Validate Event exists and belongs to the Organization
@@ -37,20 +49,39 @@ export class OrdersService {
       }
 
       // Aggregate quantities
-      const quantities = items.reduce((acc, item) => {
-        acc[item.ticketTypeId] = (acc[item.ticketTypeId] || 0) + item.quantity;
-        return acc;
-      }, {} as Record<string, number>);
-      const ticketTypeIds = Object.keys(quantities).sort();
+      const quantities = items.reduce(
+        (acc, item) => {
+          acc[item.ticketTypeId] =
+            (acc[item.ticketTypeId] || 0) + item.quantity;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+      const requestedTicketTypeIds = Object.keys(quantities).sort();
 
-      // 2. Lock Inventory Rows
+      // 2. Validate Ticket Types ownership (Pre-lock)
+      const ticketTypes = await tx.ticketType.findMany({
+        where: {
+          id: { in: requestedTicketTypeIds },
+          eventId: event.id,
+        },
+        select: { id: true, sellPriceCents: true, name: true, currency: true },
+      });
+
+      if (ticketTypes.length !== requestedTicketTypeIds.length) {
+        throw new BadRequestException(
+          'One or more ticket types are invalid for this event',
+        );
+      }
+
+      // 3. Lock Inventory Rows
       const query = Prisma.sql`
         SELECT * FROM "TicketTypeInventory"
-        WHERE "ticketTypeId" IN (${Prisma.join(ticketTypeIds)})
+        WHERE "ticketTypeId" IN (${Prisma.join(requestedTicketTypeIds)})
         FOR UPDATE
       `;
 
-      const inventoriesRaw = await tx.$queryRaw<any[]>(query); // Using any[] to avoid strict type issues locally, mapped below
+      const inventoriesRaw = await tx.$queryRaw<RawInventory[]>(query); // Using any[] to avoid strict type issues locally, mapped below
 
       const inventories: Inventory[] = inventoriesRaw.map((inv) => ({
         id: inv.id,
@@ -60,22 +91,9 @@ export class OrdersService {
         reserved: inv.reserved,
       }));
 
-      if (inventories.length !== ticketTypeIds.length) {
-        throw new BadRequestException('Inventory record missing for one or more ticket types');
-      }
-
-      // 3. Fetch Pricing & Validate
-      const ticketTypes = await tx.ticketType.findMany({
-        where: {
-          id: { in: ticketTypeIds },
-          eventId: event.id,
-        },
-        select: { id: true, sellPriceCents: true, name: true, currency: true },
-      });
-
-      if (ticketTypes.length !== ticketTypeIds.length) {
+      if (inventories.length !== requestedTicketTypeIds.length) {
         throw new BadRequestException(
-          'One or more ticket types are invalid for this event',
+          'Inventory record missing for one or more ticket types',
         );
       }
 
@@ -98,13 +116,15 @@ export class OrdersService {
         priceCents: number;
       }[] = [];
 
-      for (const typeId of ticketTypeIds) {
-        const inventory = inventories.find((inv) => inv.ticketTypeId === typeId);
+      for (const typeId of requestedTicketTypeIds) {
+        const inventory = inventories.find(
+          (inv) => inv.ticketTypeId === typeId,
+        );
         const typeInfo = ticketTypes.find((t) => t.id === typeId);
         const qty = quantities[typeId];
 
         if (!inventory || !typeInfo) {
-           throw new BadRequestException(`Invalid ticket type: ${typeId}`);
+          throw new BadRequestException(`Invalid ticket type: ${typeId}`);
         }
 
         if (inventory.sold + inventory.reserved + qty > inventory.capacity) {
