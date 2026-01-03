@@ -29,9 +29,7 @@ describe('OpsService', () => {
     prisma = module.get(PrismaService);
 
     // Mock interactive transaction
-    prisma.$transaction.mockImplementation(
-      (cb: any) => cb(prisma),
-    );
+    prisma.$transaction.mockImplementation((cb: any) => cb(prisma));
   });
 
   const orgId = 'org-1';
@@ -50,33 +48,44 @@ describe('OpsService', () => {
     it('should create CASH order successfully with row locks', async () => {
       // Mock Event check
       prisma.event.findFirst.mockResolvedValue({ id: eventId } as any);
-      
+
       // Mock row lock result
-      prisma.$queryRawUnsafe.mockResolvedValue([{
-        id: 'inv-1',
-        ticketTypeId,
-        capacity: 10,
-        sold: 0,
-        reserved: 0
-      }]);
+      prisma.$queryRawUnsafe.mockResolvedValue([
+        {
+          id: 'inv-1',
+          ticketTypeId,
+          capacity: 10,
+          sold: 0,
+          reserved: 0,
+        },
+      ]);
 
       // Mock TicketType fetch
-      prisma.ticketType.findMany.mockResolvedValue([{
-        id: ticketTypeId,
-        sellPriceCents: 1000,
-        currency: 'ILS'
-      }] as any);
+      prisma.ticketType.findMany.mockResolvedValue([
+        {
+          id: ticketTypeId,
+          sellPriceCents: 1000,
+          currency: 'ILS',
+        },
+      ] as any);
 
       // Mock creations
-      prisma.order.create.mockResolvedValue({ id: 'order-1', totalCents: 2000, currency: 'ILS', status: OrderStatus.PAID } as any);
-      prisma.ticket.findMany.mockResolvedValue([{ id: 't-1', status: TicketStatus.ISSUED }] as any);
+      prisma.order.create.mockResolvedValue({
+        id: 'order-1',
+        totalCents: 2000,
+        currency: 'ILS',
+        status: OrderStatus.PAID,
+      } as any);
+      prisma.ticket.findMany.mockResolvedValue([
+        { id: 't-1', status: TicketStatus.ISSUED },
+      ] as any);
 
       const result = await service.createPosOrder(orgId, userId, mockDto);
 
       expect(prisma.$queryRawUnsafe).toHaveBeenCalled();
       expect(prisma.ticketTypeInventory.update).toHaveBeenCalledWith({
         where: { id: 'inv-1' },
-        data: { sold: { increment: 2 } }
+        data: { sold: { increment: 2 } },
       });
       expect(result.order.status).toBe(OrderStatus.PAID);
       expect(result.payment.status).toBe(PaymentStatus.SUCCEEDED);
@@ -84,25 +93,29 @@ describe('OpsService', () => {
 
     it('should throw BadRequestException if capacity is exceeded', async () => {
       prisma.event.findFirst.mockResolvedValue({ id: eventId } as any);
-      
+
       // Capacity 10, Sold 9, Requesting 2 -> Fail
-      prisma.$queryRawUnsafe.mockResolvedValue([{
-        id: 'inv-1',
-        ticketTypeId,
-        capacity: 10,
-        sold: 9,
-        reserved: 0
-      }]);
+      prisma.$queryRawUnsafe.mockResolvedValue([
+        {
+          id: 'inv-1',
+          ticketTypeId,
+          capacity: 10,
+          sold: 9,
+          reserved: 0,
+        },
+      ]);
 
-      prisma.ticketType.findMany.mockResolvedValue([{
-        id: ticketTypeId,
-        sellPriceCents: 1000,
-        currency: 'ILS'
-      }] as any);
+      prisma.ticketType.findMany.mockResolvedValue([
+        {
+          id: ticketTypeId,
+          sellPriceCents: 1000,
+          currency: 'ILS',
+        },
+      ] as any);
 
-      await expect(service.createPosOrder(orgId, userId, mockDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.createPosOrder(orgId, userId, mockDto),
+      ).rejects.toThrow(BadRequestException);
       expect(prisma.order.create).not.toHaveBeenCalled();
     });
 
@@ -110,24 +123,33 @@ describe('OpsService', () => {
       const cardDto = {
         ...mockDto,
         paymentMethod: PaymentMethod.CARD,
-        providerReference: 'REF-123'
+        providerReference: 'REF-123',
       };
 
       prisma.event.findFirst.mockResolvedValue({ id: eventId } as any);
-      prisma.$queryRawUnsafe.mockResolvedValue([{
-        id: 'inv-1',
-        ticketTypeId,
-        capacity: 10,
-        sold: 0,
-        reserved: 0
-      }]);
-      prisma.ticketType.findMany.mockResolvedValue([{
-        id: ticketTypeId,
-        sellPriceCents: 1000,
-        currency: 'ILS'
-      }] as any);
-      prisma.order.create.mockResolvedValue({ id: 'order-1', status: OrderStatus.PENDING_PAYMENT } as any);
-      prisma.ticket.findMany.mockResolvedValue([{ id: 't-1', status: TicketStatus.PENDING }] as any);
+      prisma.$queryRawUnsafe.mockResolvedValue([
+        {
+          id: 'inv-1',
+          ticketTypeId,
+          capacity: 10,
+          sold: 0,
+          reserved: 0,
+        },
+      ]);
+      prisma.ticketType.findMany.mockResolvedValue([
+        {
+          id: ticketTypeId,
+          sellPriceCents: 1000,
+          currency: 'ILS',
+        },
+      ] as any);
+      prisma.order.create.mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.PENDING_PAYMENT,
+      } as any);
+      prisma.ticket.findMany.mockResolvedValue([
+        { id: 't-1', status: TicketStatus.PENDING },
+      ] as any);
 
       const result = await service.createPosOrder(orgId, userId, cardDto);
 
@@ -139,12 +161,93 @@ describe('OpsService', () => {
     it('should throw BadRequestException if CARD payment missing reference', async () => {
       const invalidCardDto = {
         ...mockDto,
-        paymentMethod: PaymentMethod.CARD
+        paymentMethod: PaymentMethod.CARD,
       };
 
-      await expect(service.createPosOrder(orgId, userId, invalidCardDto)).rejects.toThrow(
-        'Provider reference required for CARD payments',
+      await expect(
+        service.createPosOrder(orgId, userId, invalidCardDto),
+      ).rejects.toThrow('Provider reference required for CARD payments');
+    });
+  });
+
+  describe('confirmPayment', () => {
+    const orderId = 'order-1';
+
+    it('should confirm payment and issue tickets successfully', async () => {
+      // Mock Order fetch with pending payment
+      prisma.order.findUnique.mockResolvedValue({
+        id: orderId,
+        organizationId: orgId,
+        status: OrderStatus.PENDING_PAYMENT,
+        payments: [{ id: 'pay-1', amountCents: 1000 }],
+      } as any);
+
+      // Mock Member lookup
+      prisma.organizationMember.findUnique.mockResolvedValue({
+        id: 'mem-1',
+      } as any);
+
+      // Mock Updates
+      prisma.payment.update.mockResolvedValue({
+        id: 'pay-1',
+        status: PaymentStatus.SUCCEEDED,
+      } as any);
+      prisma.order.update.mockResolvedValue({
+        id: orderId,
+        status: OrderStatus.PAID,
+      } as any);
+      prisma.ticket.updateMany.mockResolvedValue({ count: 2 } as any);
+      prisma.auditLog.create.mockResolvedValue({ id: 'audit-1' } as any);
+
+      const result = await service.confirmPayment(orgId, orderId, userId);
+
+      expect(prisma.payment.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'pay-1' },
+          data: expect.objectContaining({ status: PaymentStatus.SUCCEEDED }),
+        }),
       );
+      expect(prisma.order.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: orderId },
+          data: { status: OrderStatus.PAID },
+        }),
+      );
+      expect(prisma.ticket.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { orderId, status: TicketStatus.PENDING },
+          data: { status: TicketStatus.ISSUED },
+        }),
+      );
+      expect(prisma.auditLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: 'POS_CARD_CONFIRM',
+            entityId: orderId,
+          }),
+        }),
+      );
+      expect(result.status).toBe(OrderStatus.PAID);
+    });
+
+    it('should throw NotFoundException if order not found', async () => {
+      prisma.order.findUnique.mockResolvedValue(null);
+      await expect(
+        service.confirmPayment(orgId, orderId, userId),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException if no pending CARD payment', async () => {
+      prisma.order.findUnique.mockResolvedValue({
+        id: orderId,
+        organizationId: orgId,
+        status: OrderStatus.PENDING_PAYMENT,
+        payments: [], // Empty
+      } as any);
+
+      await expect(
+        service.confirmPayment(orgId, orderId, userId),
+      ).rejects.toThrow('No pending CARD payment found for this order');
     });
   });
 });

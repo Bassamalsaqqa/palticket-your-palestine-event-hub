@@ -4,12 +4,19 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 import { ExecutionContext, CallHandler, ConflictException } from '@nestjs/common';
 import { of, firstValueFrom } from 'rxjs';
+import * as crypto from 'crypto';
+
+jest.mock('crypto', () => ({
+  ...jest.requireActual('crypto'),
+  createHash: jest.fn(),
+}));
 
 describe('IdempotencyInterceptor', () => {
   let interceptor: IdempotencyInterceptor;
   let prisma: DeepMockProxy<PrismaService>;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         IdempotencyInterceptor,
@@ -64,8 +71,7 @@ describe('IdempotencyInterceptor', () => {
   it('should return stored response on replay with same hash', async () => {
     const storedResponse = { id: 'order-1' };
     
-    // Mock hash to match
-    jest.spyOn(require('crypto'), 'createHash').mockReturnValue({
+    (crypto.createHash as jest.Mock).mockReturnValue({
       update: jest.fn().mockReturnThis(),
       digest: jest.fn().mockReturnValue('mock-hash'),
     });
@@ -84,15 +90,14 @@ describe('IdempotencyInterceptor', () => {
   });
 
   it('should throw ConflictException on replay with different hash', async () => {
-    prisma.idempotencyKey.findUnique.mockResolvedValue({
-      requestHash: 'different-hash',
-    } as any);
-
-    // Mock actual hash
-    jest.spyOn(require('crypto'), 'createHash').mockReturnValue({
+    (crypto.createHash as jest.Mock).mockReturnValue({
       update: jest.fn().mockReturnThis(),
       digest: jest.fn().mockReturnValue('mock-hash'),
     });
+
+    prisma.idempotencyKey.findUnique.mockResolvedValue({
+      requestHash: 'different-hash',
+    } as any);
 
     await expect(interceptor.intercept(mockExecutionContext, mockCallHandler)).rejects.toThrow(
       ConflictException,
