@@ -1,4 +1,11 @@
-import { IsOptional, IsInt, Min, IsEnum, IsEmail, IsNotEmpty } from 'class-validator';
+import {
+  IsOptional,
+  IsInt,
+  Min,
+  IsEnum,
+  IsEmail,
+  IsNotEmpty,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrganizationRole } from '@prisma/client';
 

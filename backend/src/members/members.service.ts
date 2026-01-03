@@ -1,6 +1,15 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UpdateMemberRoleDto, CreateInviteDto, AcceptInviteDto } from './dto/member.dto';
+import {
+  UpdateMemberRoleDto,
+  CreateInviteDto,
+  AcceptInviteDto,
+} from './dto/member.dto';
 import { InviteStatus } from '@prisma/client';
 import { randomBytes } from 'crypto';
 
@@ -56,18 +65,24 @@ export class MembersService {
     });
   }
 
-  async createInvite(organizationId: string, invitedByUserId: string, dto: CreateInviteDto) {
+  async createInvite(
+    organizationId: string,
+    invitedByUserId: string,
+    dto: CreateInviteDto,
+  ) {
     // 1. Check if user already a member
     const existingMember = await this.prisma.organizationMember.findFirst({
       where: {
         organizationId,
-        user: { email: dto.email }
+        user: { email: dto.email },
       },
-      select: { id: true }
+      select: { id: true },
     });
 
     if (existingMember) {
-      throw new ConflictException('User is already a member of this organization');
+      throw new ConflictException(
+        'User is already a member of this organization',
+      );
     }
 
     // 2. Check if active invite already exists
@@ -76,13 +91,15 @@ export class MembersService {
         organizationId,
         email: dto.email,
         status: InviteStatus.PENDING,
-        expiresAt: { gt: new Date() }
+        expiresAt: { gt: new Date() },
       },
-      select: { id: true }
+      select: { id: true },
     });
 
     if (existingInvite) {
-      throw new ConflictException('An active invite already exists for this email');
+      throw new ConflictException(
+        'An active invite already exists for this email',
+      );
     }
 
     // 3. Create invite
@@ -105,15 +122,15 @@ export class MembersService {
         role: true,
         token: true,
         expiresAt: true,
-        status: true
-      }
+        status: true,
+      },
     });
   }
 
   async acceptInvite(userId: string, dto: AcceptInviteDto) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true }
+      select: { id: true, email: true },
     });
 
     if (!user) throw new NotFoundException('User not found');
@@ -126,8 +143,8 @@ export class MembersService {
         email: true,
         role: true,
         status: true,
-        expiresAt: true
-      }
+        expiresAt: true,
+      },
     });
 
     if (!invite || invite.status !== InviteStatus.PENDING) {
@@ -137,13 +154,15 @@ export class MembersService {
     if (invite.expiresAt < new Date()) {
       await this.prisma.organizationInvite.update({
         where: { id: invite.id },
-        data: { status: InviteStatus.EXPIRED }
+        data: { status: InviteStatus.EXPIRED },
       });
       throw new BadRequestException('Invite has expired');
     }
 
     if (invite.email.toLowerCase() !== user.email.toLowerCase()) {
-      throw new BadRequestException('Invite was sent to a different email address');
+      throw new BadRequestException(
+        'Invite was sent to a different email address',
+      );
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -163,14 +182,14 @@ export class MembersService {
       if (existingMember) {
         await tx.organizationInvite.update({
           where: { id: invite.id },
-          data: { status: InviteStatus.ACCEPTED }
+          data: { status: InviteStatus.ACCEPTED },
         });
         return existingMember;
       }
 
       await tx.organizationInvite.update({
         where: { id: invite.id },
-        data: { status: InviteStatus.ACCEPTED }
+        data: { status: InviteStatus.ACCEPTED },
       });
 
       return tx.organizationMember.create({
@@ -181,8 +200,8 @@ export class MembersService {
         },
         select: {
           id: true,
-          organization: { select: { name: true } }
-        }
+          organization: { select: { name: true } },
+        },
       });
     });
   }

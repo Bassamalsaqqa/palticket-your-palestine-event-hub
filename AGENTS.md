@@ -86,6 +86,7 @@ Open items and conventions
 - Avoid re-exporting hooks from component files to keep react-refresh clean.
 - Use ASCII by default in new files unless existing file already uses Unicode.
 - Keep future changes aligned with the service layer and React Query for data access.
+- Backend audit priorities: inventory enforcement, scan rate limiting + idempotency, tenant isolation, CSV export safety, ScanLog indexing/retention.
 
 Common access for admin panel (mock)
 - Use /en/login or /ar/login and sign in with admin email:

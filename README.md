@@ -135,7 +135,11 @@ The project adheres to strict **ESLint** rules. The root lint configuration cove
 - [x] Step 2: Auth + RBAC (JWT, RolesGuard, OrganizationMember)
 - [x] Step 3: Domain Modules (Events/Venues/Gates/TicketTypes CRUD; Orders Create + Read; Tickets Read-only)
 - [x] Step 4: Scanner endpoint + ScanLog
-- [ ] Step 5: Payments, commissions, payouts, notifications (deferred)
+- [ ] Step 5: Inventory enforcement + idempotent order creation
+- [ ] Step 6: Scan hardening (rate limiting + consistent response/tests)
+- [ ] Step 7: Tenant isolation audit + PII-safe exports
+- [ ] Step 8: ScanLog retention + indexing
+- [ ] Step 9: Payments, commissions, payouts, notifications (deferred)
 
 ## Project State Review (Jan 1, 2026)
 
@@ -167,6 +171,9 @@ PalTicket has evolved into a multi-tenant, localized ticketing platform with ord
 
 ### Next Steps
 - Provide frontend API config (base URL, token, org ID) for live data.
+- Implement backend inventory enforcement and idempotent order creation.
+- Harden scan endpoint (rate limiting) and align tests with ScanResult.
+- Audit tenant isolation and export PII safety.
 - Payments/commissions/payouts/notifications are deferred.
 
 ## API Configuration Precedence

@@ -111,6 +111,7 @@ describe('OrdersService', () => {
 
     prisma.event.findFirst.mockResolvedValue(mockEvent);
     prisma.ticketType.findMany.mockResolvedValue([mockTicketType]);
+    prisma.ticketType.updateMany.mockResolvedValue({ count: 1 });
     prisma.order.create.mockResolvedValue(mockOrder);
     prisma.ticket.findMany.mockResolvedValue(mockTickets);
 
@@ -120,8 +121,26 @@ describe('OrdersService', () => {
     expect(result.currencySymbol).toBe('\u20AA');
     expect(result.paymentStatus).toBe(PaymentStatus.PENDING);
     expect(result.tickets).toHaveLength(2);
+    expect(prisma.ticketType.updateMany.mock.calls.length).toBe(1);
     expect(prisma.order.create.mock.calls.length).toBe(1);
     expect(prisma.ticket.createMany.mock.calls.length).toBe(1);
+  });
+
+  it('should throw BadRequestException if inventory is insufficient', async () => {
+    prisma.event.findFirst.mockResolvedValue(mockEvent);
+    prisma.ticketType.findMany.mockResolvedValue([mockTicketType]);
+    // Simulate insufficient inventory (0 rows updated)
+    prisma.ticketType.updateMany.mockResolvedValue({ count: 0 });
+
+    const createDto = {
+      eventId,
+      items: [{ ticketTypeId, quantity: 5 }],
+    };
+
+    await expect(service.create(orgId, userId, createDto)).rejects.toThrow(
+      'Insufficient capacity for ticket type: General',
+    );
+    expect(prisma.order.create).not.toHaveBeenCalled();
   });
 
   it('should throw BadRequestException if event not found', async () => {

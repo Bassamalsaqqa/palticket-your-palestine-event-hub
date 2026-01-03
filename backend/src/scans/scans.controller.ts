@@ -7,6 +7,7 @@ import {
   Get,
   Query,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ScansService } from './scans.service';
 import { ScanRequestDto, ListScanLogsQueryDto } from './dto/scan.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -22,6 +23,7 @@ export class ScansController {
 
   @Post()
   @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   scan(@Req() req: AuthenticatedRequest, @Body() body: ScanRequestDto) {
     return this.scansService.scan(req.orgId!, req.user.id, body);
   }

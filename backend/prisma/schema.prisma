@@ -81,6 +81,7 @@ model User {
   orders      Order[]
   scans       ScanLog[]
   sentInvites OrganizationInvite[] @relation("SentInvites")
+  idempotencyKeys IdempotencyKey[]
 }
 
 model Organization {
@@ -102,6 +103,7 @@ model Organization {
   payouts            Payout[]
   categories         Category[]
   cities             City[]
+  idempotencyKeys    IdempotencyKey[]
 
   @@index([slug])
 }
@@ -257,6 +259,7 @@ model Event {
   gates              Gate[]
   orders             Order[]
   tickets            Ticket[]
+  scanLogs           ScanLog[]
   commissionPolicies CommissionPolicy[]
 
   @@unique([organizationId, slug])
@@ -398,6 +401,7 @@ model ScanLog {
   id              String     @id @default(uuid())
   organizationId  String
   ticketId        String
+  eventId         String?
   scannedAt       DateTime   @default(now())
   scannedByUserId String?
   scannedByMemberId String?
@@ -406,12 +410,14 @@ model ScanLog {
 
   organization Organization     @relation(fields: [organizationId], references: [id])
   ticket       Ticket           @relation(fields: [ticketId], references: [id])
+  event        Event?           @relation(fields: [eventId], references: [id])
   scannedBy    User?            @relation(fields: [scannedByUserId], references: [id])
   scannedByMember OrganizationMember? @relation(fields: [scannedByMemberId], references: [id])
   gate         Gate?            @relation(fields: [gateId], references: [id])
 
   @@index([organizationId])
   @@index([ticketId])
+  @@index([eventId])
   @@index([gateId])
   @@index([scannedByUserId])
   @@index([scannedByMemberId])
@@ -456,5 +462,24 @@ model Payout {
   organization Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId])
+}
+
+model IdempotencyKey {
+  id             String    @id @default(uuid())
+  key            String
+  organizationId String
+  userId         String
+  requestPath    String
+  requestHash    String
+  responseCode   Int
+  responseBody   String
+  createdAt      DateTime  @default(now())
+  expiresAt      DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([organizationId, userId, key])
+  @@index([createdAt])
 }
 

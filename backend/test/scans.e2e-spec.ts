@@ -176,12 +176,18 @@ describe('ScansController (e2e)', () => {
     // Cleanup
     await prisma.scanLog.deleteMany({ where: { organizationId: orgId } });
     await prisma.ticket.deleteMany({ where: { organizationId: orgId } });
-    await prisma.orderItem.deleteMany({ where: { order: { organizationId: orgId } } });
+    await prisma.orderItem.deleteMany({
+      where: { order: { organizationId: orgId } },
+    });
     await prisma.order.deleteMany({ where: { organizationId: orgId } });
-    await prisma.ticketType.deleteMany({ where: { event: { organizationId: orgId } } });
+    await prisma.ticketType.deleteMany({
+      where: { event: { organizationId: orgId } },
+    });
     await prisma.gate.deleteMany({ where: { organizationId: orgId } });
     await prisma.event.deleteMany({ where: { organizationId: orgId } });
-    await prisma.organizationMember.deleteMany({ where: { organizationId: orgId } });
+    await prisma.organizationMember.deleteMany({
+      where: { organizationId: orgId },
+    });
     await prisma.user.deleteMany({ where: { id: userId } });
     await prisma.organization.deleteMany({ where: { id: orgId } });
     await app.close();
@@ -201,7 +207,9 @@ describe('ScansController (e2e)', () => {
     expect(response.body.result).toBe(ScanResult.GRANTED);
 
     // Verify DB
-    const ticket = await prisma.ticket.findUnique({ where: { id: ticketValidId } });
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketValidId },
+    });
     expect(ticket?.status).toBe(TicketStatus.SCANNED);
     expect(ticket?.scannedAt).not.toBeNull();
 
@@ -247,7 +255,10 @@ describe('ScansController (e2e)', () => {
 
     // Verify Log
     const log = await prisma.scanLog.findFirst({
-      where: { ticketId: ticketVoidId, result: ScanResult.DENIED_INVALID_TICKET },
+      where: {
+        ticketId: ticketVoidId,
+        result: ScanResult.DENIED_INVALID_TICKET,
+      },
     });
     expect(log).toBeDefined();
   });
@@ -256,7 +267,9 @@ describe('ScansController (e2e)', () => {
     const invalidCode = 'NON-EXISTENT-CODE';
 
     // Count before
-    const countBefore = await prisma.scanLog.count({ where: { organizationId: orgId } });
+    const countBefore = await prisma.scanLog.count({
+      where: { organizationId: orgId },
+    });
 
     const response = await request(httpServer)
       .post('/scan')
@@ -271,7 +284,9 @@ describe('ScansController (e2e)', () => {
     expect(response.body.result).toBe(ScanResult.DENIED_INVALID_TICKET);
 
     // Count after
-    const countAfter = await prisma.scanLog.count({ where: { organizationId: orgId } });
+    const countAfter = await prisma.scanLog.count({
+      where: { organizationId: orgId },
+    });
     expect(countAfter).toBe(countBefore);
   });
 
@@ -292,7 +307,10 @@ describe('ScansController (e2e)', () => {
 
     // Verify Log
     const log = await prisma.scanLog.findFirst({
-      where: { ticketId: ticketValidId, result: ScanResult.DENIED_INVALID_EVENT },
+      where: {
+        ticketId: ticketValidId,
+        result: ScanResult.DENIED_INVALID_EVENT,
+      },
     });
     expect(log).toBeDefined();
   });

@@ -1,0 +1,96 @@
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  ConflictException,
+} from '@nestjs/common';
+import { Observable, of } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { PrismaService } from '../../prisma/prisma.service';
+import { createHash } from 'crypto';
+import { AuthenticatedRequest } from '../types';
+
+@Injectable()
+export class IdempotencyInterceptor implements NestInterceptor {
+  constructor(private prisma: PrismaService) {}
+
+  async intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Promise<Observable<any>> {
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const user = request.user;
+    const orgId = request.orgId;
+
+    const body = request.body;
+    const path = request.path;
+    const idempotencyKey = request.headers['idempotency-key'] as string;
+
+    if (!idempotencyKey) {
+      return next.handle();
+    }
+
+    if (!user || !orgId) {
+      return next.handle();
+    }
+
+    const requestHash = createHash('sha256')
+      .update(JSON.stringify(body))
+      .digest('hex');
+
+    // Check for existing key
+    const existingKey = await this.prisma.idempotencyKey.findUnique({
+      where: {
+        organizationId_userId_key: {
+          organizationId: orgId,
+          userId: user.id,
+          key: idempotencyKey,
+        },
+      },
+    });
+
+    if (existingKey) {
+      if (existingKey.requestHash !== requestHash) {
+        throw new ConflictException(
+          'Idempotency key reused with different request body',
+        );
+      }
+      return of(JSON.parse(existingKey.responseBody));
+    }
+
+    // Proceed and save response
+    return next.handle().pipe(
+      tap((response: any) => {
+        this.saveIdempotencyKey(idempotencyKey, orgId, user.id, path, body, requestHash, response)
+          .catch(() => { /* Ignore errors */ });
+      }),
+    );
+  }
+
+  private async saveIdempotencyKey(
+    key: string,
+    organizationId: string,
+    userId: string,
+    requestPath: string,
+    requestParams: any,
+    requestHash: string,
+    response: any
+  ) {
+    try {
+      await this.prisma.idempotencyKey.create({
+        data: {
+          key,
+          organizationId,
+          userId,
+          requestPath,
+          requestHash,
+          responseCode: 201,
+          responseBody: JSON.stringify(response),
+        },
+      });
+    } catch {
+      // Duplicate key or other error
+    }
+  }
+}

@@ -25,6 +25,14 @@ export class ExportsService {
             strVal = JSON.stringify(val);
           }
           let escaped = strVal.replace(/"/g, '""');
+
+          // CSV Injection protection: Prepend ' if it starts with =, +, -, @
+          const sensitiveChars = ['=', '+', '-', '@'];
+          if (sensitiveChars.some((char) => strVal.startsWith(char))) {
+            strVal = `'${strVal}`;
+            escaped = strVal.replace(/"/g, '""');
+          }
+
           if (
             escaped.includes(',') ||
             escaped.includes('\n') ||

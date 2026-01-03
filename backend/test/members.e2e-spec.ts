@@ -25,7 +25,7 @@ describe('MembersController (e2e)', () => {
   const adminUserId = randomUUID();
   const targetUserId = randomUUID();
   const targetUserEmail = `target-${Date.now()}@example.com`;
-  
+
   let inviteToken: string | null = null;
   let createdMemberId: string | null = null;
 
@@ -43,9 +43,10 @@ describe('MembersController (e2e)', () => {
       .overrideGuard(AuthGuard('jwt'))
       .useValue({
         canActivate: (ctx: ExecutionContext) => {
-          const req = ctx
-            .switchToHttp()
-            .getRequest<{ user?: { id: string }, headers: Record<string, string | string[]> }>();
+          const req = ctx.switchToHttp().getRequest<{
+            user?: { id: string };
+            headers: Record<string, string | string[]>;
+          }>();
           const impersonate = req.headers['x-impersonate-user-id'];
           req.user = { id: (impersonate as string) || adminUserId };
           return true;
@@ -112,9 +113,15 @@ describe('MembersController (e2e)', () => {
 
   afterAll(async () => {
     // Cleanup
-    await prisma.organizationInvite.deleteMany({ where: { organizationId: orgId } });
-    await prisma.organizationMember.deleteMany({ where: { organizationId: orgId } });
-    await prisma.user.deleteMany({ where: { id: { in: [adminUserId, targetUserId] } } });
+    await prisma.organizationInvite.deleteMany({
+      where: { organizationId: orgId },
+    });
+    await prisma.organizationMember.deleteMany({
+      where: { organizationId: orgId },
+    });
+    await prisma.user.deleteMany({
+      where: { id: { in: [adminUserId, targetUserId] } },
+    });
     await prisma.organization.deleteMany({ where: { id: orgId } });
     await app.close();
   });
@@ -153,8 +160,8 @@ describe('MembersController (e2e)', () => {
         role: OrganizationRole.STAFF,
         token: 'test-token-target',
         expiresAt: new Date(Date.now() + 10000),
-        invitedByUserId: adminUserId
-      }
+        invitedByUserId: adminUserId,
+      },
     });
 
     const response = await request(httpServer)
@@ -181,7 +188,7 @@ describe('MembersController (e2e)', () => {
 
   it('/members/:id (DELETE) removes a member', async () => {
     expect(createdMemberId).toBeDefined();
-    
+
     await request(httpServer)
       .delete(`/members/${createdMemberId}`)
       .set('x-organization-id', orgId)

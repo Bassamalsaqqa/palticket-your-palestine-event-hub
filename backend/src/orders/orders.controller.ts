@@ -8,7 +8,9 @@ import {
   UseGuards,
   Req,
   ParseUUIDPipe,
+  UseInterceptors,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { OrdersService } from './orders.service';
 import { ListOrdersQueryDto } from './dto/order.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -17,6 +19,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { OrganizationRole } from '@prisma/client';
 import type { AuthenticatedRequest } from '../common/types';
+import { IdempotencyInterceptor } from '../common/interceptors/idempotency.interceptor';
 
 @Controller('orders')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -25,6 +28,8 @@ export class OrdersController {
 
   @Post()
   @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @UseInterceptors(IdempotencyInterceptor)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   create(
     @Req() req: AuthenticatedRequest,
     @Body() createOrderDto: CreateOrderDto,

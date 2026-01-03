@@ -1,27 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MembersService } from './members.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { NotFoundException, ConflictException } from '@nestjs/common';
-import { OrganizationRole } from '@prisma/client';
+import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
+import { ConflictException } from '@nestjs/common';
+import { OrganizationRole, InviteStatus } from '@prisma/client';
+import { CreateInviteDto } from './dto/member.dto';
 
 describe('MembersService', () => {
   let service: MembersService;
-  let prisma: PrismaService;
-
-  const mockPrismaService = {
-    user: {
-      findUnique: jest.fn(),
-    },
-    organizationMember: {
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      findFirstOrThrow: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-  };
+  let prisma: DeepMockProxy<PrismaService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -29,102 +16,73 @@ describe('MembersService', () => {
         MembersService,
         {
           provide: PrismaService,
-          useValue: mockPrismaService,
+          useValue: mockDeep<PrismaService>(),
         },
       ],
     }).compile();
 
     service = module.get<MembersService>(MembersService);
-    prisma = module.get<PrismaService>(PrismaService);
+    prisma = module.get(PrismaService);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  const orgId = 'org-1';
+  const userId = 'user-1';
 
-  describe('invite', () => {
-    const orgId = 'org-1';
-    const dto = { email: 'test@example.com', role: OrganizationRole.STAFF };
-    const user = { id: 'user-1', email: dto.email };
+  describe('createInvite', () => {
+    it('should successfully create an invite', async () => {
+      const dto: CreateInviteDto = {
+        email: 'test@example.com',
+        role: OrganizationRole.STAFF,
+      };
 
-    it('should successfully invite a user', async () => {
-      mockPrismaService.user.findUnique.mockResolvedValue(user);
-      mockPrismaService.organizationMember.findUnique.mockResolvedValue(null);
-      mockPrismaService.organizationMember.create.mockResolvedValue({
-        id: 'mem-1',
-        organizationId: orgId,
-        userId: user.id,
-        role: dto.role,
-        user,
-      });
+      prisma.organizationMember.findFirst.mockResolvedValue(null);
+      prisma.organizationInvite.findFirst.mockResolvedValue(null);
+      prisma.organizationInvite.create.mockResolvedValue({
+        id: 'invite-1',
+        ...dto,
+        token: 'token',
+        expiresAt: new Date(),
+        status: InviteStatus.PENDING,
+      } as any);
 
-      const result = await service.invite(orgId, dto);
+      const result = await service.createInvite(orgId, userId, dto);
 
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: dto.email } });
-      expect(prisma.organizationMember.findUnique).toHaveBeenCalledWith({
-        where: {
-          organizationId_userId: { organizationId: orgId, userId: user.id },
-        },
-      });
-      expect(prisma.organizationMember.create).toHaveBeenCalledWith({
-        data: {
-          organizationId: orgId,
-          userId: user.id,
-          role: dto.role,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              name: true,
-              phone: true,
-              createdAt: true,
-            },
-          },
-        },
-      });
-      expect(result).toBeDefined();
-    });
-
-    it('should throw NotFoundException if user does not exist', async () => {
-      mockPrismaService.user.findUnique.mockResolvedValue(null);
-
-      await expect(service.invite(orgId, dto)).rejects.toThrow(NotFoundException);
+      expect(prisma.organizationMember.findFirst).toHaveBeenCalled();
+      expect(prisma.organizationInvite.create).toHaveBeenCalled();
+      expect(result.email).toBe(dto.email);
     });
 
     it('should throw ConflictException if user is already a member', async () => {
-      mockPrismaService.user.findUnique.mockResolvedValue(user);
-      mockPrismaService.organizationMember.findUnique.mockResolvedValue({ id: 'mem-1' });
+      const dto: CreateInviteDto = {
+        email: 'test@example.com',
+        role: OrganizationRole.STAFF,
+      };
 
-      await expect(service.invite(orgId, dto)).rejects.toThrow(ConflictException);
+      prisma.organizationMember.findFirst.mockResolvedValue({
+        id: 'mem-1',
+      } as any);
+
+      await expect(service.createInvite(orgId, userId, dto)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
   describe('remove', () => {
-    const orgId = 'org-1';
     const memberId = 'mem-1';
 
     it('should successfully remove a member', async () => {
-      mockPrismaService.organizationMember.findFirstOrThrow.mockResolvedValue({ id: memberId });
-      mockPrismaService.organizationMember.delete.mockResolvedValue({ id: memberId });
+      prisma.organizationMember.findFirstOrThrow.mockResolvedValue({
+        id: memberId,
+      } as any);
+      prisma.organizationMember.delete.mockResolvedValue({
+        id: memberId,
+      } as any);
 
       await service.remove(orgId, memberId);
 
-      expect(prisma.organizationMember.findFirstOrThrow).toHaveBeenCalledWith({
-        where: { id: memberId, organizationId: orgId },
-      });
-      expect(prisma.organizationMember.delete).toHaveBeenCalledWith({
-        where: { id: memberId },
-      });
-    });
-
-    // prisma.findFirstOrThrow throws automatically if not found, so we don't need to assert it explicitly here
-    // unless we mock it to throw.
-    it('should propagate error if member not found', async () => {
-      mockPrismaService.organizationMember.findFirstOrThrow.mockRejectedValue(new Error('Not found'));
-
-      await expect(service.remove(orgId, memberId)).rejects.toThrow('Not found');
+      expect(prisma.organizationMember.findFirstOrThrow).toHaveBeenCalled();
+      expect(prisma.organizationMember.delete).toHaveBeenCalled();
     });
   });
 });

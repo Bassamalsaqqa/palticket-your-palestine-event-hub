@@ -55,18 +55,42 @@ export class OrdersService {
         );
       }
 
-      // 3. Calculate Totals
+      // 3. Decrement Inventory & Calculate Totals
       let totalCents = 0;
-      const orderItemsData = items.map((item) => {
+      const orderItemsData: {
+        ticketTypeId: string;
+        quantity: number;
+        priceCents: number;
+      }[] = [];
+
+      for (const item of items) {
         const type = ticketTypes.find((t) => t.id === item.ticketTypeId)!;
+
+        // Atomic decrement with capacity check
+        const updateResult = await tx.ticketType.updateMany({
+          where: {
+            id: item.ticketTypeId,
+            quantity: { gte: item.quantity },
+          },
+          data: {
+            quantity: { decrement: item.quantity },
+          },
+        });
+
+        if (updateResult.count === 0) {
+          throw new BadRequestException(
+            `Insufficient capacity for ticket type: ${type.name}`,
+          );
+        }
+
         const lineTotal = type.sellPriceCents * item.quantity;
         totalCents += lineTotal;
-        return {
+        orderItemsData.push({
           ticketTypeId: item.ticketTypeId,
           quantity: item.quantity,
           priceCents: type.sellPriceCents,
-        };
-      });
+        });
+      }
 
       // 4. Create the Order
       const order = await tx.order.create({

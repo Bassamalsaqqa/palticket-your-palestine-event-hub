@@ -49,6 +49,7 @@ export class ScansService {
           data: {
             organizationId,
             ticketId: ticket.id,
+            eventId: ticket.eventId,
             gateId,
             scannedByUserId: userId,
             scannedByMemberId,
@@ -87,6 +88,7 @@ export class ScansService {
           data: {
             organizationId,
             ticketId: ticket.id,
+            eventId: ticket.eventId,
             gateId,
             scannedByUserId: userId,
             scannedByMemberId,
@@ -123,6 +125,7 @@ export class ScansService {
           data: {
             organizationId,
             ticketId: ticket.id,
+            eventId: ticket.eventId,
             gateId,
             scannedByUserId: userId,
             scannedByMemberId,
@@ -146,6 +149,7 @@ export class ScansService {
         data: {
           organizationId,
           ticketId: ticket.id,
+          eventId: ticket.eventId,
           gateId,
           scannedByUserId: userId,
           scannedByMemberId,
@@ -182,7 +186,7 @@ export class ScansService {
       where: {
         organizationId,
         ...(gateId ? { gateId } : {}),
-        ...(eventId ? { ticket: { eventId } } : {}),
+        ...(eventId ? { eventId } : {}),
       },
       include: {
         ticket: {

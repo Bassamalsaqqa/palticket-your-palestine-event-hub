@@ -1,53 +1,65 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { validate } from './config/env';
 import { PrismaModule } from './prisma/prisma.module';
-import { CommonModule } from './common/common.module';
-import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { OrganizationsModule } from './organizations/organizations.module';
 import { EventsModule } from './events/events.module';
+import { OrganizationsModule } from './organizations/organizations.module';
 import { VenuesModule } from './venues/venues.module';
-import { GatesModule } from './gates/gates.module';
 import { TicketTypesModule } from './ticket-types/ticket-types.module';
+import { GatesModule } from './gates/gates.module';
 import { OrdersModule } from './orders/orders.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { ScansModule } from './scans/scans.module';
-import { CategoriesModule } from './categories/categories.module';
-import { CitiesModule } from './cities/cities.module';
 import { AdminModule } from './admin/admin.module';
 import { MembersModule } from './members/members.module';
+import { UsersModule } from './users/users.module';
+import { CategoriesModule } from './categories/categories.module';
+import { CitiesModule } from './cities/cities.module';
 import { ExportsModule } from './exports/exports.module';
+import { HealthModule } from './health/health.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      validate,
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
+    ScheduleModule.forRoot(),
     PrismaModule,
-    CommonModule,
-    HealthModule,
     AuthModule,
-    UsersModule,
-    OrganizationsModule,
     EventsModule,
+    OrganizationsModule,
     VenuesModule,
-    GatesModule,
     TicketTypesModule,
+    GatesModule,
     OrdersModule,
     TicketsModule,
     ScansModule,
-    CategoriesModule,
-    CitiesModule,
     AdminModule,
     MembersModule,
+    UsersModule,
+    CategoriesModule,
+    CitiesModule,
     ExportsModule,
+    HealthModule,
+    CommonModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
