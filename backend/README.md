@@ -41,7 +41,7 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Localization:** Fully localized names via translation tables. Use `?lang=en|ar` on applicable endpoints, with English fallback when missing.
 
 *   **Orders/Tickets:**
-    *   **Orders:** Create + read (ticket issuance happens here). Includes `attendeeName`.
+    *   **Orders:** Create + read (ticket issuance happens here). Non-POS orders create PENDING tickets until payment.
     *   **Tickets:** Read-only (list and detail).
     *   **Access:** ADMIN and STAFF can read.
     *   **Privacy:** Explicit selection of fields (no full PII exposure).
@@ -70,17 +70,19 @@ Each domain module enforces multi-tenancy and RBAC:
 - `/ops/exports/sold-tickets` (FINANCE/ORG_ADMIN, audit logged).
 - `/ops/orders/:id/confirm-payment` (FINANCE/ORG_ADMIN only, audited).
 
-## Recent Hardening (Jan 2026)
-- **Inventory:** Orders enforce ticket type capacity with atomic decrements.
+## Recent Hardening (Phase 0 complete)
+- **Inventory:** Orders enforce ticket type capacity with row locks (POS + non-POS).
 - **Idempotency:** `POST /orders` supports `Idempotency-Key` scoped by org/user/method/path.
 - **Rate Limiting:** Global throttling (100/min); orders (5/min); scans (60/min).
 - **Log Retention:** Daily cleanup of scan logs older than 6 months.
 - **ScanLog Indexing:** Composite index on `organizationId, scannedAt`.
+- **Payments:** Manual card confirm flow with PENDING tickets until confirm.
+- **Exports:** Orders export includes payment + seller fields; audit logged.
 
 ## Next Phase Targets
-- Payment model + POS cash/card + confirm-payment endpoint.
-- AuditLog for exports + critical actions (index on orgId, createdAt).
-- EventStaffAssignment/GateAssignment + ScopeGuard.
+- Roles enum expansion and assignments.
+- ScopeGuard enforcement for scans/orders/exports.
+- EventStaffAssignment/GateAssignment admin flows.
 - Price versioning + OrderItem snapshots.
 
 ## Admin/Staff Testing (E2E)
@@ -92,8 +94,10 @@ Each domain module enforces multi-tenancy and RBAC:
    - Include `x-organization-id` in all tenant routes. The default seeded ID can be found via `GET /organizations` after login.
 3. **Full Cycle**:
    - `POST /events` -> `POST /ticket-types` -> `POST /gates`.
-   - `POST /orders` (simulates purchase) -> returns `tickets[]`.
-   - `POST /scan` with `ticketCode` from the order and `gateId` from your created gate.
+   - `POST /orders` (non-POS creates PENDING tickets).
+   - `POST /ops/orders` (POS creates PAID tickets for CASH).
+   - `POST /ops/orders/:id/confirm-payment` for manual card flow.
+   - `POST /scan` with `ticketCode` from a PAID/ISSUED ticket and `gateId`.
 
 ## Environment Variables
 

@@ -124,7 +124,7 @@ Backend architecture and rules
 - **ScanLog Indexing:** Composite index on `organizationId, scannedAt` for log queries and cleanup.
 - Scan endpoint: `POST /scan` with atomic update + ScanLog; invalid codes are not logged (ticketId FK required).
 - Orders: `POST /orders` creates Order + OrderItems + Tickets in a transaction; tickets get unique codes.
-- Orders now store attendeeName/attendeeEmail/attendeePhone on the Order record and return attendeeName in list/detail responses.
+- Non-POS orders issue PENDING tickets until payment is confirmed.
 - Currency: Order currency derived from TicketTypes; helper `backend/src/common/currency.ts` maps currency to symbol.
 - Seed data: `backend/prisma/seed.ts` contains an embedded demo list and creates a demo org/user plus venues, cities, events, and ticket types.
 - Admin UI: Event, Ticket Type, and Gate creation forms are wired to backend APIs.
@@ -138,7 +138,7 @@ Prisma configuration
 - Prisma config lives in `backend/prisma.config.ts` and loads env vars via `dotenv/config` (uses `@prisma/config` devDependency).
 
 Roadmap (Phased)
-- Phase 0: Inventory + POS idempotency + payment model + export audit logging.
+- Phase 0: Inventory + POS idempotency + payment model + export audit logging (complete).
 - Phase 1: Roles expansion + EventStaffAssignment/GateAssignment + ScopeGuard.
 - Phase 2: Price versioning + order item snapshots + pricing policy.
 - Phase 3: EventPolicyService enforcement.
@@ -149,7 +149,7 @@ Open items and conventions
 - Avoid re-exporting hooks from component files to keep react-refresh clean.
 - Use ASCII by default in new files unless existing file already uses Unicode.
 - Keep future changes aligned with the service layer and React Query for data access.
-- Pending follow-ups: payment model + POS endpoint, audit logging for exports, assignment scoping (Phase 1).
+- Pending follow-ups: Phase 1 RBAC + assignment scoping, pricing versioning.
 
 Common access for admin panel (mock)
 - Use /en/login or /ar/login and sign in with admin email:

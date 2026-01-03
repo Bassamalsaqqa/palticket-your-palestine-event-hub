@@ -137,45 +137,48 @@ E) Exports (FINANCE / ORG_ADMIN)
 - **Assignments:** EventStaffAssignment and optional GateAssignment.
 
 ## Roadmap (Phased)
-Phase 0 - Stabilize foundation (1-2 sprints)
+Phase 0 - Stabilize foundation (done)
 - Inventory locking in POS order creation using row locks.
 - POS Idempotency-Key support with requestHash mismatch protection.
-- Payment model + POS Cash/Card (Phase 1 manual reference with confirm endpoint).
+- Payment model + POS Cash/Card (manual reference with confirm endpoint).
 - Exports include payment fields + audit log.
 - Audit log framework for critical actions (index on organizationId, createdAt).
+- Non-POS orders use inventory locks and issue PENDING tickets until payment.
 
-Phase 1 - RBAC overhaul + scoped assignments (1-2 sprints)
+Phase 1 - RBAC overhaul + scoped assignments (next)
 - Expand roles enum.
 - EventStaffAssignment/GateAssignment + ScopeGuard.
 - Org admin endpoints to manage assignments.
+- Tests for scope leakage.
 
-Phase 2 - Price versioning + governance (1 sprint)
+Phase 2 - Price versioning + governance
 - TicketTypePriceVersion + snapshot in OrderItem.
 - Pricing policy enforcement + approvals.
 
-Phase 3 - Central policy enforcement (1 sprint)
+Phase 3 - Central policy enforcement
 - EventPolicyService (canSell/canScan/visibility).
 - Enforce across orders, scans, public listing.
 
-Phase 4 - Security hardening & ops readiness (1-2 sprints)
+Phase 4 - Security hardening & ops readiness
 - Rate limiting for auth/scans/orders.
 - Structured logging + correlation IDs.
 - Retention jobs + dashboards.
 
-Phase 5 - Provider card integration + buyer foundations (later)
+Phase 5 - Provider card integration + buyer foundations
 - PSP integration + webhooks + refunds.
 - Buyer-facing endpoints and reservation holds.
 
 ## Project State (Jan 2026)
-- **Implemented hardening:** inventory enforcement, idempotency, throttling, ScanLog retention + composite index, CSV injection protection.
+- **Implemented hardening:** inventory enforcement (POS + non-POS), idempotency, throttling, ScanLog retention + composite index, CSV injection protection.
+- **Payments:** manual card confirm flow (`/ops/orders/:id/confirm-payment`) and PENDING ticket gating.
+- **Auditability:** export audit logs + audit log model.
 - **Prisma config:** `backend/prisma.config.ts` with `@prisma/config` devDependency.
 - **Bilingual UI:** localized display helper + bilingual meta title preserved.
 
 ## Next Session Focus
-- Implement Payment model + POS order creation flow with CASH/CARD (manual confirm flow).
-- Add AuditLog + export audit logging (filters and actor info).
-- Add EventStaffAssignment/GateAssignment + ScopeGuard (Phase 1 kickoff).
-- Add tests for oversell, idempotency replay, scope leakage, pending ticket scan denial.
+- Phase 1 kickoff: roles expansion, EventStaffAssignment/GateAssignment, ScopeGuard.
+- Update member management flows for assignments.
+- Add tests for scope leakage and assignment enforcement.
 
 ## Technologies
 - **Frontend:** React, TypeScript, Tailwind CSS, TanStack Query.

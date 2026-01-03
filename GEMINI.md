@@ -3,9 +3,9 @@
 ## Project Overview
 **PalTicket** is a bilingual (English/Arabic) event ticketing + scanning + POS platform for Palestine. It is a Single Page Application (SPA) built with React and Vite, connected to a NestJS backend.
 
-**Current State:** Integrated, with ongoing hardening.
+**Current State:** Phase 0 complete; Phase 1 starting.
 *   **Frontend**: Connected to backend APIs for core domains with mock fallbacks.
-*   **Backend**: Multi-tenant foundation, inventory enforcement, idempotency, throttling, and scan log retention.
+*   **Backend**: Multi-tenant foundation, inventory enforcement (POS + non-POS), idempotency, throttling, scan log retention, export audit logging.
 
 ## Decision Lock-In (Production Intent)
 - Tenant boundary: Organization.
@@ -37,15 +37,14 @@
 ### Database Schema (Current)
 *   **Core Models**: `Organization`, `User`, `OrganizationMember`.
 *   **Event Domain**: `Event` (includes `imageUrl`), `Venue`, `TicketType`, `Gate`.
-*   **Taxonomy**: `Category` and `City` using slugs for filtering and UUIDs for relations.
+*   **Inventory**: `TicketTypeInventory` with capacity/sold/reserved.
+*   **Payments**: `Payment` model with CASH/CARD, manual confirm flow.
+*   **Audit**: `AuditLog` and `IdempotencyKey` for auditability.
 *   **Access Control**: `ScanLog` records all entry attempts (`GRANTED` / `DENIED_*`).
 
-### Schema Targets (Phase 0-2)
-*   **Inventory**: TicketTypeInventory with atomic decrement.
-*   **Pricing**: TicketTypePriceVersion + OrderItem snapshots.
-*   **Payments**: Order + Payment status models for POS and provider integration.
-*   **Audit/Idempotency**: AuditLog + IdempotencyKey (requestHash required for replay).
+### Schema Targets (Phase 1-2)
 *   **Assignments**: EventStaffAssignment (+ optional GateAssignment).
+*   **Pricing**: TicketTypePriceVersion + OrderItem snapshots.
 
 ## Operating Model (Target)
 - **Platform roles**: PLATFORM_SUPERADMIN, PLATFORM_SUPPORT.
@@ -72,13 +71,13 @@
 *   **Auth Persistence**: Mock auth persists only when "Remember me" is checked; localStorage is optional and guarded.
 
 ## Roadmap (Phased)
-Phase 0 - Stabilize foundation
-- Inventory locking in POS order creation using row locks.
+Phase 0 - Stabilize foundation (complete)
+- Inventory locking in POS + non-POS order creation using row locks.
 - POS Idempotency-Key support with requestHash replay protection.
 - Payment model + POS Cash/Card (manual reference with confirm endpoint).
 - Export includes payment fields + audit log.
 
-Phase 1 - RBAC overhaul + scoped assignments
+Phase 1 - RBAC overhaul + scoped assignments (next)
 - Roles expansion.
 - EventStaffAssignment/GateAssignment.
 - ScopeGuard for scans/orders/exports.
@@ -96,10 +95,10 @@ Phase 5 - PSP integration + buyer foundations
 - Payment provider integration + buyer endpoints.
 
 ## Current Priorities (Next Session)
-1. Implement Payment model + POS order creation flow (CASH/CARD) with confirm endpoint.
-2. Add AuditLog + export audit logging (filters and actor info).
-3. Add EventStaffAssignment/GateAssignment + ScopeGuard (Phase 1 kickoff).
-4. Add tests for oversell, idempotency replay, scope leakage, pending ticket scan denial.
+1. Phase 1 kickoff: roles enum expansion and assignments.
+2. Add EventStaffAssignment/GateAssignment + ScopeGuard.
+3. Update admin/member flows to manage assignments.
+4. Tests for scope leakage and assignment enforcement.
 
 ## Common Pitfalls
 1.  **UUID vs Slug**: Always use UUIDs for relationships/updates and slugs for filtering/URLs.
