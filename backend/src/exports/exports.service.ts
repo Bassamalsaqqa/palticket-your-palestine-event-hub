@@ -49,6 +49,7 @@ export class ExportsService {
 
   async exportOrders(
     organizationId: string,
+    actorMemberId: string,
     eventId?: string,
   ): Promise<string> {
     const orders = await this.prisma.order.findMany({
@@ -60,26 +61,55 @@ export class ExportsService {
             translations: { where: { locale: 'en' }, select: { name: true } },
           },
         },
+        payments: {
+          include: {
+            createdBy: {
+              include: {
+                user: { select: { email: true, name: true } },
+              },
+            },
+          },
+        },
       },
     });
 
-    const flatOrders = orders.map((o) => ({
-      id: o.id,
-      customerName: o.attendeeName || o.user.name || '',
-      customerEmail: o.attendeeEmail || o.user.email || '',
-      eventName: o.event.translations[0]?.name || '',
-      total: o.totalCents / 100,
-      currency: o.currency,
-      status: o.status,
-      paymentStatus: o.paymentStatus,
-      createdAt: o.createdAt.toISOString(),
-    }));
+    const flatOrders = orders.map((o) => {
+      const payment = o.payments[0]; // Assuming primary payment for now
+      return {
+        id: o.id,
+        customerName: o.attendeeName || o.user.name || '',
+        customerEmail: o.attendeeEmail || o.user.email || '',
+        eventName: o.event.translations[0]?.name || '',
+        total: o.totalCents / 100,
+        currency: o.currency,
+        status: o.status,
+        paymentStatus: payment?.status || o.paymentStatus || '',
+        paymentMethod: payment?.method || '',
+        providerReference: payment?.providerReference || '',
+        capturedAt: payment?.capturedAt?.toISOString() || '',
+        sellerMemberId: payment?.createdBy?.id || '',
+        sellerName: payment?.createdBy?.user.name || '',
+        sellerEmail: payment?.createdBy?.user.email || '',
+        createdAt: o.createdAt.toISOString(),
+      };
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        organizationId,
+        actorMemberId,
+        action: 'EXPORT_ORDERS',
+        entityType: 'Order',
+        metadata: { eventId, count: orders.length },
+      },
+    });
 
     return this.toCsv(flatOrders);
   }
 
   async exportTickets(
     organizationId: string,
+    actorMemberId: string,
     eventId?: string,
   ): Promise<string> {
     const tickets = await this.prisma.ticket.findMany({
@@ -105,6 +135,16 @@ export class ExportsService {
       scannedAt: t.scannedAt?.toISOString() || '',
       createdAt: t.createdAt.toISOString(),
     }));
+
+    await this.prisma.auditLog.create({
+      data: {
+        organizationId,
+        actorMemberId,
+        action: 'EXPORT_TICKETS',
+        entityType: 'Ticket',
+        metadata: { eventId, count: tickets.length },
+      },
+    });
 
     return this.toCsv(flatTickets);
   }

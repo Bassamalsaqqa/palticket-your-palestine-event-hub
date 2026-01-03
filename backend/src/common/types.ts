@@ -11,5 +11,6 @@ export interface SafeUser {
 export interface AuthenticatedRequest extends Request {
   user: SafeUser;
   memberRole?: OrganizationRole;
+  memberId?: string;
   orgId?: string;
 }

@@ -46,6 +46,7 @@ export class RolesGuard implements CanActivate {
     }
 
     request.memberRole = member.role;
+    request.memberId = member.id;
     request.orgId = orgId;
 
     return requiredRoles.includes(member.role);

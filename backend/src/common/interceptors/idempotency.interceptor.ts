@@ -11,6 +11,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { createHash } from 'crypto';
 import { AuthenticatedRequest } from '../types';
 
+import { Response } from 'express';
+
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
   constructor(private prisma: PrismaService) {}
@@ -23,7 +25,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const user = request.user;
     const orgId = request.orgId;
 
-    const body = request.body;
+    const body = request.body as unknown;
     const path = request.path;
     const method = request.method;
     const idempotencyKey = request.headers['idempotency-key'] as string;
@@ -59,15 +61,15 @@ export class IdempotencyInterceptor implements NestInterceptor {
           'Idempotency key reused with different request body',
         );
       }
-      const response = context.switchToHttp().getResponse();
+      const response = context.switchToHttp().getResponse<Response>();
       response.status(existingKey.responseCode);
       return of(JSON.parse(existingKey.responseBody));
     }
 
     // Proceed and save response
     return next.handle().pipe(
-      tap((response: any) => {
-        const httpResponse = context.switchToHttp().getResponse();
+      tap((response: unknown) => {
+        const httpResponse = context.switchToHttp().getResponse<Response>();
         const statusCode = httpResponse.statusCode;
 
         this.saveIdempotencyKey(

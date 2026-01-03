@@ -20,7 +20,11 @@ export class ExportsController {
     @Req() req: AuthenticatedRequest,
     @Query() query: ExportQueryDto,
   ) {
-    return await this.exportsService.exportOrders(req.orgId!, query.eventId);
+    return await this.exportsService.exportOrders(
+      req.orgId!,
+      req.memberId!,
+      query.eventId,
+    );
   }
 
   @Get('tickets.csv')
@@ -31,6 +35,10 @@ export class ExportsController {
     @Req() req: AuthenticatedRequest,
     @Query() query: ExportQueryDto,
   ) {
-    return await this.exportsService.exportTickets(req.orgId!, query.eventId);
+    return await this.exportsService.exportTickets(
+      req.orgId!,
+      req.memberId!,
+      query.eventId,
+    );
   }
 }
