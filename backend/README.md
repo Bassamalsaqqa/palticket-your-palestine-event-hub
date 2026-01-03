@@ -7,8 +7,21 @@
 - Runtime: NestJS on http://localhost:3001
 - Database: Postgres via Prisma
 - Multi-tenant boundary: Organization
-- RBAC: OrganizationMember (ADMIN/STAFF per org)
+- RBAC: OrganizationMember (ADMIN/STAFF today; Phase 1 expands roles)
 - DTO validation: Global ValidationPipe enabled
+
+## Production Intent (Shipping Gate)
+- No oversell under concurrency (DB row locks in a transaction; updateMany-only is insufficient).
+- Scoped scanning (event/gate assignments enforced).
+- Price immutability via versioning + order item snapshots.
+- POS idempotency (duplicate issuance prevention).
+- Audit + export logging (forensics, disputes, finance).
+
+## Operating Model (Target)
+- Platform roles: PLATFORM_SUPERADMIN, PLATFORM_SUPPORT.
+- Org roles: ORG_ADMIN, EVENT_MANAGER, SELLER, SCANNER, FINANCE.
+- Scope enforcement: Role + org scope + EventStaffAssignment + optional GateAssignment.
+- Defaults: SELLER restricted to assigned events; ORG_ADMIN can view everything but scanning still requires assignment.
 
 ## Domain Modules & Scoping
 
@@ -22,7 +35,7 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Localization:** Events and Venues support multi-locale translations (e.g., "en", "ar") via separate translation tables. Use `?lang=en|ar` (default: `en`) on read endpoints to retrieve localized content, with English fallback when missing.
     *   **Create/Update:** Events accept `translations[]` and optional `venueId`, `categoryId`, and `cityId`.
 
-*   ** Taxonomy (Categories & Cities):**
+*   **Taxonomy (Categories & Cities):**
     *   **Endpoints:** `GET /categories?lang=en|ar`, `GET /cities?lang=en|ar`
     *   **Global & Tenant-specific:** Taxonomy entries can be global (system-wide) or tenant-specific.
     *   **Localization:** Fully localized names via translation tables. Use `?lang=en|ar` on applicable endpoints, with English fallback when missing.
@@ -49,7 +62,13 @@ Each domain module enforces multi-tenancy and RBAC:
 *   **Exports:**
     *   **Endpoints:** `GET /exports/orders.csv`, `GET /exports/tickets.csv`
     *   **Filters:** Optional `eventId` query parameter to export a single event.
-- **Access**: ADMIN only
+    *   **Access**: ADMIN only
+
+## Ops Endpoints Plan (Phase 0/1)
+- `/ops/orders` (POS create, Idempotency-Key required, SELLER assignment).
+- `/ops/scans` (SCANNER assignment required).
+- `/ops/exports/sold-tickets` (FINANCE/ORG_ADMIN, audit logged).
+- `/ops/orders/:id/confirm-payment` (FINANCE/ORG_ADMIN only, audited).
 
 ## Recent Hardening (Jan 2026)
 - **Inventory:** Orders enforce ticket type capacity with atomic decrements.
@@ -57,6 +76,12 @@ Each domain module enforces multi-tenancy and RBAC:
 - **Rate Limiting:** Global throttling (100/min); orders (5/min); scans (60/min).
 - **Log Retention:** Daily cleanup of scan logs older than 6 months.
 - **ScanLog Indexing:** Composite index on `organizationId, scannedAt`.
+
+## Next Phase Targets
+- Payment model + POS cash/card + confirm-payment endpoint.
+- AuditLog for exports + critical actions (index on orgId, createdAt).
+- EventStaffAssignment/GateAssignment + ScopeGuard.
+- Price versioning + OrderItem snapshots.
 
 ## Admin/Staff Testing (E2E)
 

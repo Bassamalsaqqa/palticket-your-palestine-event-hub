@@ -3,6 +3,17 @@
 Purpose
 - This file captures the current state, conventions, and key decisions for this repo so future sessions can continue work safely and consistently.
 
+Decision Lock-In (Production Intent)
+- Tenant boundary: Organization.
+- Every event belongs to exactly one organization.
+- Access is evaluated as: JWT identity + x-organization-id + role + scope assignment.
+- Do not ship production until all are true:
+  - No oversell under concurrency (DB row locks in a transaction; updateMany-only is insufficient).
+  - Scoped scanning (event/gate assignments enforced).
+  - Price immutability via versioning + order item snapshots.
+  - POS idempotency (duplicate issuance prevention).
+  - Audit + export logging (forensics, disputes, finance).
+
 Repository
 - Root: C:\Users\bassa\Documents\PalTickets\palticket-your-palestine-event-hub
 - Frontend: Vite + React + TypeScript + Tailwind + shadcn/ui
@@ -23,6 +34,12 @@ Auth and RBAC
   - Account: /en/account, /ar/account (RequireAuth)
 - Invite acceptance: `/en/accept-invite` and `/ar/accept-invite` use a token in the query string; backend `POST /members/invites/accept` requires JWT only (no x-organization-id).
 - Unauthorized users are redirected to login with message and a "from" location for post-login redirect.
+
+Target Roles and Scoping (Phase 1)
+- Platform roles: PLATFORM_SUPERADMIN (cross-tenant full access), PLATFORM_SUPPORT (cross-tenant read-only + allowlist ops).
+- Org roles: ORG_ADMIN, EVENT_MANAGER, SELLER, SCANNER, FINANCE.
+- Scope enforcement: Role + org scope (mandatory) + EventStaffAssignment, optionally GateAssignment.
+- Defaults: SELLER restricted to assigned events; ORG_ADMIN can view everything but scanning still requires assignment.
 
 Auth implementation
 - Auth provider: src/contexts/AuthContext.tsx
@@ -82,32 +99,11 @@ Lint status
 - Root lint covers both frontend and backend (backend/dist is ignored).
 - eslint runs clean (zero errors and warnings after recent refactors).
 
-Open items and conventions
-- Avoid re-exporting hooks from component files to keep react-refresh clean.
-- Use ASCII by default in new files unless existing file already uses Unicode.
-- Keep future changes aligned with the service layer and React Query for data access.
-- Backend audit priorities: inventory enforcement, scan rate limiting + idempotency, tenant isolation, CSV export safety, ScanLog indexing/retention.
-- Prisma config lives in `backend/prisma.config.ts` and loads env vars via `dotenv/config` (uses `@prisma/config` devDependency).
- - Pending follow-ups: verify tenant isolation across admin/exports, add PII minimization in exports where required, and confirm idempotency/ratelimit behavior via e2e tests.
-
-Common access for admin panel (mock)
-- Use /en/login or /ar/login and sign in with admin email:
-  - Email: admin@palticket.com
-  - Password: 123456
-- Staff access to scanner uses staff@palticket.com with the same password.
-
-Notes
-- The project uses backend APIs when API config is provided; otherwise it falls back to mock data.
-- Invite acceptance requires live API config (base URL + token) and is blocked in Mock Mode with a UI warning.
-- Scanner uses camera access; mobile browsers require HTTPS or localhost for camera permissions.
-- Scanner includes manual entry, session export, and camera control buttons.
-- Localization: backend returns translations for requested locale; fallback behavior is limited.
-
 Backend architecture and rules
 - Backend runtime: http://localhost:3001
 - Database: PostgreSQL via Prisma (classic workflow)
 - Tenant boundary: Organization
-- RBAC: OrganizationMember with roles ADMIN/STAFF; unique(organizationId, userId)
+- Current RBAC: OrganizationMember roles ADMIN/STAFF (phase 1 expands roles).
 - Money fields use integer cents; no floats/decimals
 - Ticket scan-once enforced by Ticket.status and ScanLog
 - All tenant-owned tables include organizationId or link to Event with organizationId; prefer explicit organizationId and indexes
@@ -119,11 +115,11 @@ Backend architecture and rules
   - Members: invite-by-email via `/members/invites`, accept via `/members/invites/accept` (JWT only)
   - Scan logs: `GET /scan/logs` (admin/staff), `POST /scan`
   - Exports: `GET /exports/orders.csv`, `GET /exports/tickets.csv`
-- **Services MUST use explicit Prisma `select`** to avoid over-fetching and leaking PII. Do not rely on default model return.
+- **Services MUST use explicit Prisma `select`** to avoid over-fetching and leaking PII.
 - **Pagination:** List endpoints must support `skip`/`take` via Query DTOs. Max take is 100.
-- **Idempotency:** `POST /orders` requires `Idempotency-Key` header (optional but recommended). Scoped by org/user/method/path.
+- **Idempotency:** `POST /orders` supports `Idempotency-Key` scoped by org/user/method/path. Replay must be consistent; mismatch returns 409.
 - Rate Limiting: ThrottlerGuard enabled globally. Default: 100/min. Orders: 5/min. Scans: 60/min.
-- **Inventory:** Atomic decrement in `OrdersService` via `updateMany` with count check.
+- **Inventory:** Enforce with transaction + row locks; updateMany-only is not sufficient for concurrency safety.
 - **Log Retention:** `ScansCleanupService` runs daily at midnight to delete logs > 6 months.
 - **ScanLog Indexing:** Composite index on `organizationId, scannedAt` for log queries and cleanup.
 - Scan endpoint: `POST /scan` with atomic update + ScanLog; invalid codes are not logged (ticketId FK required).
@@ -137,6 +133,36 @@ Backend architecture and rules
 - Image upload: `POST /events/:id/image` with storage settings in backend `.env`.
 - Storage config: `STORAGE_DRIVER`, `STORAGE_LOCAL_ROOT`, `STORAGE_PUBLIC_URL` (local disk default).
 - Exports: `/exports/orders.csv` and `/exports/tickets.csv` support optional `eventId` filtering.
+
+Prisma configuration
+- Prisma config lives in `backend/prisma.config.ts` and loads env vars via `dotenv/config` (uses `@prisma/config` devDependency).
+
+Roadmap (Phased)
+- Phase 0: Inventory + POS idempotency + payment model + export audit logging.
+- Phase 1: Roles expansion + EventStaffAssignment/GateAssignment + ScopeGuard.
+- Phase 2: Price versioning + order item snapshots + pricing policy.
+- Phase 3: EventPolicyService enforcement.
+- Phase 4: Security hardening + ops readiness.
+- Phase 5: PSP integration + buyer foundations.
+
+Open items and conventions
+- Avoid re-exporting hooks from component files to keep react-refresh clean.
+- Use ASCII by default in new files unless existing file already uses Unicode.
+- Keep future changes aligned with the service layer and React Query for data access.
+- Pending follow-ups: payment model + POS endpoint, audit logging for exports, assignment scoping (Phase 1).
+
+Common access for admin panel (mock)
+- Use /en/login or /ar/login and sign in with admin email:
+  - Email: admin@palticket.com
+  - Password: 123456
+- Staff access to scanner uses staff@palticket.com with the same password.
+
+Notes
+- The project uses backend APIs when API config is provided; otherwise it falls back to mock data.
+- Invite acceptance requires live API config (base URL + token) and is blocked in Mock Mode with a UI warning.
+- Scanner uses camera access; mobile browsers require HTTPS or localhost for camera permissions.
+- Scanner includes manual entry, session export, and camera control buttons.
+- Localization: backend returns translations for requested locale; fallback behavior is limited.
 
 ## API Configuration Precedence
 The application resolves its data source in the following order:

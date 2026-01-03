@@ -1,7 +1,15 @@
 # PalTicket
 
 ## Overview
-PalTicket is a bilingual event ticketing platform for Palestine.
+PalTicket is a bilingual (English/Arabic) event ticketing + scanning + POS platform for Palestine. The project is built with production intent and enforces strict tenant isolation and auditability.
+
+## Production Intent (Shipping Gate)
+You do not ship "production" until all are true:
+- No oversell under concurrency (DB row locks in a transaction; not updateMany-only).
+- Scoped scanning (event/gate assignments enforced).
+- Price immutability via versioning + order item snapshots.
+- POS idempotency (duplicate issuance prevention).
+- Audit + export logging (forensics, disputes, finance).
 
 ## Architecture
 - Frontend: React + Vite + TypeScript, runs at http://localhost:8080
@@ -81,29 +89,102 @@ The backend implements **JWT Authentication** and **RBAC**.
 *   **Validation:** Global `ValidationPipe` enforces DTO validation.
 *   **Pagination:** List endpoints validate `skip`/`take` (min 0) and cap results at 100.
 
-## Development Architecture
+### Operating Model (Target)
+- **Tenant boundary:** Organization. Every event belongs to exactly one organization.
+- **Platform roles:** `PLATFORM_SUPERADMIN` (cross-tenant full access), `PLATFORM_SUPPORT` (cross-tenant read-only + allowlist ops).
+- **Org roles:** `ORG_ADMIN`, `EVENT_MANAGER`, `SELLER`, `SCANNER`, `FINANCE`.
+- **Scope enforcement:** Role + organization scope (mandatory) + `EventStaffAssignment` and optional `GateAssignment`.
+- **Defaults:** SELLER restricted to assigned events; ORG_ADMIN can view everything but scanning still requires assignment.
 
-*   **Frontend**: React + Vite + Shadcn/UI. Uses a **Service Layer** to mock data.
-*   **Backend**: NestJS + Prisma + PostgreSQL.
-    *   **Multi-tenant**: Organization-based data isolation.
-    *   **Domain Modules**: Events/Venues/Gates/TicketTypes (CRUD); Orders (Create + Read); Tickets (Read-only).
-    *   **Scanning**: `POST /scan` with atomic scan-once enforcement and ScanLog auditing.
-*   **Admin UI**: Admin forms manage Events (with translations and image uploads), Ticket Types, Gates, and Users/Roles via backend APIs.
-*   **Scanner**: Integrated camera scanning with `@zxing/library`, session CSV exports, manual entry, and event-aware validation.
+## Core Workflows
+A) Organization bootstrap (Platform -> Partner autonomy)
+- PLATFORM_SUPERADMIN creates Organization.
+- ORG_ADMIN invited/created for that org.
+- ORG_ADMIN invites staff and assigns roles and event/gate scopes.
 
-**Important**: Do not import `mockEvents` directly into UI components. Use the services.
+B) Event creation (ORG_ADMIN / EVENT_MANAGER)
+- Create event (status DRAFT) with bilingual translations.
+- Set sale windows + event windows + currency rules.
+- Attach Venue, create Gates, create Ticket Types.
+- Create inventory (capacity) for each TicketType.
+- Create price versions (per currency) and publish.
+- Publish event (DRAFT -> PUBLISHED -> LIVE).
+
+C) POS selling (SELLER)
+- Select eventId, items[], currency, paymentMethod (CASH|CARD).
+- Enforce inventory lock + decrement.
+- Select price version, snapshot into OrderItem.
+- Require Idempotency-Key.
+- CASH: Payment SUCCEEDED, Order PAID, tickets ISSUED.
+- CARD Phase 1: require providerReference; default to Order PENDING_PAYMENT, Payment PENDING, tickets PENDING (not scannable) until confirm-payment.
+- CARD Phase 2: PSP webhook -> Payment SUCCEEDED -> Order PAID -> tickets ISSUED.
+
+D) Scanning (SCANNER)
+- Scanner selects Gate (sticky).
+- Validate assignment (event and optionally gate), ticket ownership/org/event.
+- Atomic update ISSUED -> SCANNED, write ScanLog.
+- PENDING tickets must be denied with explicit reason.
+
+E) Exports (FINANCE / ORG_ADMIN)
+- Include payment fields + seller identity.
+- Every export is audit logged with filters.
+
+## Data Model Targets (Backend)
+- **Inventory:** TicketTypeInventory (capacity/sold/reserved).
+- **Pricing:** TicketTypePriceVersion, OrderItem snapshots (unitPriceCents, currency, priceVersionId).
+- **Payments:** Order status (CREATED/PENDING_PAYMENT/PAID/CANCELLED/REFUNDED) + Payment model (CASH/CARD).
+- **Audit/Idempotency:** AuditLog + IdempotencyKey scoped by org/endpoint/key.
+- **Assignments:** EventStaffAssignment and optional GateAssignment.
+
+## Roadmap (Phased)
+Phase 0 - Stabilize foundation (1-2 sprints)
+- Inventory locking in POS order creation using row locks.
+- POS Idempotency-Key support with requestHash mismatch protection.
+- Payment model + POS Cash/Card (Phase 1 manual reference with confirm endpoint).
+- Exports include payment fields + audit log.
+- Audit log framework for critical actions (index on organizationId, createdAt).
+
+Phase 1 - RBAC overhaul + scoped assignments (1-2 sprints)
+- Expand roles enum.
+- EventStaffAssignment/GateAssignment + ScopeGuard.
+- Org admin endpoints to manage assignments.
+
+Phase 2 - Price versioning + governance (1 sprint)
+- TicketTypePriceVersion + snapshot in OrderItem.
+- Pricing policy enforcement + approvals.
+
+Phase 3 - Central policy enforcement (1 sprint)
+- EventPolicyService (canSell/canScan/visibility).
+- Enforce across orders, scans, public listing.
+
+Phase 4 - Security hardening & ops readiness (1-2 sprints)
+- Rate limiting for auth/scans/orders.
+- Structured logging + correlation IDs.
+- Retention jobs + dashboards.
+
+Phase 5 - Provider card integration + buyer foundations (later)
+- PSP integration + webhooks + refunds.
+- Buyer-facing endpoints and reservation holds.
+
+## Project State (Jan 2026)
+- **Implemented hardening:** inventory enforcement, idempotency, throttling, ScanLog retention + composite index, CSV injection protection.
+- **Prisma config:** `backend/prisma.config.ts` with `@prisma/config` devDependency.
+- **Bilingual UI:** localized display helper + bilingual meta title preserved.
+
+## Next Session Focus
+- Implement Payment model + POS order creation flow with CASH/CARD (manual confirm flow).
+- Add AuditLog + export audit logging (filters and actor info).
+- Add EventStaffAssignment/GateAssignment + ScopeGuard (Phase 1 kickoff).
+- Add tests for oversell, idempotency replay, scope leakage, pending ticket scan denial.
 
 ## Technologies
-
 - **Frontend:** React, TypeScript, Tailwind CSS, TanStack Query.
 - **Backend:** NestJS, Prisma, PostgreSQL, Passport (Auth).
 
 ## Code Quality
-
 The project adheres to strict **ESLint** rules. The root lint configuration covers both the frontend and the backend. Code is structured to separate components from hooks and constants to ensure Fast Refresh works reliably.
 
 ## Known Issues & Troubleshooting
-
 *   **Data Persistence**: Mock orders/tickets reset on reload. Auth persists only when "Remember me" is checked.
 *   **Backend Connection**: The frontend supports connecting to backend APIs when environment variables are provided. Otherwise, it falls back to mock data.
 
@@ -131,69 +212,6 @@ The project adheres to strict **ESLint** rules. The root lint configuration cove
 - Access `/scan`. The camera requires **HTTPS** (or `localhost`) to function.
 - Select your event and gate.
 - Scan the QR code from the customer's account.
-
-## Roadmap
-- [x] Step A: Foundation (env validation, CORS, Prisma, Health)
-- [x] Step 1: Schema + Migrations (Multi-tenant, Orders, Tickets)
-- [x] Step 2: Auth + RBAC (JWT, RolesGuard, OrganizationMember)
-- [x] Step 3: Domain Modules (Events/Venues/Gates/TicketTypes CRUD; Orders Create + Read; Tickets Read-only)
-- [x] Step 4: Scanner endpoint + ScanLog
-- [ ] Step 5: Inventory enforcement + idempotent order creation
-- [ ] Step 6: Scan hardening (rate limiting + consistent response/tests)
-- [ ] Step 7: Tenant isolation audit + PII-safe exports
-- [ ] Step 8: ScanLog retention + indexing
-- [ ] Step 9: Payments, commissions, payouts, notifications (deferred)
-
-## Project State Review (Jan 1, 2026)
-
-### Overall Progress
-PalTicket has evolved into a multi-tenant, localized ticketing platform with order issuance, scan-once enforcement, admin reporting, and exports. The frontend now consumes real APIs with a mock fallback.
-
-### Data Model & Database
-- **Multi-tenant:** Organization-scoped data with OrganizationMember RBAC (ADMIN/STAFF).
-- **Tickets & Scanning:** Ticket status (ISSUED/SCANNED/VOID) and ScanLog with ScanResult (GRANTED/DENIED_*).
-- **Orders & Payments:** Orders include paymentProvider/paymentReference/paymentStatus placeholders (no provider integration yet).
-- **Localization & Taxonomy:** Category/City + translation tables; Event/Venue translations with per-tenant slugs.
-
-### Backend Services
-- **Scanning:** Atomic scan-once logic, tenant-scoped, logs ScanResult. `POST /scan` and `GET /scan/logs`.
-- **Orders:** Order creation issues tickets and returns ticket codes. Payment remains PENDING until provider integration.
-- **Events/Venues/Categories/Cities:** Localized read; Events support translation arrays on create/update.
-- **Admin & Members:** `/admin/stats` for KPI metrics, `/members` for org members, invite flow via `/members/invites` and `/members/invites/accept`.
-- **Exports:** `GET /exports/orders.csv` and `GET /exports/tickets.csv` with optional `eventId` filter.
-
-### Frontend Integration
-- **Admin UI:** Create flows for Events/Ticket Types/Gates are wired to backend.
-- **Scanner:** Uses `/scan`, returns ScanResult, camera lifecycle handled; requires HTTPS on mobile.
-- **Admin Dashboard:** Uses `/admin/stats` and API-backed orders/events.
-- **Admin Tools:** Audit logs, exports, order details, and edit flows are wired to the backend.
-- **Invites:** Admin Users can create invites and share `/accept-invite?token=...`; the accept flow warns when API config is missing or Mock Mode is enabled.
-
-### Known Gaps
-- **Payments/Notifications**: Payment provider, commissions, payouts, and delivery channels are not implemented (deferred).
-
-### Next Steps
-- Provide frontend API config (base URL, token, org ID) for live data.
-- Implement backend inventory enforcement and idempotent order creation.
-- Harden scan endpoint (rate limiting) and align tests with ScanResult.
-- Audit tenant isolation and export PII safety.
-- Payments/commissions/payouts/notifications are deferred.
-
-### Backend Hardening (Jan 2026)
-- **Inventory Enforcement:** Atomic transaction-based inventory checks prevent overselling.
-- **Idempotency:** `Idempotency-Key` header support for `POST /orders`, scoped by user/org/method/path.
-- **Rate Limiting:** Global rate limit (100 req/min) with strict overrides for orders (5 req/min) and scans (60 req/min).
-- **Log Retention:** Daily cron job cleans up scan logs older than 6 months.
-- **Indexes:** ScanLog indexed by `organizationId, scannedAt` to support reporting and cleanup.
-- **Security:** CSV export injection protection and enhanced tenant isolation checks.
-
-### Next Session Focus
-- Verify tenant isolation across admin and export endpoints.
-- Confirm idempotency replay behavior and throttling via E2E tests.
-- Review export PII minimization requirements.
-
-### Database Migrations
-Database schema is up to date with idempotency and indexing improvements.
 
 ## API Configuration Precedence
 The application resolves its data source in the following order:

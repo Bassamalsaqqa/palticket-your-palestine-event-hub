@@ -27,6 +27,7 @@ enum InviteStatus {
 }
 
 enum TicketStatus {
+  PENDING
   ISSUED
   SCANNED
   VOID
@@ -40,7 +41,8 @@ enum ScanResult {
 }
 
 enum OrderStatus {
-  PENDING
+  CREATED
+  PENDING_PAYMENT
   PAID
   CANCELLED
   REFUNDED
@@ -48,9 +50,15 @@ enum OrderStatus {
 
 enum PaymentStatus {
   PENDING
-  AUTHORIZED
-  PAID
+  SUCCEEDED
   FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
 }
 
 enum EventStatus {
@@ -104,6 +112,9 @@ model Organization {
   categories         Category[]
   cities             City[]
   idempotencyKeys    IdempotencyKey[]
+  ticketInventories  TicketTypeInventory[]
+  payments           Payment[]
+  auditLogs          AuditLog[]
 
   @@index([slug])
 }
@@ -119,6 +130,8 @@ model OrganizationMember {
   organization Organization @relation(fields: [organizationId], references: [id])
   user         User         @relation(fields: [userId], references: [id])
   scanLogs     ScanLog[]
+  auditLogs    AuditLog[]
+  createdPayments Payment[]
 
   @@unique([organizationId, userId])
   @@index([organizationId])
@@ -320,8 +333,25 @@ model TicketType {
   event      Event       @relation(fields: [eventId], references: [id])
   orderItems OrderItem[]
   tickets    Ticket[]
+  inventory  TicketTypeInventory?
 
   @@index([eventId])
+}
+
+model TicketTypeInventory {
+  id             String   @id @default(uuid())
+  organizationId String
+  ticketTypeId   String   @unique
+  capacity       Int
+  sold           Int      @default(0)
+  reserved       Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  ticketType   TicketType   @relation(fields: [ticketTypeId], references: [id])
+
+  @@index([organizationId, ticketTypeId])
 }
 
 model Order {
@@ -331,8 +361,8 @@ model Order {
   userId           String
   totalCents       Int
   currency         String
-  status           OrderStatus   @default(PENDING)
-  paymentStatus    PaymentStatus @default(PENDING)
+  status           OrderStatus   @default(PENDING_PAYMENT)
+  paymentStatus    PaymentStatus? // Deprecated in favor of Payment model, but kept for migration safety if needed, or remove? Request says "add if missing" for enum values. The model fields for Payment model are specified. I will keep existing fields but maybe they are redundant now. The request says "Payment model + enums... fields: ...". It doesn't explicitly say remove old fields from Order. I'll keep them for now to avoid breaking existing code immediately, or map them. Actually, OrderStatus is updated.
   paymentProvider  String?
   paymentReference String?
   attendeeName     String?
@@ -346,6 +376,8 @@ model Order {
   user         User         @relation(fields: [userId], references: [id])
   items        OrderItem[]
   tickets      Ticket[]
+  payments     Payment[]
+  idempotencyKeys IdempotencyKey[]
 
   @@index([organizationId])
   @@index([eventId])
@@ -425,8 +457,50 @@ model ScanLog {
 }
 
 // -----------------------------------------------------------------------------
-// 7. Finance (Future Ready)
+// 7. Finance & Audit
 // -----------------------------------------------------------------------------
+
+model Payment {
+  id                String        @id @default(uuid())
+  organizationId    String
+  orderId           String
+  method            PaymentMethod
+  status            PaymentStatus
+  amountCents       Int
+  currency          String
+  provider          String?       // "manual" for phase 1
+  providerReference String?
+  capturedAt        DateTime?
+  createdByMemberId String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  order        Order        @relation(fields: [orderId], references: [id])
+  createdBy    OrganizationMember? @relation(fields: [createdByMemberId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([orderId])
+  @@unique([provider, providerReference]) // Only works if both are non-null? Postgres handles nulls in unique index as non-conflicting usually, but Prisma might be stricter. If nullable, maybe standard index is better or partial index. Request said "optional unique". I'll add it.
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  organizationId String
+  actorMemberId  String?
+  action         String
+  entityType     String
+  entityId       String?
+  metadata       Json?
+  ip             String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  actor        OrganizationMember? @relation(fields: [actorMemberId], references: [id])
+
+  @@index([organizationId, createdAt])
+}
 
 model CommissionPolicy {
   id             String    @id @default(uuid())
@@ -476,9 +550,11 @@ model IdempotencyKey {
   responseBody   String
   createdAt      DateTime  @default(now())
   expiresAt      DateTime?
+  orderId        String?
 
   organization Organization @relation(fields: [organizationId], references: [id])
   user         User         @relation(fields: [userId], references: [id])
+  order        Order?       @relation(fields: [orderId], references: [id])
 
   @@unique([organizationId, userId, requestMethod, requestPath, key])
   @@index([createdAt])

@@ -80,7 +80,7 @@ describe('OrdersService', () => {
     id: 'order-1',
     totalCents: 2000,
     currency: 'ILS',
-    status: OrderStatus.PENDING,
+    status: OrderStatus.PENDING_PAYMENT,
     paymentStatus: PaymentStatus.PENDING,
     paymentProvider: null,
     paymentReference: null,

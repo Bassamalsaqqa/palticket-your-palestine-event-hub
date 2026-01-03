@@ -1,11 +1,22 @@
 # PalTicket Context Guide
 
 ## Project Overview
-**PalTicket** is a bilingual (English/Arabic) event ticketing and discovery platform tailored for the Palestinian market. It is a Single Page Application (SPA) built with React and Vite, connected to a NestJS backend.
+**PalTicket** is a bilingual (English/Arabic) event ticketing + scanning + POS platform for Palestine. It is a Single Page Application (SPA) built with React and Vite, connected to a NestJS backend.
 
-**Current State:** Fully Integrated.
-*   **Frontend**: Connected to backend APIs for all core domains (Events, Orders, Tickets, Admin Management, Scanning).
-*   **Backend**: Production-ready NestJS foundation with organized storage, organizational isolation, and comprehensive audit logging.
+**Current State:** Integrated, with ongoing hardening.
+*   **Frontend**: Connected to backend APIs for core domains with mock fallbacks.
+*   **Backend**: Multi-tenant foundation, inventory enforcement, idempotency, throttling, and scan log retention.
+
+## Decision Lock-In (Production Intent)
+- Tenant boundary: Organization.
+- Every event belongs to exactly one organization.
+- Access is evaluated as: JWT identity + x-organization-id + role + scope assignment.
+- Shipping gate (non-negotiables):
+  - No oversell under concurrency (DB row locks in a transaction; updateMany-only is insufficient).
+  - Scoped scanning (event/gate assignments enforced).
+  - Price immutability via versioning + order item snapshots.
+  - POS idempotency (duplicate issuance prevention).
+  - Audit + export logging (forensics, disputes, finance).
 
 ## Architecture
 
@@ -23,32 +34,24 @@
     *   `src/exports/`: CSV generation and data portability.
     *   `src/members/`, `src/users/`: Organizational membership and profile management.
 
-### Database Schema (Prisma)
+### Database Schema (Current)
 *   **Core Models**: `Organization`, `User`, `OrganizationMember`.
 *   **Event Domain**: `Event` (includes `imageUrl`), `Venue`, `TicketType`, `Gate`.
 *   **Taxonomy**: `Category` and `City` using slugs for filtering and UUIDs for relations.
 *   **Access Control**: `ScanLog` records all entry attempts (`GRANTED` / `DENIED_*`).
 
-## Key Workflows
+### Schema Targets (Phase 0-2)
+*   **Inventory**: TicketTypeInventory with atomic decrement.
+*   **Pricing**: TicketTypePriceVersion + OrderItem snapshots.
+*   **Payments**: Order + Payment status models for POS and provider integration.
+*   **Audit/Idempotency**: AuditLog + IdempotencyKey (requestHash required for replay).
+*   **Assignments**: EventStaffAssignment (+ optional GateAssignment).
 
-### 1. Asset Management (Images)
-*   **Backend**: `StorageService` builds paths like `/YYYY/event-slug/`.
-*   **Validation**: 5MB limit, restricted to `png`, `jpg`, `jpeg`, `webp`.
-*   **UI**: Admins can upload/replace cover images directly in the event management dialog.
-
-### 2. Administrative Suite
-*   **Entity Management**: Full CRUD for Events, Ticket Types, and Gates.
-*   **Membership**: `ADMIN` can update member roles and edit user profiles (tenant-safe).
-*   **Reporting**: Dashboard metrics and tenant-scoped CSV exports for orders and tickets.
-
-### 3. Entry Control (Scanner)
-*   **UX**: Hardware controls (Stop/Switch camera), status indicators, and manual entry.
-*   **Session**: Exportable scan history (CSV) with robust data escaping.
-*   **Atomicity**: Single-use entry enforced via database transactions.
-
-### 4. Search & Discovery
-*   **Consistency**: Filters (Category/City) utilize slugs in URL search params.
-*   **Mapping**: Service layer maps `categorySlug` and `citySlug` for reliable filtering across API and mock modes.
+## Operating Model (Target)
+- **Platform roles**: PLATFORM_SUPERADMIN, PLATFORM_SUPPORT.
+- **Org roles**: ORG_ADMIN, EVENT_MANAGER, SELLER, SCANNER, FINANCE.
+- **Scope enforcement**: Role + org scope + EventStaffAssignment + optional GateAssignment.
+- **Defaults**: SELLER restricted to assigned events; ORG_ADMIN can view all but scanning still requires assignment.
 
 ## Service Layer
 
@@ -65,17 +68,40 @@
 
 ### UI Patterns
 *   **React Query**: Always invalidate appropriate keys (`["adminEvents"]`, `["admin", "members"]`) on success.
-*   **Localization**: Use `\u` escapes or valid UTF-8 for Arabic content; avoid mojibake separators.
-*   **Localized Display**: Prefer `getLocalizedText` from `src/i18n/localize.ts` instead of direct `name[language]` access.
+*   **Localization**: Use `getLocalizedText` from `src/i18n/localize.ts` for display.
 *   **Auth Persistence**: Mock auth persists only when "Remember me" is checked; localStorage is optional and guarded.
 
+## Roadmap (Phased)
+Phase 0 - Stabilize foundation
+- Inventory locking in POS order creation using row locks.
+- POS Idempotency-Key support with requestHash replay protection.
+- Payment model + POS Cash/Card (manual reference with confirm endpoint).
+- Export includes payment fields + audit log.
+
+Phase 1 - RBAC overhaul + scoped assignments
+- Roles expansion.
+- EventStaffAssignment/GateAssignment.
+- ScopeGuard for scans/orders/exports.
+
+Phase 2 - Price versioning + governance
+- TicketTypePriceVersion + OrderItem snapshots.
+
+Phase 3 - Central policy enforcement
+- EventPolicyService canSell/canScan/visibility.
+
+Phase 4 - Security hardening & ops readiness
+- Rate limits + structured logging + dashboards.
+
+Phase 5 - PSP integration + buyer foundations
+- Payment provider integration + buyer endpoints.
+
 ## Current Priorities (Next Session)
-1. Verify tenant isolation for admin and export endpoints.
-2. Confirm idempotency replay and throttling via E2E tests.
-3. Review CSV export PII minimization requirements.
-4. Continue payments/notifications roadmap after security hardening.
+1. Implement Payment model + POS order creation flow (CASH/CARD) with confirm endpoint.
+2. Add AuditLog + export audit logging (filters and actor info).
+3. Add EventStaffAssignment/GateAssignment + ScopeGuard (Phase 1 kickoff).
+4. Add tests for oversell, idempotency replay, scope leakage, pending ticket scan denial.
 
 ## Common Pitfalls
 1.  **UUID vs Slug**: Always use UUIDs for relationships/updates and slugs for filtering/URLs.
 2.  **Camera Lifecycle**: Ensure all media tracks are stopped (`track.stop()`) on component unmount or step change.
-3.  **Mock Sync**: When updating domain types, ensure `mockEvents.ts` is updated to reflect new fields like `imageUrl` or `categorySlug`.
+3.  **Mock Sync**: When updating domain types, ensure `mockEvents.ts` reflects new fields (e.g., `imageUrl`, `categorySlug`).

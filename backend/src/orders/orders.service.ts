@@ -100,7 +100,7 @@ export class OrdersService {
           userId,
           totalCents,
           currency: orderCurrency,
-          status: OrderStatus.PENDING,
+          status: OrderStatus.PENDING_PAYMENT,
           paymentStatus: PaymentStatus.PENDING,
           attendeeName,
           attendeeEmail,
