@@ -13,6 +13,7 @@ import { VenuesModule } from './venues/venues.module';
 import { TicketTypesModule } from './ticket-types/ticket-types.module';
 import { GatesModule } from './gates/gates.module';
 import { OrdersModule } from './orders/orders.module';
+import { OpsModule } from './ops/ops.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { ScansModule } from './scans/scans.module';
 import { AdminModule } from './admin/admin.module';
@@ -44,6 +45,7 @@ import { validate } from './config/env';
     TicketTypesModule,
     GatesModule,
     OrdersModule,
+    OpsModule,
     TicketsModule,
     ScansModule,
     AdminModule,
