@@ -155,4 +155,21 @@ describe('ScansService', () => {
     const voidLogArgs = prisma.scanLog.create.mock.calls[0]?.[0];
     expect(voidLogArgs?.data?.result).toBe(ScanResult.DENIED_INVALID_TICKET);
   });
+
+  it('should return payment not confirmed if ticket is PENDING', async () => {
+    const pendingTicket: typeof mockTicket = {
+      ...mockTicket,
+      status: TicketStatus.PENDING,
+    };
+    prisma.ticket.findFirst.mockResolvedValue(pendingTicket);
+    prisma.organizationMember.findUnique.mockResolvedValue(mockMember);
+
+    const result = await service.scan(orgId, userId, { ticketCode });
+
+    expect(result.result).toBe(ScanResult.DENIED_PAYMENT_NOT_CONFIRMED);
+    expect(result.message).toBe('Payment not confirmed');
+    expect(prisma.scanLog.create.mock.calls.length).toBe(1);
+    const logArgs = prisma.scanLog.create.mock.calls[0]?.[0];
+    expect(logArgs?.data?.result).toBe(ScanResult.DENIED_PAYMENT_NOT_CONFIRMED);
+  });
 });

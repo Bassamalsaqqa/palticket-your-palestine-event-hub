@@ -82,7 +82,31 @@ export class ScansService {
         }
       }
 
-      // 4. Check Ticket Status (Void)
+      // 4. Check Ticket Status (Pending/Void)
+      if (ticket.status === TicketStatus.PENDING) {
+        await tx.scanLog.create({
+          data: {
+            organizationId,
+            ticketId: ticket.id,
+            eventId: ticket.eventId,
+            gateId,
+            scannedByUserId: userId,
+            scannedByMemberId,
+            result: ScanResult.DENIED_PAYMENT_NOT_CONFIRMED,
+          },
+        });
+        return {
+          result: ScanResult.DENIED_PAYMENT_NOT_CONFIRMED,
+          message: 'Payment not confirmed',
+          timestamp: new Date(),
+          ticket: {
+            id: ticket.id,
+            attendeeName: ticket.attendeeName,
+            ticketType: ticket.ticketType.name,
+          },
+        };
+      }
+
       if (ticket.status === TicketStatus.VOID) {
         await tx.scanLog.create({
           data: {

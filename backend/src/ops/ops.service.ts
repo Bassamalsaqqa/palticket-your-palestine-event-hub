@@ -22,6 +22,14 @@ interface Inventory {
   reserved: number;
 }
 
+interface RawInventory {
+  id: string;
+  ticketTypeId: string;
+  capacity: number;
+  sold: number;
+  reserved: number;
+}
+
 @Injectable()
 export class OpsService {
   constructor(private prisma: PrismaService) {}
@@ -68,18 +76,18 @@ export class OpsService {
         FOR UPDATE
       `;
 
-      const inventoriesRaw = await tx.$queryRawUnsafe<any[]>(
+      const inventoriesRaw = await tx.$queryRawUnsafe<RawInventory[]>(
         query,
         ...ticketTypeIds,
       );
 
       // Map to a more usable structure
       const inventories: Inventory[] = inventoriesRaw.map((inv) => ({
-        id: inv.id as string,
-        ticketTypeId: inv.ticketTypeId as string,
-        capacity: inv.capacity as number,
-        sold: inv.sold as number,
-        reserved: inv.reserved as number,
+        id: inv.id,
+        ticketTypeId: inv.ticketTypeId,
+        capacity: inv.capacity,
+        sold: inv.sold,
+        reserved: inv.reserved,
       }));
 
       if (inventories.length !== ticketTypeIds.length) {

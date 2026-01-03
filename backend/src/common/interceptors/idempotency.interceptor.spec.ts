@@ -2,7 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { IdempotencyInterceptor } from './idempotency.interceptor';
 import { PrismaService } from '../../prisma/prisma.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
-import { ExecutionContext, CallHandler, ConflictException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  CallHandler,
+  ConflictException,
+} from '@nestjs/common';
 import { of, firstValueFrom } from 'rxjs';
 import * as crypto from 'crypto';
 
@@ -70,21 +74,24 @@ describe('IdempotencyInterceptor', () => {
 
   it('should return stored response on replay with same hash', async () => {
     const storedResponse = { id: 'order-1' };
-    
+
     (crypto.createHash as jest.Mock).mockReturnValue({
       update: jest.fn().mockReturnThis(),
       digest: jest.fn().mockReturnValue('mock-hash'),
     });
-    
+
     prisma.idempotencyKey.findUnique.mockResolvedValue({
       responseCode: 201,
       responseBody: JSON.stringify(storedResponse),
       requestHash: 'mock-hash',
     } as any);
 
-    const result$ = await interceptor.intercept(mockExecutionContext, mockCallHandler);
+    const result$ = await interceptor.intercept(
+      mockExecutionContext,
+      mockCallHandler,
+    );
     const res = await firstValueFrom(result$);
-    
+
     expect(res).toEqual(storedResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(201);
   });
@@ -99,8 +106,8 @@ describe('IdempotencyInterceptor', () => {
       requestHash: 'different-hash',
     } as any);
 
-    await expect(interceptor.intercept(mockExecutionContext, mockCallHandler)).rejects.toThrow(
-      ConflictException,
-    );
+    await expect(
+      interceptor.intercept(mockExecutionContext, mockCallHandler),
+    ).rejects.toThrow(ConflictException);
   });
 });
