@@ -54,11 +54,12 @@ describe('ExportsService', () => {
       prisma.order.findMany.mockResolvedValue([mockOrder] as any);
       prisma.auditLog.create.mockResolvedValue({ id: 'log-1' } as any);
 
-          const csv = await service.exportOrders(orgId, memberId);
-      
-          expect(csv).toContain('totalCents');
-          expect(csv).toContain('1000'); // 1000 cents, not 10
-          expect(csv).toContain('paymentMethod');      expect(csv).toContain('providerReference');
+      const csv = await service.exportOrders(orgId, memberId);
+
+      expect(csv).toContain('totalCents');
+      expect(csv).toContain('1000'); // 1000 cents, not 10
+      expect(csv).toContain('paymentMethod');
+      expect(csv).toContain('providerReference');
       expect(csv).toContain('capturedAt');
       expect(csv).toContain('sellerMemberId');
       expect(csv).toContain('sellerName');

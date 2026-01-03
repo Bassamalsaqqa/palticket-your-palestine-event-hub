@@ -47,11 +47,13 @@ describe('OpsService', () => {
   describe('createPosOrder', () => {
     it('should create CASH order successfully with row locks', async () => {
       // Mock Member check
-      prisma.organizationMember.findUnique.mockResolvedValue({ id: 'mem-1' } as any);
+      prisma.organizationMember.findUnique.mockResolvedValue({
+        id: 'mem-1',
+      } as any);
 
       // Mock Event check
       prisma.event.findFirst.mockResolvedValue({ id: eventId } as any);
-      
+
       // Mock row lock result
       prisma.$queryRaw.mockResolvedValue([
         {
@@ -59,8 +61,8 @@ describe('OpsService', () => {
           ticketTypeId,
           capacity: 10,
           sold: 0,
-          reserved: 0
-        }
+          reserved: 0,
+        },
       ]);
 
       // Mock TicketType fetch
@@ -69,20 +71,27 @@ describe('OpsService', () => {
           id: ticketTypeId,
           sellPriceCents: 1000,
           currency: 'ILS',
-          eventId
-        }
+          eventId,
+        },
       ] as any);
 
       // Mock creations
-      prisma.order.create.mockResolvedValue({ id: 'order-1', totalCents: 2000, currency: 'ILS', status: OrderStatus.PAID } as any);
-      prisma.ticket.findMany.mockResolvedValue([{ id: 't-1', status: TicketStatus.ISSUED }] as any);
+      prisma.order.create.mockResolvedValue({
+        id: 'order-1',
+        totalCents: 2000,
+        currency: 'ILS',
+        status: OrderStatus.PAID,
+      } as any);
+      prisma.ticket.findMany.mockResolvedValue([
+        { id: 't-1', status: TicketStatus.ISSUED },
+      ] as any);
 
       const result = await service.createPosOrder(orgId, userId, mockDto);
 
       expect(prisma.$queryRaw).toHaveBeenCalled();
       expect(prisma.ticketTypeInventory.update).toHaveBeenCalledWith({
         where: { id: 'inv-1' },
-        data: { sold: { increment: 2 } }
+        data: { sold: { increment: 2 } },
       });
       expect(result.order.status).toBe(OrderStatus.PAID);
       expect(result.payment.status).toBe(PaymentStatus.SUCCEEDED);
@@ -93,13 +102,15 @@ describe('OpsService', () => {
         ...mockDto,
         items: [
           { ticketTypeId, quantity: 6 },
-          { ticketTypeId, quantity: 5 } // Total 11
-        ]
+          { ticketTypeId, quantity: 5 }, // Total 11
+        ],
       };
 
-      prisma.organizationMember.findUnique.mockResolvedValue({ id: 'mem-1' } as any);
+      prisma.organizationMember.findUnique.mockResolvedValue({
+        id: 'mem-1',
+      } as any);
       prisma.event.findFirst.mockResolvedValue({ id: eventId } as any);
-      
+
       // Capacity 10
       prisma.$queryRaw.mockResolvedValue([
         {
@@ -107,8 +118,8 @@ describe('OpsService', () => {
           ticketTypeId,
           capacity: 10,
           sold: 0,
-          reserved: 0
-        }
+          reserved: 0,
+        },
       ]);
 
       prisma.ticketType.findMany.mockResolvedValue([
@@ -116,17 +127,21 @@ describe('OpsService', () => {
           id: ticketTypeId,
           sellPriceCents: 1000,
           currency: 'ILS',
-          eventId
-        }
+          eventId,
+        },
       ] as any);
 
-      await expect(service.createPosOrder(orgId, userId, dupDto)).rejects.toThrow(
+      await expect(
+        service.createPosOrder(orgId, userId, dupDto),
+      ).rejects.toThrow(
         BadRequestException, // Insufficient capacity
       );
     });
 
     it('should throw BadRequestException if ticket type does not belong to event', async () => {
-      prisma.organizationMember.findUnique.mockResolvedValue({ id: 'mem-1' } as any);
+      prisma.organizationMember.findUnique.mockResolvedValue({
+        id: 'mem-1',
+      } as any);
       prisma.event.findFirst.mockResolvedValue({ id: eventId } as any);
       prisma.$queryRaw.mockResolvedValue([
         {
@@ -134,8 +149,8 @@ describe('OpsService', () => {
           ticketTypeId,
           capacity: 10,
           sold: 0,
-          reserved: 0
-        }
+          reserved: 0,
+        },
       ]);
 
       prisma.ticketType.findMany.mockResolvedValue([
@@ -143,19 +158,26 @@ describe('OpsService', () => {
           id: ticketTypeId,
           sellPriceCents: 1000,
           currency: 'ILS',
-          eventId: 'other-event' // Mismatch
-        }
+          eventId: 'other-event', // Mismatch
+        },
       ] as any);
 
-      await expect(service.createPosOrder(orgId, userId, mockDto)).rejects.toThrow(
-        `Ticket type ${ticketTypeId} does not belong to event ${eventId}`
+      // Mock order creation to prevent crash if validation fails (though it shouldn't reach here)
+      prisma.order.create.mockResolvedValue({ id: 'order-1' } as any);
+
+      await expect(
+        service.createPosOrder(orgId, userId, mockDto),
+      ).rejects.toThrow(
+        `Ticket type ${ticketTypeId} does not belong to event ${eventId}`,
       );
     });
 
     it('should throw BadRequestException if capacity is exceeded', async () => {
-      prisma.organizationMember.findUnique.mockResolvedValue({ id: 'mem-1' } as any);
+      prisma.organizationMember.findUnique.mockResolvedValue({
+        id: 'mem-1',
+      } as any);
       prisma.event.findFirst.mockResolvedValue({ id: eventId } as any);
-      
+
       // Capacity 10, Sold 9, Requesting 2 -> Fail
       prisma.$queryRaw.mockResolvedValue([
         {
@@ -163,8 +185,8 @@ describe('OpsService', () => {
           ticketTypeId,
           capacity: 10,
           sold: 9,
-          reserved: 0
-        }
+          reserved: 0,
+        },
       ]);
 
       prisma.ticketType.findMany.mockResolvedValue([
@@ -172,13 +194,13 @@ describe('OpsService', () => {
           id: ticketTypeId,
           sellPriceCents: 1000,
           currency: 'ILS',
-          eventId
-        }
+          eventId,
+        },
       ] as any);
 
-      await expect(service.createPosOrder(orgId, userId, mockDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.createPosOrder(orgId, userId, mockDto),
+      ).rejects.toThrow(BadRequestException);
       expect(prisma.order.create).not.toHaveBeenCalled();
     });
 
@@ -186,10 +208,12 @@ describe('OpsService', () => {
       const cardDto = {
         ...mockDto,
         paymentMethod: PaymentMethod.CARD,
-        providerReference: 'REF-123'
+        providerReference: 'REF-123',
       };
 
-      prisma.organizationMember.findUnique.mockResolvedValue({ id: 'mem-1' } as any);
+      prisma.organizationMember.findUnique.mockResolvedValue({
+        id: 'mem-1',
+      } as any);
       prisma.event.findFirst.mockResolvedValue({ id: eventId } as any);
       prisma.$queryRaw.mockResolvedValue([
         {
@@ -197,19 +221,24 @@ describe('OpsService', () => {
           ticketTypeId,
           capacity: 10,
           sold: 0,
-          reserved: 0
-        }
+          reserved: 0,
+        },
       ]);
       prisma.ticketType.findMany.mockResolvedValue([
         {
           id: ticketTypeId,
           sellPriceCents: 1000,
           currency: 'ILS',
-          eventId
-        }
+          eventId,
+        },
       ] as any);
-      prisma.order.create.mockResolvedValue({ id: 'order-1', status: OrderStatus.PENDING_PAYMENT } as any);
-      prisma.ticket.findMany.mockResolvedValue([{ id: 't-1', status: TicketStatus.PENDING }] as any);
+      prisma.order.create.mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.PENDING_PAYMENT,
+      } as any);
+      prisma.ticket.findMany.mockResolvedValue([
+        { id: 't-1', status: TicketStatus.PENDING },
+      ] as any);
 
       const result = await service.createPosOrder(orgId, userId, cardDto);
 
@@ -227,6 +256,17 @@ describe('OpsService', () => {
       await expect(
         service.createPosOrder(orgId, userId, invalidCardDto),
       ).rejects.toThrow('Provider reference required for CARD payments');
+    });
+
+    it('should throw BadRequestException if items array is empty', async () => {
+      const emptyItemsDto = {
+        ...mockDto,
+        items: [],
+      };
+
+      await expect(
+        service.createPosOrder(orgId, userId, emptyItemsDto),
+      ).rejects.toThrow('Order must contain at least one item');
     });
   });
 

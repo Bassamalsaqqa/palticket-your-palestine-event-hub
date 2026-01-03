@@ -47,6 +47,10 @@ export class OpsService {
       );
     }
 
+    if (!items || items.length === 0) {
+      throw new BadRequestException('Order must contain at least one item');
+    }
+
     return this.prisma.$transaction(async (tx) => {
       // 0. Resolve Seller Member ID
       const member = await tx.organizationMember.findUnique({
@@ -65,16 +69,41 @@ export class OpsService {
       }
 
       // Aggregate quantities to prevent duplicate ID bypass
-      const quantities = items.reduce((acc, item) => {
-        acc[item.ticketTypeId] = (acc[item.ticketTypeId] || 0) + item.quantity;
-        return acc;
-      }, {} as Record<string, number>);
-      const ticketTypeIds = Object.keys(quantities).sort();
+      const quantities = items.reduce(
+        (acc, item) => {
+          acc[item.ticketTypeId] =
+            (acc[item.ticketTypeId] || 0) + item.quantity;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+      const requestedTicketTypeIds = Object.keys(quantities).sort();
 
-      // 2. Lock Inventory Rows
+      // 2. Validate Ticket Types ownership (Pre-lock)
+      const ticketTypes = await tx.ticketType.findMany({
+        where: {
+          id: { in: requestedTicketTypeIds },
+          eventId: eventId, // Strict scoping
+        },
+        select: {
+          id: true,
+          sellPriceCents: true,
+          currency: true,
+          eventId: true,
+        },
+      });
+
+      if (ticketTypes.length !== requestedTicketTypeIds.length) {
+        throw new BadRequestException(
+          'One or more ticket types are invalid or do not belong to this event',
+        );
+      }
+
+      // 3. Lock Inventory Rows
+      // Use validated IDs
       const query = Prisma.sql`
         SELECT * FROM "TicketTypeInventory"
-        WHERE "ticketTypeId" IN (${Prisma.join(ticketTypeIds)})
+        WHERE "ticketTypeId" IN (${Prisma.join(requestedTicketTypeIds)})
         FOR UPDATE
       `;
 
@@ -89,13 +118,13 @@ export class OpsService {
         reserved: inv.reserved,
       }));
 
-      if (inventories.length !== ticketTypeIds.length) {
+      if (inventories.length !== requestedTicketTypeIds.length) {
         throw new BadRequestException(
           'Inventory record missing for one or more ticket types',
         );
       }
 
-      // 3. Check Capacity & 4. Increment Sold
+      // 4. Check Capacity & Increment Sold
       let totalCents = 0;
       const orderItemsData: {
         ticketTypeId: string;
@@ -103,23 +132,18 @@ export class OpsService {
         priceCents: number;
       }[] = [];
 
-      const ticketTypes = await tx.ticketType.findMany({
-        where: { id: { in: ticketTypeIds } },
-        select: { id: true, sellPriceCents: true, currency: true, eventId: true },
-      });
-
-      for (const typeId of ticketTypeIds) {
-        const inventory = inventories.find((inv) => inv.ticketTypeId === typeId);
+      for (const typeId of requestedTicketTypeIds) {
+        const inventory = inventories.find(
+          (inv) => inv.ticketTypeId === typeId,
+        );
         const typeInfo = ticketTypes.find((t) => t.id === typeId);
         const qty = quantities[typeId];
 
+        // Validations already mostly done, just checking integrity
         if (!inventory || !typeInfo) {
-          throw new BadRequestException(`Invalid ticket type: ${typeId}`);
-        }
-
-        // Validate Event Scope
-        if (typeInfo.eventId !== eventId) {
-           throw new BadRequestException(`Ticket type ${typeId} does not belong to event ${eventId}`);
+          throw new BadRequestException(
+            `Integrity error: Ticket type ${typeId} missing data`,
+          );
         }
 
         if (typeInfo.currency !== currency) {

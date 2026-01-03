@@ -126,6 +126,24 @@ describe('OrdersService', () => {
     expect(prisma.ticket.createMany.mock.calls.length).toBe(1);
   });
 
+  it('should explicitly set OrderStatus to PENDING_PAYMENT', async () => {
+    const createDto = {
+      eventId,
+      items: [{ ticketTypeId, quantity: 1 }],
+    };
+
+    prisma.event.findFirst.mockResolvedValue(mockEvent);
+    prisma.ticketType.findMany.mockResolvedValue([mockTicketType]);
+    prisma.ticketType.updateMany.mockResolvedValue({ count: 1 });
+    prisma.order.create.mockResolvedValue(mockOrder);
+    prisma.ticket.findMany.mockResolvedValue(mockTickets);
+
+    await service.create(orgId, userId, createDto);
+
+    const createCallArgs = prisma.order.create.mock.calls[0]?.[0];
+    expect(createCallArgs?.data.status).toBe(OrderStatus.PENDING_PAYMENT);
+  });
+
   it('should throw BadRequestException if inventory is insufficient', async () => {
     prisma.event.findFirst.mockResolvedValue(mockEvent);
     prisma.ticketType.findMany.mockResolvedValue([mockTicketType]);
