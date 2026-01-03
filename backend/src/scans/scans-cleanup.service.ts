@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
-import { subMonths } from 'date-fns';
 
 @Injectable()
 export class ScansCleanupService {
@@ -14,7 +13,8 @@ export class ScansCleanupService {
     this.logger.log('Starting ScanLog cleanup job...');
 
     // Define retention period: 6 months
-    const thresholdDate = subMonths(new Date(), 6);
+    const thresholdDate = new Date();
+    thresholdDate.setMonth(thresholdDate.getMonth() - 6);
 
     try {
       const deleteResult = await this.prisma.scanLog.deleteMany({

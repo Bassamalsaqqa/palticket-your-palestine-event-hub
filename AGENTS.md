@@ -119,6 +119,10 @@ Backend architecture and rules
   - Exports: `GET /exports/orders.csv`, `GET /exports/tickets.csv`
 - **Services MUST use explicit Prisma `select`** to avoid over-fetching and leaking PII. Do not rely on default model return.
 - **Pagination:** List endpoints must support `skip`/`take` via Query DTOs. Max take is 100.
+- **Idempotency:** `POST /orders` requires `Idempotency-Key` header (optional but recommended). Scoped by org/user/method/path.
+- **Rate Limiting:** ThrottlerGuard enabled globally. Default: 100/min. Orders: 5/min. Scans: 60/min.
+- **Inventory:** Atomic decrement in `TicketTypesService` via `updateMany` with count check.
+- **Log Retention:** `ScansCleanupService` runs daily at midnight to delete logs > 6 months.
 - Scan endpoint: `POST /scan` with atomic update + ScanLog; invalid codes are not logged (ticketId FK required).
 - Orders: `POST /orders` creates Order + OrderItems + Tickets in a transaction; tickets get unique codes.
 - Orders now store attendeeName/attendeeEmail/attendeePhone on the Order record and return attendeeName in list/detail responses.

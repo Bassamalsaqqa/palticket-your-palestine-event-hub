@@ -469,6 +469,7 @@ model IdempotencyKey {
   key            String
   organizationId String
   userId         String
+  requestMethod  String
   requestPath    String
   requestHash    String
   responseCode   Int
@@ -479,7 +480,7 @@ model IdempotencyKey {
   organization Organization @relation(fields: [organizationId], references: [id])
   user         User         @relation(fields: [userId], references: [id])
 
-  @@unique([organizationId, userId, key])
+  @@unique([organizationId, userId, requestMethod, requestPath, key])
   @@index([createdAt])
 }
 

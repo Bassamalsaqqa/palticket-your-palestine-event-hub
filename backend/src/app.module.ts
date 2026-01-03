@@ -23,12 +23,14 @@ import { CitiesModule } from './cities/cities.module';
 import { ExportsModule } from './exports/exports.module';
 import { HealthModule } from './health/health.module';
 import { CommonModule } from './common/common.module';
+import { validate } from './config/env';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, validate }),
     ThrottlerModule.forRoot([
       {
+        name: 'default',
         ttl: 60000,
         limit: 100,
       },

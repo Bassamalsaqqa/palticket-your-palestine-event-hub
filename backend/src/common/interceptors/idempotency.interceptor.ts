@@ -25,6 +25,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
     const body = request.body;
     const path = request.path;
+    const method = request.method;
     const idempotencyKey = request.headers['idempotency-key'] as string;
 
     if (!idempotencyKey) {
@@ -42,9 +43,11 @@ export class IdempotencyInterceptor implements NestInterceptor {
     // Check for existing key
     const existingKey = await this.prisma.idempotencyKey.findUnique({
       where: {
-        organizationId_userId_key: {
+        organizationId_userId_requestMethod_requestPath_key: {
           organizationId: orgId,
           userId: user.id,
+          requestMethod: method,
+          requestPath: path,
           key: idempotencyKey,
         },
       },
@@ -56,14 +59,30 @@ export class IdempotencyInterceptor implements NestInterceptor {
           'Idempotency key reused with different request body',
         );
       }
+      const response = context.switchToHttp().getResponse();
+      response.status(existingKey.responseCode);
       return of(JSON.parse(existingKey.responseBody));
     }
 
     // Proceed and save response
     return next.handle().pipe(
       tap((response: any) => {
-        this.saveIdempotencyKey(idempotencyKey, orgId, user.id, path, body, requestHash, response)
-          .catch(() => { /* Ignore errors */ });
+        const httpResponse = context.switchToHttp().getResponse();
+        const statusCode = httpResponse.statusCode;
+
+        this.saveIdempotencyKey(
+          idempotencyKey,
+          orgId,
+          user.id,
+          method,
+          path,
+          body,
+          requestHash,
+          statusCode,
+          response,
+        ).catch(() => {
+          /* Ignore errors */
+        });
       }),
     );
   }
@@ -72,10 +91,12 @@ export class IdempotencyInterceptor implements NestInterceptor {
     key: string,
     organizationId: string,
     userId: string,
+    requestMethod: string,
     requestPath: string,
     requestParams: any,
     requestHash: string,
-    response: any
+    responseCode: number,
+    response: any,
   ) {
     try {
       await this.prisma.idempotencyKey.create({
@@ -83,9 +104,10 @@ export class IdempotencyInterceptor implements NestInterceptor {
           key,
           organizationId,
           userId,
+          requestMethod,
           requestPath,
           requestHash,
-          responseCode: 201,
+          responseCode,
           responseBody: JSON.stringify(response),
         },
       });

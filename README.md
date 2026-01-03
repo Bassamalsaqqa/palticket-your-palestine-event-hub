@@ -176,6 +176,20 @@ PalTicket has evolved into a multi-tenant, localized ticketing platform with ord
 - Audit tenant isolation and export PII safety.
 - Payments/commissions/payouts/notifications are deferred.
 
+### Backend Hardening (Jan 2026)
+- **Inventory Enforcement:** Atomic transaction-based inventory checks prevent overselling.
+- **Idempotency:** `Idempotency-Key` header support for `POST /orders`, scoped by user/org/method/path.
+- **Rate Limiting:** Global rate limit (100 req/min) with strict overrides for orders (5 req/min) and scans (60 req/min).
+- **Log Retention:** Daily cron job cleans up scan logs older than 6 months.
+- **Security:** CSV export injection protection and strict tenant isolation checks.
+
+### Database Migrations
+New features require schema changes. Run the following to apply:
+```bash
+cd backend
+npx prisma migrate dev --name idempotency_and_indexes
+```
+
 ## API Configuration Precedence
 The application resolves its data source in the following order:
 1. **Force Mock Flag**: If "Force Mock Mode" is enabled in Admin Settings, all other configs are ignored.
