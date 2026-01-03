@@ -421,7 +421,6 @@ model ScanLog {
   @@index([gateId])
   @@index([scannedByUserId])
   @@index([scannedByMemberId])
-  @@index([scannedAt])
   @@index([organizationId, scannedAt])
 }
 

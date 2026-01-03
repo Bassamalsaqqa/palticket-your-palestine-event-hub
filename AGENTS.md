@@ -123,6 +123,7 @@ Backend architecture and rules
 - Rate Limiting: ThrottlerGuard enabled globally. Default: 100/min. Orders: 5/min. Scans: 60/min.
 - **Inventory:** Atomic decrement in `OrdersService` via `updateMany` with count check.
 - **Log Retention:** `ScansCleanupService` runs daily at midnight to delete logs > 6 months.
+- **ScanLog Indexing:** Composite index on `organizationId, scannedAt` for log queries and cleanup.
 - Scan endpoint: `POST /scan` with atomic update + ScanLog; invalid codes are not logged (ticketId FK required).
 - Orders: `POST /orders` creates Order + OrderItems + Tickets in a transaction; tickets get unique codes.
 - Orders now store attendeeName/attendeeEmail/attendeePhone on the Order record and return attendeeName in list/detail responses.
