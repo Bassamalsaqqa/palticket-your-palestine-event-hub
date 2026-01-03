@@ -14,17 +14,31 @@ export class TicketTypesService {
       where: { id: data.eventId, organizationId },
     });
 
-    return this.prisma.ticketType.create({
-      data,
-      select: {
-        id: true,
-        name: true,
-        sellPriceCents: true,
-        partnerPriceCents: true,
-        currency: true,
-        quantity: true,
-        eventId: true,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const ticketType = await tx.ticketType.create({
+        data,
+        select: {
+          id: true,
+          name: true,
+          sellPriceCents: true,
+          partnerPriceCents: true,
+          currency: true,
+          quantity: true,
+          eventId: true,
+        },
+      });
+
+      await tx.ticketTypeInventory.create({
+        data: {
+          organizationId,
+          ticketTypeId: ticketType.id,
+          capacity: data.quantity,
+          sold: 0,
+          reserved: 0,
+        },
+      });
+
+      return ticketType;
     });
   }
 

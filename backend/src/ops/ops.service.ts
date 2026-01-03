@@ -48,6 +48,12 @@ export class OpsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      // 0. Resolve Seller Member ID
+      const member = await tx.organizationMember.findUnique({
+        where: { organizationId_userId: { organizationId, userId } },
+        select: { id: true },
+      });
+
       // 1. Validate Event
       const event = await tx.event.findFirst({
         where: { id: eventId, organizationId },
@@ -58,28 +64,21 @@ export class OpsService {
         throw new NotFoundException('Event not found or access denied');
       }
 
+      // Aggregate quantities to prevent duplicate ID bypass
+      const quantities = items.reduce((acc, item) => {
+        acc[item.ticketTypeId] = (acc[item.ticketTypeId] || 0) + item.quantity;
+        return acc;
+      }, {} as Record<string, number>);
+      const ticketTypeIds = Object.keys(quantities).sort();
+
       // 2. Lock Inventory Rows
-      // We sort IDs to prevent deadlocks if multiple orders hit same types in different order
-      const ticketTypeIds = [
-        ...new Set(items.map((i) => i.ticketTypeId)),
-      ].sort();
-
-      // Raw query to lock rows.
-      // Note: Prisma raw query returns plain objects, need to map carefully.
-      // We assume TicketTypeInventory exists.
-      // Postgres: SELECT * FROM "TicketTypeInventory" WHERE "ticketTypeId" IN (...) FOR UPDATE
-
-      const placeholders = ticketTypeIds.map((_, i) => `$${i + 1}`).join(',');
-      const query = `
+      const query = Prisma.sql`
         SELECT * FROM "TicketTypeInventory"
-        WHERE "ticketTypeId" IN (${placeholders})
+        WHERE "ticketTypeId" IN (${Prisma.join(ticketTypeIds)})
         FOR UPDATE
       `;
 
-      const inventoriesRaw = await tx.$queryRawUnsafe<RawInventory[]>(
-        query,
-        ...ticketTypeIds,
-      );
+      const inventoriesRaw = await tx.$queryRaw<RawInventory[]>(query);
 
       // Map to a more usable structure
       const inventories: Inventory[] = inventoriesRaw.map((inv) => ({
@@ -104,56 +103,51 @@ export class OpsService {
         priceCents: number;
       }[] = [];
 
-      // Fetch TicketTypes for pricing (no lock needed, assumed mostly static or versioned later)
       const ticketTypes = await tx.ticketType.findMany({
         where: { id: { in: ticketTypeIds } },
-        select: { id: true, sellPriceCents: true, currency: true },
+        select: { id: true, sellPriceCents: true, currency: true, eventId: true },
       });
 
-      for (const item of items) {
-        const inventory = inventories.find(
-          (inv) => inv.ticketTypeId === item.ticketTypeId,
-        );
-        const typeInfo = ticketTypes.find((t) => t.id === item.ticketTypeId);
+      for (const typeId of ticketTypeIds) {
+        const inventory = inventories.find((inv) => inv.ticketTypeId === typeId);
+        const typeInfo = ticketTypes.find((t) => t.id === typeId);
+        const qty = quantities[typeId];
 
         if (!inventory || !typeInfo) {
-          throw new BadRequestException(
-            `Invalid ticket type: ${item.ticketTypeId}`,
-          );
+          throw new BadRequestException(`Invalid ticket type: ${typeId}`);
+        }
+
+        // Validate Event Scope
+        if (typeInfo.eventId !== eventId) {
+           throw new BadRequestException(`Ticket type ${typeId} does not belong to event ${eventId}`);
         }
 
         if (typeInfo.currency !== currency) {
           throw new BadRequestException(
-            `Currency mismatch for ticket type ${item.ticketTypeId}`,
+            `Currency mismatch for ticket type ${typeId}`,
           );
         }
 
-        if (
-          inventory.sold + inventory.reserved + item.quantity >
-          inventory.capacity
-        ) {
+        if (inventory.sold + inventory.reserved + qty > inventory.capacity) {
           throw new BadRequestException(
-            `Insufficient capacity for ticket type ${item.ticketTypeId}`,
+            `Insufficient capacity for ticket type ${typeId}`,
           );
         }
 
-        // Increment sold in memory for later DB update
-        // We do single updates per row to be safe with the lock we hold
         await tx.ticketTypeInventory.update({
           where: { id: inventory.id },
-          data: { sold: { increment: item.quantity } },
+          data: { sold: { increment: qty } },
         });
 
-        totalCents += typeInfo.sellPriceCents * item.quantity;
+        totalCents += typeInfo.sellPriceCents * qty;
         orderItemsData.push({
-          ticketTypeId: item.ticketTypeId,
-          quantity: item.quantity,
+          ticketTypeId: typeId,
+          quantity: qty,
           priceCents: typeInfo.sellPriceCents,
         });
       }
 
       // 5. Create Order
-      // Payment Rules
       const isPaid = paymentMethod === PaymentMethod.CASH;
       const orderStatus = isPaid
         ? OrderStatus.PAID
@@ -168,20 +162,15 @@ export class OpsService {
         data: {
           organizationId,
           eventId,
-          userId, // Seller is the user creating it in POS context? Or is there a "customer"?
-          // Requirement says "Scope by organization/user", implying the user IS the caller (seller).
-          // POS orders usually have an anonymous or ad-hoc customer.
-          // For now, we link to the Seller User ID as the "owner" of the record context,
-          // or we might need a separate customer field later.
-          // Schema has `userId` on Order. We'll use the authenticated user (Seller).
+          userId,
           totalCents,
           currency,
           status: orderStatus,
-          paymentStatus, // Legacy field, keeping in sync
+          paymentStatus, // Legacy
           paymentProvider:
             paymentMethod === PaymentMethod.CARD ? 'manual' : null,
           paymentReference: providerReference,
-          attendeeName: 'POS Walk-in', // Default for now
+          attendeeName: 'POS Walk-in',
           items: {
             create: orderItemsData,
           },
@@ -200,16 +189,13 @@ export class OpsService {
           provider: paymentMethod === PaymentMethod.CARD ? 'manual' : null,
           providerReference,
           capturedAt,
-          createdByMemberId: undefined, // We need to resolve Member ID from User ID to populate this?
-          // The requirement doesn't strictly demand looking up the member ID here,
-          // but it's good practice. I'll skip for speed unless I can get it easily.
-          // `userId` is available.
+          createdByMemberId: member?.id,
         },
       });
 
       // Generate Tickets
       const ticketsToCreate: Prisma.TicketCreateManyInput[] = [];
-      for (const item of items) {
+      for (const item of orderItemsData) {
         for (let i = 0; i < item.quantity; i++) {
           ticketsToCreate.push({
             organizationId,

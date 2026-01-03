@@ -7,6 +7,7 @@ import {
   UseInterceptors,
   Param,
   ParseUUIDPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
@@ -29,6 +30,9 @@ export class OpsController {
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreatePosOrderDto,
   ) {
+    if (!req.headers['idempotency-key']) {
+      throw new BadRequestException('Idempotency-Key header is required');
+    }
     return this.opsService.createPosOrder(req.orgId!, req.user.id, dto);
   }
 

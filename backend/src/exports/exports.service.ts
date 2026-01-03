@@ -80,7 +80,7 @@ export class ExportsService {
         customerName: o.attendeeName || o.user.name || '',
         customerEmail: o.attendeeEmail || o.user.email || '',
         eventName: o.event.translations[0]?.name || '',
-        total: o.totalCents / 100,
+        totalCents: o.totalCents,
         currency: o.currency,
         status: o.status,
         paymentStatus: payment?.status || o.paymentStatus || '',

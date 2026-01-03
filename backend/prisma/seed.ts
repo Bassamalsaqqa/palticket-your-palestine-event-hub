@@ -277,14 +277,14 @@ const run = async () => {
     });
 
     const price = parsePrice(event.price);
-    const existingTicket = await prisma.ticketType.findFirst({
+    let ticketType = await prisma.ticketType.findFirst({
       where: { eventId: eventRecord.id, name: 'General' },
       select: { id: true },
     });
 
-    if (existingTicket) {
+    if (ticketType) {
       await prisma.ticketType.update({
-        where: { id: existingTicket.id },
+        where: { id: ticketType.id },
         data: {
           sellPriceCents: price.cents,
           partnerPriceCents: price.cents,
@@ -292,7 +292,7 @@ const run = async () => {
         },
       });
     } else {
-      await prisma.ticketType.create({
+      ticketType = await prisma.ticketType.create({
         data: {
           eventId: eventRecord.id,
           name: 'General',
@@ -301,8 +301,21 @@ const run = async () => {
           currency: price.currency,
           quantity: 100,
         },
+        select: { id: true },
       });
     }
+
+    await prisma.ticketTypeInventory.upsert({
+      where: { ticketTypeId: ticketType.id },
+      update: { capacity: 100 },
+      create: {
+        organizationId: organization.id,
+        ticketTypeId: ticketType.id,
+        capacity: 100,
+        sold: 0,
+        reserved: 0,
+      },
+    });
   }
 
   console.log('Seeding completed successfully.');
