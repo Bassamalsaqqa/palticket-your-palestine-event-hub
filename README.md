@@ -181,7 +181,7 @@ PalTicket has evolved into a multi-tenant, localized ticketing platform with ord
 - **Idempotency:** `Idempotency-Key` header support for `POST /orders`, scoped by user/org/method/path.
 - **Rate Limiting:** Global rate limit (100 req/min) with strict overrides for orders (5 req/min) and scans (60 req/min).
 - **Log Retention:** Daily cron job cleans up scan logs older than 6 months.
-- **Security:** CSV export injection protection and strict tenant isolation checks.
+- **Security:** CSV export injection protection and enhanced tenant isolation checks.
 
 ### Database Migrations
 Database schema is up to date with idempotency and indexing improvements.

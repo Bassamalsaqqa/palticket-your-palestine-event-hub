@@ -422,6 +422,7 @@ model ScanLog {
   @@index([scannedByUserId])
   @@index([scannedByMemberId])
   @@index([scannedAt])
+  @@index([organizationId, scannedAt])
 }
 
 // -----------------------------------------------------------------------------
