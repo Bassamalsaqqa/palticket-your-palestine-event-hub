@@ -115,6 +115,14 @@ describe('OpsService', () => {
       });
       expect(result.order.status).toBe(OrderStatus.PAID);
       expect(result.payment.status).toBe(PaymentStatus.SUCCEEDED);
+      expect(prisma.auditLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: 'POS_ORDER_CREATE',
+            entityType: 'Order',
+          }),
+        }),
+      );
     });
 
     it('should use active price version and snapshot pricing into OrderItem', async () => {

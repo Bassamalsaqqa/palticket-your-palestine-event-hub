@@ -42,7 +42,7 @@ export class EventsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateEventAssignmentDto,
   ) {
-    return this.eventsService.createAssignment(req.orgId!, id, dto);
+    return this.eventsService.createAssignment(req.orgId!, id, dto, req.memberId);
   }
 
   @Post()

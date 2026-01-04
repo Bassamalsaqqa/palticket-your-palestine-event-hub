@@ -31,7 +31,8 @@ Each domain module enforces multi-tenancy and RBAC:
 
 *   **Events/Venues/Gates/TicketTypes:**
     *   **CRUD:** Full Create/Read/Update/Delete.
-    *   **Endpoints:** `GET /events/slug/:slug?lang=en|ar`
+    *   **Endpoints:** `GET /events/slug/:slug?lang=en|ar` (Admin list, unfiltered by status)
+    *   **Public Endpoints:** `GET /public/events`, `GET /public/events/:id`, `GET /public/events/slug/:slug` (Filtered by `EventPolicyService.isPublicVisible`)
     *   **Price Versions:** `POST /ticket-types/:id/price-versions`, `GET /ticket-types/:id/price-versions` (Admin/EventManager).
     *   **Access:** ADMIN can write; STAFF can read.
     *   **Scope:** All queries filtered by `x-organization-id`.
@@ -44,8 +45,9 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Localization:** Fully localized names via translation tables. Use `?lang=en|ar` on applicable endpoints, with English fallback when missing.
 
 *   **Orders/Tickets:**
-    *   **Orders:** Create + read (ticket issuance happens here). Non-POS orders create PENDING tickets until payment.
-    *   **Tickets:** Read-only (list and detail). Support `POST /tickets/:id/void` (Admin/EventManager).
+    *   **Orders:** Create + read (ticket issuance happens here). Non-POS orders create PENDING tickets until payment. Audit logged as `ORDER_CREATE`.
+    *   **POS Orders:** `POST /ops/orders`. Audit logged as `POS_ORDER_CREATE`.
+    *   **Tickets:** Read-only (list and detail). Support `POST /tickets/:id/void` (Admin/EventManager). Audit logged as `TICKET_VOID`.
     *   **Access:** ADMIN and STAFF can read.
     *   **Privacy:** Explicit selection of fields (no full PII exposure).
 
@@ -85,7 +87,7 @@ Each domain module enforces multi-tenancy and RBAC:
 
 ## Pricing Governance (Phase 2)
 PalTicket implements price immutability via versioning and snapshotting:
-- **Price Versions:** `TicketTypePriceVersion` allows scheduling price changes for a specific `TicketType` and `currency`.
+- **Price Versions:** `TicketTypePriceVersion` allows scheduling price changes for a specific `TicketType` and `currency`. Audit logged as `PRICE_VERSION_CREATE`.
 - **Selection Logic:** The system automatically selects the most recent active price version (matching currency, `startsAt <= now`, and `endsAt` is null or `> now`).
 - **Snapshots:** When an order is created, `unitPriceCents`, `currency`, and the applied `priceVersionId` are snapshotted into each `OrderItem`. This ensures that subsequent price changes do not affect existing orders and provides a historical audit trail.
 - **Consistency:** Both public orders (`POST /orders`) and POS orders (`POST /ops/orders`) follow the same pricing selection and snapshotting rules.
@@ -105,10 +107,10 @@ If you already have data and the initial `20260104184304_add_price_versioning` m
 ## Central Policy Enforcement (Phase 3)
 - **EventStatus Expansion:** DRAFT, PUBLISHED, LIVE, ENDED, CANCELLED.
 - **EventPolicyService:** Centralizes rules for selling, scanning, and public visibility.
-- **Visibility:** Only PUBLISHED, LIVE, or ENDED events are visible to the public.
+- **Visibility:** Only PUBLISHED, LIVE, or ENDED events are visible to the public via `/public/events`.
 - **Selling:** Only PUBLISHED or LIVE events can be sold.
 - **Scanning:** Only LIVE events allow ticket scanning.
-- **Audit Logging:** Expanded coverage for role updates, event status changes, ticket voiding, and price versioning.
+- **Audit Logging:** Expanded coverage for role updates (`MEMBER_ROLE_UPDATE`), event status changes (`EVENT_STATUS_UPDATE`), ticket voiding (`TICKET_VOID`), order creation (`ORDER_CREATE`, `POS_ORDER_CREATE`), and assignments (`EVENT_ASSIGNMENT_CREATE`, `GATE_ASSIGNMENT_CREATE`).
 
 ## Next Phase Targets
 - Central EventPolicyService for event status/visibility enforcement (Phase 3).

@@ -34,6 +34,6 @@ describe('GatesController Assignments', () => {
     
     await controller.createAssignment(req, 'gate-1', dto);
     
-    expect(service.createAssignment).toHaveBeenCalledWith('org-1', 'gate-1', dto);
+    expect(service.createAssignment).toHaveBeenCalledWith('org-1', 'gate-1', dto, undefined);
   });
 });

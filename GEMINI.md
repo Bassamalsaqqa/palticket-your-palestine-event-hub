@@ -93,12 +93,14 @@ Phase 2 - Price versioning + governance (complete)
 - Admin UI for managing price versions (done).
 - Item-level CSV export with price snapshots (done).
 
-Phase 3 - Central policy enforcement (complete)
+Phase 3 - Central policy enforcement (in progress)
 - EventStatus expansion: DRAFT, PUBLISHED, LIVE, ENDED, CANCELLED (done).
 - EventPolicyService for unified canSell/canScan/visibility logic (done).
-- Enforce policies in public listings, orders, POS, and scans (done).
+- Dedicated public events listing endpoint `/public/events` (done).
+- Admin list remains unfiltered by status (done).
+- Enforce policies in orders, POS, and scans (done).
 - FINANCE role for payment confirmation and exports (done).
-- Audit logging expansion for roles, status changes, and voiding (done).
+- Audit logging expansion: orders, assignments, role/status updates, voids (done).
 
 Phase 4 - Security hardening & ops readiness
 - Rate limits for auth and exports.

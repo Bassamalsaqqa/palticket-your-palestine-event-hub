@@ -146,6 +146,14 @@ describe('OrdersService', () => {
     });
     expect(prisma.order.create.mock.calls.length).toBe(1);
     expect(prisma.ticket.createMany.mock.calls.length).toBe(1);
+    expect(prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: 'ORDER_CREATE',
+          entityType: 'Order',
+        }),
+      }),
+    );
 
     // Check ticket creation status
     const ticketCreateArgs = prisma.ticket.createMany.mock.calls[0][0];

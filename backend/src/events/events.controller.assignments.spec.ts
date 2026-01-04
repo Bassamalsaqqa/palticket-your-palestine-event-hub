@@ -40,6 +40,6 @@ describe('EventsController Assignments', () => {
     
     await controller.createAssignment(req, 'event-1', dto);
     
-    expect(service.createAssignment).toHaveBeenCalledWith('org-1', 'event-1', dto);
+    expect(service.createAssignment).toHaveBeenCalledWith('org-1', 'event-1', dto, undefined);
   });
 });

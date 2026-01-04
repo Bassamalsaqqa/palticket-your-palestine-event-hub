@@ -35,7 +35,7 @@ export class GatesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateGateAssignmentDto,
   ) {
-    return this.gatesService.createAssignment(req.orgId!, id, dto);
+    return this.gatesService.createAssignment(req.orgId!, id, dto, req.memberId);
   }
 
   @Post()

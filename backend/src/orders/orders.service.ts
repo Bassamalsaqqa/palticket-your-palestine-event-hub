@@ -235,6 +235,17 @@ export class OrdersService {
         data: ticketsToCreate,
       });
 
+      // 6.5 Audit Log
+      await tx.auditLog.create({
+        data: {
+          organizationId,
+          action: 'ORDER_CREATE',
+          entityType: 'Order',
+          entityId: order.id,
+          metadata: { eventId, totalCents: order.totalCents, ticketCount: ticketsToCreate.length },
+        },
+      });
+
       // 7. Return explicit select
       const createdTickets = await tx.ticket.findMany({
         where: { orderId: order.id },

@@ -10,6 +10,7 @@ export class GatesService {
     organizationId: string,
     gateId: string,
     data: CreateGateAssignmentDto,
+    actorMemberId?: string,
   ) {
     // Verify gate exists and belongs to org
     await this.prisma.gate.findFirstOrThrow({
@@ -37,7 +38,7 @@ export class GatesService {
       throw new ConflictException('Member is already assigned to this gate');
     }
 
-    return this.prisma.gateAssignment.create({
+    const assignment = await this.prisma.gateAssignment.create({
       data: {
         organizationId,
         gateId,
@@ -49,6 +50,19 @@ export class GatesService {
         memberId: true,
       },
     });
+
+    await this.prisma.auditLog.create({
+      data: {
+        organizationId,
+        actorMemberId,
+        action: 'GATE_ASSIGNMENT_CREATE',
+        entityType: 'GateAssignment',
+        entityId: assignment.id,
+        metadata: { gateId, memberId: data.memberId },
+      },
+    });
+
+    return assignment;
   }
 
   async create(organizationId: string, data: CreateGateDto) {

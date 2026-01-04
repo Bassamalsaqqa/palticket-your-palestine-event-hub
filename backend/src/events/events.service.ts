@@ -3,18 +3,21 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto, UpdateEventDto, CreateEventAssignmentDto } from './dto/event.dto';
 import { StorageService } from '../common/storage.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { EventPolicyService } from './event-policy.service';
 
 @Injectable()
 export class EventsService {
   constructor(
     private prisma: PrismaService,
     private storageService: StorageService,
+    private eventPolicy: EventPolicyService,
   ) {}
 
   async createAssignment(
     organizationId: string,
     eventId: string,
     data: CreateEventAssignmentDto,
+    actorMemberId?: string,
   ) {
     // Verify event exists and belongs to org
     await this.prisma.event.findFirstOrThrow({
@@ -42,7 +45,7 @@ export class EventsService {
       throw new ConflictException('Member is already assigned to this event');
     }
 
-    return this.prisma.eventStaffAssignment.create({
+    const assignment = await this.prisma.eventStaffAssignment.create({
       data: {
         organizationId,
         eventId,
@@ -56,6 +59,19 @@ export class EventsService {
         role: true,
       },
     });
+
+    await this.prisma.auditLog.create({
+      data: {
+        organizationId,
+        actorMemberId,
+        action: 'EVENT_ASSIGNMENT_CREATE',
+        entityType: 'EventStaffAssignment',
+        entityId: assignment.id,
+        metadata: { eventId, memberId: data.memberId, role: data.role },
+      },
+    });
+
+    return assignment;
   }
 
   async create(organizationId: string, data: CreateEventDto) {
@@ -135,6 +151,180 @@ export class EventsService {
         },
       },
     });
+  }
+
+  async findPublicAll(lang = 'en', skip = 0, take = 20) {
+    const limit = Math.min(take, 100);
+    // Since we need to filter by policy, we might over-fetch if we filter after.
+    // But policy currently uses only 'status'.
+    const events = await this.prisma.event.findMany({
+      where: {
+        status: {
+          in: ['PUBLISHED', 'LIVE', 'ENDED'],
+        },
+      },
+      skip,
+      take: limit,
+      orderBy: { startTime: 'asc' },
+      select: {
+        id: true,
+        slug: true,
+        imageUrl: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        translations: {
+          where: { locale: { in: [lang, 'en'] } },
+          select: {
+            locale: true,
+            name: true,
+            summary: true,
+            description: true,
+          },
+        },
+        category: {
+          select: {
+            slug: true,
+            translations: {
+              where: { locale: { in: [lang, 'en'] } },
+              select: { locale: true, name: true },
+            },
+          },
+        },
+        city: {
+          select: {
+            slug: true,
+            translations: {
+              where: { locale: { in: [lang, 'en'] } },
+              select: { locale: true, name: true },
+            },
+          },
+        },
+        venue: {
+          select: {
+            id: true,
+            translations: {
+              where: { locale: { in: [lang, 'en'] } },
+              select: { locale: true, name: true, address: true, city: true },
+            },
+          },
+        },
+      },
+    });
+
+    return events.filter((e) => this.eventPolicy.isPublicVisible(e));
+  }
+
+  async findPublicOne(id: string, lang = 'en') {
+    const event = await this.prisma.event.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        slug: true,
+        imageUrl: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        translations: {
+          where: { locale: { in: [lang, 'en'] } },
+          select: {
+            locale: true,
+            name: true,
+            summary: true,
+            description: true,
+          },
+        },
+        category: {
+          select: {
+            slug: true,
+            translations: {
+              where: { locale: { in: [lang, 'en'] } },
+              select: { locale: true, name: true },
+            },
+          },
+        },
+        city: {
+          select: {
+            slug: true,
+            translations: {
+              where: { locale: { in: [lang, 'en'] } },
+              select: { locale: true, name: true },
+            },
+          },
+        },
+        venue: {
+          select: {
+            id: true,
+            translations: {
+              where: { locale: { in: [lang, 'en'] } },
+              select: { locale: true, name: true, address: true, city: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!event || !this.eventPolicy.isPublicVisible(event)) {
+      throw new NotFoundException('Event not found');
+    }
+
+    return event;
+  }
+
+  async findPublicBySlug(slug: string, lang = 'en') {
+    const event = await this.prisma.event.findFirst({
+      where: { slug },
+      select: {
+        id: true,
+        slug: true,
+        imageUrl: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        translations: {
+          where: { locale: { in: [lang, 'en'] } },
+          select: {
+            locale: true,
+            name: true,
+            summary: true,
+            description: true,
+          },
+        },
+        category: {
+          select: {
+            slug: true,
+            translations: {
+              where: { locale: { in: [lang, 'en'] } },
+              select: { locale: true, name: true },
+            },
+          },
+        },
+        city: {
+          select: {
+            slug: true,
+            translations: {
+              where: { locale: { in: [lang, 'en'] } },
+              select: { locale: true, name: true },
+            },
+          },
+        },
+        venue: {
+          select: {
+            id: true,
+            translations: {
+              where: { locale: { in: [lang, 'en'] } },
+              select: { locale: true, name: true, address: true, city: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!event || !this.eventPolicy.isPublicVisible(event)) {
+      throw new NotFoundException('Event not found');
+    }
+
+    return event;
   }
 
   async findOne(organizationId: string, id: string, lang = 'en') {
