@@ -3,6 +3,7 @@ import { GatesController } from './gates.controller';
 import { GatesService } from './gates.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
+import { AuthenticatedRequest } from '../common/types';
 
 describe('GatesController Assignments', () => {
   let controller: GatesController;
@@ -28,7 +29,7 @@ describe('GatesController Assignments', () => {
   });
 
   it('should call createAssignment with correct params', async () => {
-    const req = { orgId: 'org-1' } as any;
+    const req = { orgId: 'org-1' } as unknown as AuthenticatedRequest;
     const dto = { memberId: 'member-1' };
     
     await controller.createAssignment(req, 'gate-1', dto);

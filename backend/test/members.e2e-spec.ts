@@ -11,6 +11,7 @@ import { MembersModule } from '../src/members/members.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../src/auth/roles.guard';
+import { ScopeGuard } from '../src/auth/scope.guard';
 import { OrganizationRole } from '@prisma/client';
 import request from 'supertest';
 import { Server } from 'http';
@@ -60,11 +61,14 @@ describe('MembersController (e2e)', () => {
             headers: Record<string, string | string[]>;
           }>();
           const orgHeader = req.headers['x-organization-id'];
-          if (!orgHeader || Array.isArray(orgHeader)) return false;
-          req.orgId = orgHeader;
+          if (orgHeader && !Array.isArray(orgHeader)) {
+            req.orgId = orgHeader;
+          }
           return true;
         },
       })
+      .overrideGuard(ScopeGuard)
+      .useValue({ canActivate: () => true })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -97,7 +101,7 @@ describe('MembersController (e2e)', () => {
       data: {
         organizationId: orgId,
         userId: adminUserId,
-        role: OrganizationRole.ADMIN,
+        role: OrganizationRole.ORG_ADMIN,
       },
     });
 
@@ -132,7 +136,7 @@ describe('MembersController (e2e)', () => {
       .set('x-organization-id', orgId)
       .send({
         email: targetUserEmail,
-        role: 'STAFF',
+        role: 'SELLER',
       })
       .expect(201);
 
@@ -147,7 +151,7 @@ describe('MembersController (e2e)', () => {
       .set('x-organization-id', orgId)
       .send({
         email: targetUserEmail,
-        role: 'STAFF',
+        role: 'SELLER',
       })
       .expect(409);
   });
@@ -157,7 +161,7 @@ describe('MembersController (e2e)', () => {
       data: {
         organizationId: orgId,
         email: targetUserEmail,
-        role: OrganizationRole.STAFF,
+        role: OrganizationRole.SELLER,
         token: 'test-token-target',
         expiresAt: new Date(Date.now() + 10000),
         invitedByUserId: adminUserId,

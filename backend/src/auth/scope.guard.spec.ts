@@ -1,13 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ScopeGuard } from './scope.guard';
-import { PrismaService } from '../prisma/prisma.service';
-import { mockDeep } from 'jest-mock-extended';
+import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { OrganizationRole } from '@prisma/client';
-import { ForbiddenException } from '@nestjs/common';
+import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
+import { PrismaService } from '../prisma/prisma.service';
+import { ScopeGuard } from './scope.guard';
 
 describe('ScopeGuard', () => {
   let guard: ScopeGuard;
-  let prisma: any;
+  let prisma: DeepMockProxy<PrismaService>;
 
   beforeEach(async () => {
     prisma = mockDeep<PrismaService>();
@@ -16,8 +15,8 @@ describe('ScopeGuard', () => {
 
   const createMockContext = (
     userRole: OrganizationRole,
-    body: any = {},
-  ): any => {
+    body: Record<string, unknown> = {},
+  ): ExecutionContext => {
     return {
       switchToHttp: () => ({
         getRequest: () => ({
@@ -27,7 +26,7 @@ describe('ScopeGuard', () => {
           body,
         }),
       }),
-    };
+    } as unknown as ExecutionContext;
   };
 
   it('should allow ORG_ADMIN to bypass assignment checks', async () => {

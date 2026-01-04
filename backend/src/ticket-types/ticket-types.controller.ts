@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   Put,
+  Patch,
   Query,
   UseGuards,
   Req,

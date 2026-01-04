@@ -11,6 +11,7 @@ import { ScansModule } from '../src/scans/scans.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../src/auth/roles.guard';
+import { ScopeGuard } from '../src/auth/scope.guard';
 import { OrganizationRole, TicketStatus, ScanResult } from '@prisma/client';
 import request from 'supertest';
 import { Server } from 'http';
@@ -68,6 +69,8 @@ describe('ScansController (e2e)', () => {
           return true;
         },
       })
+      .overrideGuard(ScopeGuard)
+      .useValue({ canActivate: () => true })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -100,7 +103,7 @@ describe('ScansController (e2e)', () => {
         id: memberId,
         organizationId: orgId,
         userId,
-        role: OrganizationRole.STAFF,
+        role: OrganizationRole.SELLER,
       },
     });
 

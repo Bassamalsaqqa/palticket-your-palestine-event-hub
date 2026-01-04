@@ -11,6 +11,7 @@ import { OrdersModule } from '../src/orders/orders.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../src/auth/roles.guard';
+import { ScopeGuard } from '../src/auth/scope.guard';
 import { OrganizationRole } from '@prisma/client';
 import request from 'supertest';
 import type { Response } from 'supertest';
@@ -72,6 +73,8 @@ describe('OrdersController (e2e)', () => {
           return true;
         },
       })
+      .overrideGuard(ScopeGuard)
+      .useValue({ canActivate: () => true })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -103,7 +106,7 @@ describe('OrdersController (e2e)', () => {
         id: memberId,
         organizationId: orgId,
         userId,
-        role: OrganizationRole.ADMIN,
+        role: OrganizationRole.ORG_ADMIN,
       },
     });
 
@@ -127,6 +130,14 @@ describe('OrdersController (e2e)', () => {
         quantity: 10,
       },
     });
+
+    await prisma.ticketTypeInventory.create({
+      data: {
+        organizationId: orgId,
+        ticketTypeId,
+        capacity: 10,
+      },
+    });
   });
 
   afterAll(async () => {
@@ -136,6 +147,7 @@ describe('OrdersController (e2e)', () => {
       await prisma.order.deleteMany({ where: { id: orderId } });
     }
 
+    await prisma.ticketTypeInventory.deleteMany({ where: { ticketTypeId } });
     await prisma.ticketType.deleteMany({ where: { id: ticketTypeId } });
     await prisma.event.deleteMany({ where: { id: eventId } });
     await prisma.organizationMember.deleteMany({ where: { id: memberId } });

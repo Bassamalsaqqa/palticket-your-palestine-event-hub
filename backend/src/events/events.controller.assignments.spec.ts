@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../common/storage.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 import { OrganizationRole } from '@prisma/client';
+import { AuthenticatedRequest } from '../common/types';
 
 describe('EventsController Assignments', () => {
   let controller: EventsController;
@@ -34,7 +35,7 @@ describe('EventsController Assignments', () => {
   });
 
   it('should call createAssignment with correct params', async () => {
-    const req = { orgId: 'org-1' } as any;
+    const req = { orgId: 'org-1' } as unknown as AuthenticatedRequest;
     const dto = { memberId: 'member-1', role: OrganizationRole.SELLER };
     
     await controller.createAssignment(req, 'event-1', dto);

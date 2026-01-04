@@ -20,7 +20,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
   async intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Promise<Observable<any>> {
+  ): Promise<Observable<unknown>> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const user = request.user;
     const orgId = request.orgId;
@@ -95,10 +95,10 @@ export class IdempotencyInterceptor implements NestInterceptor {
     userId: string,
     requestMethod: string,
     requestPath: string,
-    requestParams: any,
+    requestParams: unknown,
     requestHash: string,
     responseCode: number,
-    response: any,
+    response: unknown,
   ) {
     try {
       await this.prisma.idempotencyKey.create({
