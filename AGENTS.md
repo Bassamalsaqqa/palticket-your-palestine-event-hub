@@ -145,8 +145,8 @@ Prisma configuration
 Roadmap (Phased)
 - Phase 0: Inventory + POS idempotency + payment model + export audit logging (complete).
 - Phase 1: Roles expansion + EventStaffAssignment/GateAssignment + ScopeGuard + Admin UI (complete).
-- Phase 2: Price versioning + order item snapshots + pricing policy.
-- Phase 3: EventPolicyService enforcement.
+- Phase 2: Price versioning + order item snapshots (complete). Pricing policy enforcement pending.
+- Phase 3: EventPolicyService enforcement + centralized status/visibility rules.
 - Phase 4: Security hardening + ops readiness.
 - Phase 5: PSP integration + buyer foundations.
 
@@ -154,7 +154,8 @@ Open items and conventions
 - Avoid re-exporting hooks from component files to keep react-refresh clean.
 - Use ASCII by default in new files unless existing file already uses Unicode.
 - Keep future changes aligned with the service layer and React Query for data access.
-- Pending follow-ups: Phase 1 frontend assignment UI + scope-aware UX, pricing versioning.
+- Phase 3 focus: enforce event status via EventPolicyService; tighten FINANCE role usage for confirm-payment and exports; expand audit logging (role changes, event status changes, ticket voids).
+- Migration note (dev): if price versioning migration fails on existing data, follow the manual backfill steps in `backend/README.md`.
 
 Common access for admin panel (mock)
 - Use /en/login or /ar/login and sign in with admin email:

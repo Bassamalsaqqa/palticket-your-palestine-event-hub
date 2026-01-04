@@ -84,7 +84,7 @@ The frontend uses a mock authentication system for UI testing. Backend APIs can 
 ### Role Migration (Phase 1)
 The `OrganizationRole` enum has been migrated:
 *   `ADMIN` -> `ORG_ADMIN`
-*   `STAFF` -> `SELLER` (temporarily retains scanner/staff access until Phase-1 ScopeGuard/assignments land)
+*   `STAFF` -> `SELLER` (temporary broad read access remains on some endpoints)
 
 ### Backend (Real)
 The backend implements **JWT Authentication** and **RBAC**.
@@ -158,13 +158,15 @@ Phase 1 - RBAC overhaul + scoped assignments (complete)
 - UI for managing assignments in Admin dashboard.
 - Scanning requires mandatory eventId for scope enforcement.
 
-Phase 2 - Price versioning + governance
+Phase 2 - Price versioning + governance (complete)
 - TicketTypePriceVersion + snapshot in OrderItem.
-- Pricing policy enforcement + approvals.
+- Admin endpoints and UI for price version management.
+- Item-level CSV export includes price snapshots.
 
 Phase 3 - Central policy enforcement
 - EventPolicyService (canSell/canScan/visibility).
 - Enforce across orders, scans, public listing.
+- Pricing policy enforcement + approvals.
 
 Phase 4 - Security hardening & ops readiness
 - Rate limiting for auth and exports.
@@ -181,11 +183,12 @@ Phase 5 - Provider card integration + buyer foundations
 - **Auditability:** export audit logs + audit log model.
 - **Prisma config:** `backend/prisma.config.ts` with `@prisma/config` devDependency.
 - **Bilingual UI:** localized display helper + bilingual meta title preserved.
+- **Pricing:** price versioning, OrderItem snapshots, item-level exports.
 
 ## Next Session Focus
-- Phase 1 frontend: assignment UI for events/gates + scope-aware UX.
-- Update member management flows for assignments.
-- Add tests for scope leakage and assignment enforcement.
+- Phase 3: central EventPolicyService for event status/visibility rules.
+- Enforce event status checks in orders, scans, and public listing.
+- Use FINANCE role for confirm-payment and export access where appropriate.
 
 ## Technologies
 - **Frontend:** React, TypeScript, Tailwind CSS, TanStack Query.

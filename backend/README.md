@@ -80,6 +80,7 @@ Each domain module enforces multi-tenancy and RBAC:
 - **Implemented hardening:** inventory enforcement (POS + non-POS), idempotency, throttling, ScanLog retention + composite index, CSV injection protection.
 - **RBAC & Assignments (Phase 1):** Scoped scanning and POS sales via `EventStaffAssignment` and `GateAssignment`. Mandatory `eventId` for scanning. Admin UI for assignments.
 - **Auditability:** export audit logs + audit log model.
+- **Pricing (Phase 2):** price versioning with OrderItem snapshots and item-level order exports.
 
 ## Pricing Governance (Phase 2)
 PalTicket implements price immutability via versioning and snapshotting:
@@ -101,7 +102,7 @@ If you already have data and the initial `20260104184304_add_price_versioning` m
    - `npx prisma migrate deploy`
 
 ## Next Phase Targets
-- Price versioning + OrderItem snapshots (Phase 2).
+- Central EventPolicyService for event status/visibility enforcement (Phase 3).
 - Pricing policy enforcement + approvals.
 
 ## Admin/Staff Testing (E2E)

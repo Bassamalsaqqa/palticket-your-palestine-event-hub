@@ -3,7 +3,7 @@
 ## Project Overview
 **PalTicket** is a bilingual (English/Arabic) event ticketing + scanning + POS platform for Palestine. It is a Single Page Application (SPA) built with React and Vite, connected to a NestJS backend.
 
-**Current State:** Phase 0 complete; Phase 1 in progress (backend complete, frontend pending).
+**Current State:** Phase 0-2 complete (inventory/idempotency/payments, assignments, price versioning). Phase 3 next (central policy enforcement).
 *   **Frontend**: Connected to backend APIs for core domains with mock fallbacks.
 *   **Backend**: Multi-tenant foundation, inventory enforcement (POS + non-POS), idempotency, throttling, scan log retention, export audit logging.
 
@@ -94,7 +94,8 @@ Phase 2 - Price versioning + governance (complete)
 - Item-level CSV export with price snapshots (done).
 
 Phase 3 - Central policy enforcement
-- EventPolicyService canSell/canScan/visibility.
+- EventPolicyService canSell/canScan/visibility + status enforcement.
+- Pricing policy enforcement + approvals.
 
 Phase 4 - Security hardening & ops readiness
 - Rate limits for auth and exports.
@@ -104,10 +105,9 @@ Phase 5 - PSP integration + buyer foundations
 - Payment provider integration + buyer endpoints.
 
 ## Current Priorities (Next Session)
-1. Add backend tests for scope leakage (ensure unassigned staff cannot sell/scan).
-2. Phase 2: Price versioning implementation (Backend models and migrations).
-3. Update Order Item snapshots to include price versioning.
-4. Prepare Frontend for price history display.
+1. Implement EventPolicyService and enforce event status rules across orders, scans, and public listing.
+2. Use FINANCE role for confirm-payment and export access where appropriate.
+3. Expand audit logging for high-risk actions (role changes, event status changes, ticket voids).
 
 ## Common Pitfalls
 1.  **UUID vs Slug**: Always use UUIDs for relationships/updates and slugs for filtering/URLs.
