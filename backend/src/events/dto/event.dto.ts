@@ -13,7 +13,7 @@ import {
   IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { EventStatus } from '@prisma/client';
+import { EventStatus, OrganizationRole } from '@prisma/client';
 
 export class EventTranslationDto {
   @IsIn(['en', 'ar'])
@@ -117,14 +117,17 @@ export class ListEventsQueryDto {
   take?: number;
 }
 
-import { OrganizationRole } from '@prisma/client';
-
 export class CreateEventAssignmentDto {
   @IsUUID()
   @IsNotEmpty()
   memberId: string;
 
   @IsEnum(OrganizationRole)
+  @IsIn([
+    OrganizationRole.SELLER,
+    OrganizationRole.SCANNER,
+    OrganizationRole.EVENT_MANAGER,
+  ])
   @IsNotEmpty()
   role: OrganizationRole;
 }

@@ -19,11 +19,13 @@ export class EventsService {
     // Verify event exists and belongs to org
     await this.prisma.event.findFirstOrThrow({
       where: { id: eventId, organizationId },
+      select: { id: true },
     });
 
     // Verify member exists and belongs to org
     await this.prisma.organizationMember.findFirstOrThrow({
       where: { id: data.memberId, organizationId },
+      select: { id: true },
     });
 
     const existing = await this.prisma.eventStaffAssignment.findUnique({
@@ -241,6 +243,7 @@ export class EventsService {
     // Verify ownership
     await this.prisma.event.findFirstOrThrow({
       where: { id, organizationId },
+      select: { id: true },
     });
 
     return this.prisma.event.update({

@@ -18,9 +18,9 @@ export class ScanRequestDto {
   @IsUUID()
   gateId?: string;
 
-  @IsOptional()
   @IsUUID()
-  eventId?: string;
+  @IsNotEmpty()
+  eventId: string;
 }
 
 export class ScanResponseDto {

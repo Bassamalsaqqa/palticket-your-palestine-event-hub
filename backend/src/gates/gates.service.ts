@@ -14,11 +14,13 @@ export class GatesService {
     // Verify gate exists and belongs to org
     await this.prisma.gate.findFirstOrThrow({
       where: { id: gateId, organizationId },
+      select: { id: true },
     });
 
     // Verify member exists and belongs to org
     await this.prisma.organizationMember.findFirstOrThrow({
       where: { id: data.memberId, organizationId },
+      select: { id: true },
     });
 
     const existing = await this.prisma.gateAssignment.findUnique({
@@ -52,6 +54,7 @@ export class GatesService {
   async create(organizationId: string, data: CreateGateDto) {
     await this.prisma.event.findFirstOrThrow({
       where: { id: data.eventId, organizationId },
+      select: { id: true },
     });
 
     return this.prisma.gate.create({
@@ -98,11 +101,13 @@ export class GatesService {
   async update(organizationId: string, id: string, data: UpdateGateDto) {
     await this.prisma.gate.findFirstOrThrow({
       where: { id, organizationId },
+      select: { id: true },
     });
 
     if (data.eventId) {
       await this.prisma.event.findFirstOrThrow({
         where: { id: data.eventId, organizationId },
+        select: { id: true },
       });
     }
 
