@@ -88,6 +88,18 @@ PalTicket implements price immutability via versioning and snapshotting:
 - **Snapshots:** When an order is created, `unitPriceCents`, `currency`, and the applied `priceVersionId` are snapshotted into each `OrderItem`. This ensures that subsequent price changes do not affect existing orders and provides a historical audit trail.
 - **Consistency:** Both public orders (`POST /orders`) and POS orders (`POST /ops/orders`) follow the same pricing selection and snapshotting rules.
 
+### Migration Note (Dev Only)
+If you already have data and the initial `20260104184304_add_price_versioning` migration fails due to NOT NULL columns:
+1. Manually add nullable columns and backfill:
+   - `ALTER TABLE "OrderItem" ADD COLUMN "unitPriceCents" INTEGER;`
+   - `ALTER TABLE "OrderItem" ADD COLUMN "currency" TEXT;`
+   - `UPDATE "OrderItem" SET "unitPriceCents" = "priceCents" WHERE "unitPriceCents" IS NULL;`
+   - `UPDATE "OrderItem" SET "currency" = "TicketType"."currency" FROM "TicketType" WHERE "OrderItem"."ticketTypeId" = "TicketType"."id" AND "OrderItem"."currency" IS NULL;`
+2. Mark the migration as applied:
+   - `npx prisma migrate resolve --applied 20260104184304_add_price_versioning`
+3. Apply the repair migration:
+   - `npx prisma migrate deploy`
+
 ## Next Phase Targets
 - Price versioning + OrderItem snapshots (Phase 2).
 - Pricing policy enforcement + approvals.

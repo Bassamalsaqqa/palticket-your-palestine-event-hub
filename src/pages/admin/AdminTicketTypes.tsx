@@ -292,7 +292,7 @@ export default function AdminTicketTypes() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t.admin.typeName}</TableHead>
-                    <TableHead>{t.admin.eventName || "Event"}</TableHead>
+                    <TableHead>{t.admin.eventName}</TableHead>
                     <TableHead>{t.admin.basePrice}</TableHead>
                     <TableHead className="w-24">{t.admin.actions}</TableHead>
                   </TableRow>
@@ -344,7 +344,7 @@ export default function AdminTicketTypes() {
                               variant="ghost"
                               size="icon"
                               onClick={() => {
-                                if (window.confirm(t.admin.confirmDelete || "Are you sure?")) {
+                                if (window.confirm(t.admin.confirmDelete)) {
                                   deleteMutation.mutate(type.id);
                                 }
                               }}
