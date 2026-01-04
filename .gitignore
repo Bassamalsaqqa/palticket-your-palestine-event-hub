@@ -37,3 +37,6 @@ info
 objects
 refs
 rmdir
+
+.gemini/
+gha-creds-*.json
