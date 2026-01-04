@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { of, firstValueFrom } from 'rxjs';
 import * as crypto from 'crypto';
+import type { IdempotencyKey } from '@prisma/client';
 
 jest.mock('crypto', () => ({
   ...jest.requireActual('crypto'),
@@ -84,7 +85,7 @@ describe('IdempotencyInterceptor', () => {
       responseCode: 201,
       responseBody: JSON.stringify(storedResponse),
       requestHash: 'mock-hash',
-    } as any);
+    } as unknown as IdempotencyKey);
 
     const result$ = await interceptor.intercept(
       mockExecutionContext,
@@ -104,7 +105,7 @@ describe('IdempotencyInterceptor', () => {
 
     prisma.idempotencyKey.findUnique.mockResolvedValue({
       requestHash: 'different-hash',
-    } as any);
+    } as unknown as IdempotencyKey);
 
     await expect(
       interceptor.intercept(mockExecutionContext, mockCallHandler),

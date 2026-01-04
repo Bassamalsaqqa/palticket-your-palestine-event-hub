@@ -151,11 +151,12 @@ Phase 0 - Stabilize foundation (done)
 - Non-POS orders use inventory locks and issue PENDING tickets until payment.
 - Rate limiting is enabled (global defaults and stricter limits for orders/scans).
 
-Phase 1 - RBAC overhaul + scoped assignments (in progress)
-- Expand roles enum. (done)
-- EventStaffAssignment/GateAssignment + ScopeGuard. (backend done)
-- Org admin endpoints to manage assignments. (backend done)
-- Frontend assignment UI + scope-aware UX. (pending)
+Phase 1 - RBAC overhaul + scoped assignments (complete)
+- Roles expansion.
+- EventStaffAssignment/GateGuard + ScopeGuard.
+- Org admin endpoints to manage assignments.
+- UI for managing assignments in Admin dashboard.
+- Scanning requires mandatory eventId for scope enforcement.
 
 Phase 2 - Price versioning + governance
 - TicketTypePriceVersion + snapshot in OrderItem.

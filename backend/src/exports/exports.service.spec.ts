@@ -24,6 +24,12 @@ describe('ExportsService', () => {
 
   const orgId = 'org-1';
   const memberId = 'mem-1';
+  type OrderRecord = Awaited<
+    ReturnType<PrismaService['order']['findMany']>
+  >[number];
+  type TicketRecord = Awaited<
+    ReturnType<PrismaService['ticket']['findMany']>
+  >[number];
 
   describe('exportOrders', () => {
     it('should return CSV with payment details and log audit', async () => {
@@ -49,10 +55,10 @@ describe('ExportsService', () => {
             },
           },
         ],
-      };
+      } as unknown as OrderRecord;
 
-      prisma.order.findMany.mockResolvedValue([mockOrder] as any);
-      prisma.auditLog.create.mockResolvedValue({ id: 'log-1' } as any);
+      prisma.order.findMany.mockResolvedValue([mockOrder]);
+      prisma.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
       const csv = await service.exportOrders(orgId, memberId);
 
@@ -91,10 +97,10 @@ describe('ExportsService', () => {
         event: { translations: [{ name: 'Event 1' }] },
         attendeeName: 'Attendee',
         attendeeEmail: 'att@example.com',
-      };
+      } as unknown as TicketRecord;
 
-      prisma.ticket.findMany.mockResolvedValue([mockTicket] as any);
-      prisma.auditLog.create.mockResolvedValue({ id: 'log-2' } as any);
+      prisma.ticket.findMany.mockResolvedValue([mockTicket]);
+      prisma.auditLog.create.mockResolvedValue({ id: 'log-2' });
 
       const csv = await service.exportTickets(orgId, memberId);
 

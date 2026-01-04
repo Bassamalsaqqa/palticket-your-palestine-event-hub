@@ -3,6 +3,7 @@ import { MembersController } from './members.controller';
 import { MembersService } from './members.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
+import { AuthenticatedRequest } from '../common/types';
 
 describe('MembersController', () => {
   let controller: MembersController;
@@ -28,7 +29,10 @@ describe('MembersController', () => {
   });
 
   it('should call findAll with pagination params', async () => {
-    const req = { orgId: 'org-1', user: { id: 'user-1' } } as any;
+    const req = {
+      orgId: 'org-1',
+      user: { id: 'user-1' },
+    } as unknown as AuthenticatedRequest;
     const query = { skip: 10, take: 5 };
     
     await controller.findAll(req, query);
@@ -37,7 +41,9 @@ describe('MembersController', () => {
   });
 
   it('should call acceptInvite with userId', async () => {
-    const req = { user: { id: 'user-1' } } as any; // No orgId needed
+    const req = {
+      user: { id: 'user-1' },
+    } as unknown as AuthenticatedRequest; // No orgId needed
     const dto = { token: 'token-123' };
     
     await controller.acceptInvite(req, dto);

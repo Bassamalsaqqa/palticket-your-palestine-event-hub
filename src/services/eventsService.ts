@@ -1,6 +1,7 @@
 import { mockEvents, categories as mockCategories, cities as mockCities } from "@/data/mockEvents";
 import { type Event, type Category, type City, type EventFilters, type TicketTier } from "@/types/domain";
 import { apiFetch, getApiConfig, getLanguage } from "./apiClient";
+import { OrganizationRole } from "./membersService";
 
 const LATENCY = 300;
 const FALLBACK_IMAGE = "/placeholder.svg";
@@ -459,7 +460,7 @@ export const updateEventImage = async (id: string, file: File): Promise<{ imageU
 
 export const assignMemberToEvent = async (
   eventId: string,
-  data: { memberId: string; role: string }
+  data: { memberId: string; role: OrganizationRole }
 ): Promise<void> => {
   const config = getApiConfig();
   if (!config) throw new Error("API configuration is missing");

@@ -139,8 +139,9 @@ describe('OrdersService', () => {
 
     // Check ticket creation status
     const ticketCreateArgs = prisma.ticket.createMany.mock.calls[0][0];
-    const firstTicket = (ticketCreateArgs?.data as any[])[0];
-    expect(firstTicket.status).toBe(TicketStatus.PENDING);
+    const ticketData = ticketCreateArgs?.data;
+    const firstTicket = Array.isArray(ticketData) ? ticketData[0] : ticketData;
+    expect(firstTicket?.status).toBe(TicketStatus.PENDING);
   });
 
   it('should throw BadRequestException if items array is empty', async () => {

@@ -10,6 +10,11 @@ export const translations = {
     roleNames: {
       admin: "Admin",
       staff: "Staff",
+      orgAdmin: "Organization Admin",
+      eventManager: "Event Manager",
+      seller: "Seller",
+      scanner: "Scanner",
+      finance: "Finance",
     },
 
     permissions: {
@@ -741,6 +746,11 @@ export const translations = {
     roleNames: {
       admin: "مسؤول",
       staff: "طاقم عمل",
+      orgAdmin: "مسؤول المؤسسة",
+      eventManager: "مدير الفعالية",
+      seller: "بائع",
+      scanner: "ماسح",
+      finance: "مالية",
     },
 
     permissions: {

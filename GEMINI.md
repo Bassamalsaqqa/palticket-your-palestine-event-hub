@@ -79,11 +79,12 @@ Phase 0 - Stabilize foundation (complete)
 - Export includes payment fields + audit log.
 - Rate limiting enabled (global defaults and stricter limits for orders/scans).
 
-Phase 1 - RBAC overhaul + scoped assignments (in progress)
+Phase 1 - RBAC overhaul + scoped assignments (complete)
 - Roles expansion (done).
-- EventStaffAssignment/GateAssignment + ScopeGuard (backend done).
-- Org admin endpoints to manage assignments (backend done).
-- Frontend assignment UI + scope-aware UX (pending).
+- EventStaffAssignment/GateAssignment + ScopeGuard (done).
+- Org admin endpoints to manage assignments (done).
+- ScopeGuard for scans/orders/exports (done).
+- UI integration for assignments (done).
 
 Phase 2 - Price versioning + governance
 - TicketTypePriceVersion + OrderItem snapshots.
@@ -99,10 +100,10 @@ Phase 5 - PSP integration + buyer foundations
 - Payment provider integration + buyer endpoints.
 
 ## Current Priorities (Next Session)
-1. Add tests for scope leakage (ensure unassigned staff cannot sell/scan).
-2. Update admin/member flows in Frontend to manage assignments.
-3. Verify ScopeGuard on exports (if applicable).
-4. Prepare for Phase 2 (Pricing).
+1. Add backend tests for scope leakage (ensure unassigned staff cannot sell/scan).
+2. Phase 2: Price versioning implementation (Backend models and migrations).
+3. Update Order Item snapshots to include price versioning.
+4. Prepare Frontend for price history display.
 
 ## Common Pitfalls
 1.  **UUID vs Slug**: Always use UUIDs for relationships/updates and slugs for filtering/URLs.

@@ -2,14 +2,6 @@ import { apiFetch, getApiConfig, apiFetchPublic, getApiAuthConfig } from "./apiC
 
 export type OrganizationRole = "ORG_ADMIN" | "EVENT_MANAGER" | "SELLER" | "SCANNER" | "FINANCE";
 
-export const ROLE_LABELS: Record<OrganizationRole, string> = {
-  ORG_ADMIN: "Admin",
-  EVENT_MANAGER: "Event Manager",
-  SELLER: "Seller",
-  SCANNER: "Scanner",
-  FINANCE: "Finance",
-};
-
 export interface OrganizationMember {
   id: string;
   organizationId: string;

@@ -3,7 +3,12 @@ import { MembersService } from './members.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { ConflictException } from '@nestjs/common';
-import { OrganizationRole, InviteStatus } from '@prisma/client';
+import {
+  OrganizationRole,
+  InviteStatus,
+  OrganizationInvite,
+  OrganizationMember,
+} from '@prisma/client';
 import { CreateInviteDto } from './dto/member.dto';
 
 describe('MembersService', () => {
@@ -43,7 +48,7 @@ describe('MembersService', () => {
         token: 'token',
         expiresAt: new Date(),
         status: InviteStatus.PENDING,
-      } as any);
+      } as unknown as OrganizationInvite);
 
       const result = await service.createInvite(orgId, userId, dto);
 
@@ -60,7 +65,7 @@ describe('MembersService', () => {
 
       prisma.organizationMember.findFirst.mockResolvedValue({
         id: 'mem-1',
-      } as any);
+      } as unknown as OrganizationMember);
 
       await expect(service.createInvite(orgId, userId, dto)).rejects.toThrow(
         ConflictException,
@@ -74,10 +79,10 @@ describe('MembersService', () => {
     it('should successfully remove a member', async () => {
       prisma.organizationMember.findFirstOrThrow.mockResolvedValue({
         id: memberId,
-      } as any);
+      } as unknown as OrganizationMember);
       prisma.organizationMember.delete.mockResolvedValue({
         id: memberId,
-      } as any);
+      } as unknown as OrganizationMember);
 
       await service.remove(orgId, memberId);
 

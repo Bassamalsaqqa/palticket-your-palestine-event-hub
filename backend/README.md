@@ -74,18 +74,14 @@ Each domain module enforces multi-tenancy and RBAC:
 - `/events/:id/assignments` (ORG_ADMIN only).
 - `/gates/:id/assignments` (ORG_ADMIN only).
 
-## Recent Hardening (Phase 0 complete)
-- **Inventory:** Orders enforce ticket type capacity with row locks (POS + non-POS).
-- **Idempotency:** `POST /orders` supports `Idempotency-Key` scoped by org/user/method/path.
-- **Rate Limiting:** Global throttling (100/min); orders (5/min); scans (60/min).
-- **Log Retention:** Daily cleanup of scan logs older than 6 months.
-- **ScanLog Indexing:** Composite index on `organizationId, scannedAt`.
-- **Payments:** Manual card confirm flow with PENDING tickets until confirm.
-- **Exports:** Orders export includes payment + seller fields; audit logged.
+## Project State (Jan 2026)
+- **Implemented hardening:** inventory enforcement (POS + non-POS), idempotency, throttling, ScanLog retention + composite index, CSV injection protection.
+- **RBAC & Assignments (Phase 1):** Scoped scanning and POS sales via `EventStaffAssignment` and `GateAssignment`. Mandatory `eventId` for scanning. Admin UI for assignments.
+- **Auditability:** export audit logs + audit log model.
 
 ## Next Phase Targets
-- UI integration for assignments (Admin).
-- Price versioning + OrderItem snapshots.
+- Price versioning + OrderItem snapshots (Phase 2).
+- Pricing policy enforcement + approvals.
 
 ## Admin/Staff Testing (E2E)
 

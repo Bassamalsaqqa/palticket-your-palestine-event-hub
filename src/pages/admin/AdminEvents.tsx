@@ -41,7 +41,7 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchAllEvents, deleteEvent, createEvent, updateEvent, updateEventImage, fetchCategories, fetchCities, assignMemberToEvent } from "@/services/eventsService";
 import { fetchAllVenues } from "@/services/venuesService";
-import { fetchMembers, ROLE_LABELS } from "@/services/membersService";
+import { fetchMembers, OrganizationRole } from "@/services/membersService";
 import { useForm, Controller } from "react-hook-form";
 import { Event } from "@/types/domain";
 
@@ -65,7 +65,7 @@ interface EventFormValues {
 
 interface AssignmentFormValues {
   memberId: string;
-  role: string;
+  role: OrganizationRole;
 }
 
 export default function AdminEvents() {
@@ -150,8 +150,10 @@ export default function AdminEvents() {
 
   const assignMutation = useMutation({
     mutationFn: ({ eventId, data }: { eventId: string, data: AssignmentFormValues }) => assignMemberToEvent(eventId, data),
-    onSuccess: () => {
-      toast.success(t.admin.assignmentSuccess);
+    onSuccess: (_, variables) => {
+      const member = members.find(m => m.id === variables.data.memberId);
+      const identifier = member ? (member.user.name || member.user.email) : variables.data.memberId;
+      toast.success(`${t.admin.assignmentSuccess}: ${identifier}`);
       setAssigningEvent(null);
       assignForm.reset();
     },
@@ -159,6 +161,12 @@ export default function AdminEvents() {
       toast.error(error.message || t.admin.assignmentError);
     },
   });
+
+  const handleAssignCancel = () => {
+    setAssigningEvent(null);
+    assignForm.reset();
+  };
+
 
   const uploadMutation = useMutation({
     mutationFn: ({ id, file }: { id: string, file: File }) => updateEventImage(id, file),
@@ -445,7 +453,7 @@ export default function AdminEvents() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!assigningEvent} onOpenChange={(open) => !open && setAssigningEvent(null)}>
+      <Dialog open={!!assigningEvent} onOpenChange={(open) => !open && handleAssignCancel()}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>{t.admin.assignStaff}</DialogTitle></DialogHeader>
           <form onSubmit={assignForm.handleSubmit(handleAssignSubmit)} className="space-y-4 py-4">
@@ -468,16 +476,19 @@ export default function AdminEvents() {
                 <Select onValueChange={field.onChange} value={field.value}>
                   <SelectTrigger><SelectValue placeholder={t.admin.selectRole} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="EVENT_MANAGER">{ROLE_LABELS.EVENT_MANAGER}</SelectItem>
-                    <SelectItem value="SELLER">{ROLE_LABELS.SELLER}</SelectItem>
-                    <SelectItem value="SCANNER">{ROLE_LABELS.SCANNER}</SelectItem>
+                    <SelectItem value="EVENT_MANAGER">{t.roleNames.eventManager}</SelectItem>
+                    <SelectItem value="SELLER">{t.roleNames.seller}</SelectItem>
+                    <SelectItem value="SCANNER">{t.roleNames.scanner}</SelectItem>
                   </SelectContent>
                 </Select>
               )} />
             </div>
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setAssigningEvent(null)}>{t.common.cancel}</Button>
-              <Button type="submit" disabled={assignMutation.isPending}>
+              <Button type="button" variant="ghost" onClick={handleAssignCancel}>{t.common.cancel}</Button>
+              <Button 
+                type="submit" 
+                disabled={assignMutation.isPending || !assignForm.watch("memberId") || !assignForm.watch("role")}
+              >
                 {assignMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t.admin.assign}
               </Button>

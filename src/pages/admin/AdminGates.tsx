@@ -124,8 +124,10 @@ export default function AdminGates() {
 
   const assignMutation = useMutation({
     mutationFn: ({ gateId, data }: { gateId: string, data: AssignmentFormValues }) => assignMemberToGate(gateId, data),
-    onSuccess: () => {
-      toast.success(t.admin.assignmentSuccess);
+    onSuccess: (_, variables) => {
+      const member = members.find(m => m.id === variables.data.memberId);
+      const identifier = member ? (member.user.name || member.user.email) : variables.data.memberId;
+      toast.success(`${t.admin.assignmentSuccess}: ${identifier}`);
       setAssigningGate(null);
       assignForm.reset();
     },
@@ -133,6 +135,11 @@ export default function AdminGates() {
       toast.error(error.message || t.admin.assignmentError);
     },
   });
+
+  const handleAssignCancel = () => {
+    setAssigningGate(null);
+    assignForm.reset();
+  };
 
   const handleCreateSubmit = (data: CreateGateForm) => {
     createMutation.mutate(data);
@@ -289,7 +296,7 @@ export default function AdminGates() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!assigningGate} onOpenChange={(open) => !open && setAssigningGate(null)}>
+      <Dialog open={!!assigningGate} onOpenChange={(open) => !open && handleAssignCancel()}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>{t.admin.assignScanner}</DialogTitle></DialogHeader>
           <form onSubmit={assignForm.handleSubmit(handleAssignSubmit)} className="space-y-4 py-4">
@@ -307,8 +314,11 @@ export default function AdminGates() {
               )} />
             </div>
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setAssigningGate(null)}>{t.common.cancel}</Button>
-              <Button type="submit" disabled={assignMutation.isPending}>
+              <Button type="button" variant="ghost" onClick={handleAssignCancel}>{t.common.cancel}</Button>
+              <Button 
+                type="submit" 
+                disabled={assignMutation.isPending || !assignForm.watch("memberId")}
+              >
                 {assignMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t.admin.assign}
               </Button>
