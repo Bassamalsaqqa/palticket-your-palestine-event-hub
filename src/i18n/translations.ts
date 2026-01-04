@@ -436,6 +436,11 @@ export const translations = {
       acceptInvitation: "Accept Invitation",
       apiConfigMissing: "API Configuration Missing",
       apiConfigMissingDesc: "The API base URL or token is not configured, or Mock Mode is enabled. Invites can only be accepted when connected to a live API.",
+      assignScanner: "Assign Scanner",
+      selectMember: "Select Member",
+      assign: "Assign",
+      assignmentSuccess: "Staff assigned successfully",
+      assignmentError: "Failed to assign staff",
     },
     
     // Scanner
@@ -1162,6 +1167,11 @@ export const translations = {
       acceptInvitation: "قبول الدعوة",
       apiConfigMissing: "إعدادات API مفقودة",
       apiConfigMissingDesc: "رابط API الأساسي أو الرمز مفقود، أو الوضع التجريبي مفعل. يمكن قبول الدعوات فقط عند الاتصال بـ API مباشر.",
+      assignScanner: "تعيين ماسح",
+      selectMember: "اختر عضواً",
+      assign: "تعيين",
+      assignmentSuccess: "تم تعيين الموظف بنجاح",
+      assignmentError: "فشل في تعيين الموظف",
     },
     
     // Scanner

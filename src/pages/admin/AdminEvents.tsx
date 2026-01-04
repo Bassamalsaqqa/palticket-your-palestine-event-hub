@@ -36,11 +36,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye, Loader2, Globe, EyeOff, Image as ImageIcon } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye, Loader2, Globe, EyeOff, Image as ImageIcon, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchAllEvents, deleteEvent, createEvent, updateEvent, updateEventImage, fetchCategories, fetchCities } from "@/services/eventsService";
+import { fetchAllEvents, deleteEvent, createEvent, updateEvent, updateEventImage, fetchCategories, fetchCities, assignMemberToEvent } from "@/services/eventsService";
 import { fetchAllVenues } from "@/services/venuesService";
+import { fetchMembers, ROLE_LABELS } from "@/services/membersService";
 import { useForm, Controller } from "react-hook-form";
 import { Event } from "@/types/domain";
 
@@ -62,11 +63,17 @@ interface EventFormValues {
   summaryAr: string;
 }
 
+interface AssignmentFormValues {
+  memberId: string;
+  role: string;
+}
+
 export default function AdminEvents() {
   const { language, t } = useLanguage();
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [assigningEvent, setAssigningEvent] = useState<Event | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -77,6 +84,7 @@ export default function AdminEvents() {
   });
   
   const editForm = useForm<EventFormValues>();
+  const assignForm = useForm<AssignmentFormValues>();
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["adminEvents", language],
@@ -96,6 +104,11 @@ export default function AdminEvents() {
   const { data: cities = [] } = useQuery({
     queryKey: ["adminCities", language],
     queryFn: () => fetchCities(language),
+  });
+
+  const { data: members = [] } = useQuery({
+    queryKey: ["adminMembers"],
+    queryFn: fetchMembers,
   });
 
   const deleteMutation = useMutation({
@@ -132,6 +145,18 @@ export default function AdminEvents() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to update event");
+    },
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: ({ eventId, data }: { eventId: string, data: AssignmentFormValues }) => assignMemberToEvent(eventId, data),
+    onSuccess: () => {
+      toast.success(t.admin.assignmentSuccess);
+      setAssigningEvent(null);
+      assignForm.reset();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || t.admin.assignmentError);
     },
   });
 
@@ -180,6 +205,14 @@ export default function AdminEvents() {
           { locale: 'ar', name: data.nameAr, description: data.descAr, summary: data.summaryAr },
         ]
       }
+    });
+  };
+
+  const handleAssignSubmit = (data: AssignmentFormValues) => {
+    if (!assigningEvent) return;
+    assignMutation.mutate({
+      eventId: assigningEvent.id,
+      data
     });
   };
 
@@ -340,6 +373,7 @@ export default function AdminEvents() {
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => toast.info("View details - not implemented")}><Eye className="h-4 w-4 ltr:mr-2 rtl:ml-2" />{t.common.view}</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setAssigningEvent(event)}><Users className="h-4 w-4 ltr:mr-2 rtl:ml-2" />{t.admin.assignStaff}</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => triggerUpload(event.id)}><ImageIcon className="h-4 w-4 ltr:mr-2 rtl:ml-2" />Upload Image</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => startEditing(event)}><Edit className="h-4 w-4 ltr:mr-2 rtl:ml-2" />{t.common.edit}</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { if (window.confirm(t.admin.confirmDelete || "Are you sure?")) { deleteMutation.mutate(event.id); } }} className="text-destructive"><Trash2 className="h-4 w-4 ltr:mr-2 rtl:ml-2" />{t.common.delete}</DropdownMenuItem>
@@ -407,6 +441,47 @@ export default function AdminEvents() {
               <div className="space-y-2"><Label>Description (Arabic)</Label><Textarea {...editForm.register("descAr")} dir="rtl" /></div>
             </div>
             <DialogFooter><Button type="button" variant="ghost" onClick={() => setEditingEvent(null)}>{t.common.cancel}</Button><Button type="submit" disabled={updateMutation.isPending}>{updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t.common.save}</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!assigningEvent} onOpenChange={(open) => !open && setAssigningEvent(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>{t.admin.assignStaff}</DialogTitle></DialogHeader>
+          <form onSubmit={assignForm.handleSubmit(handleAssignSubmit)} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>{t.admin.selectMember}</Label>
+              <Controller name="memberId" control={assignForm.control} rules={{ required: true }} render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger><SelectValue placeholder={t.admin.selectMember} /></SelectTrigger>
+                  <SelectContent>
+                    {members.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>{m.user.name || m.user.email}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )} />
+            </div>
+            <div className="space-y-2">
+              <Label>{t.admin.role}</Label>
+              <Controller name="role" control={assignForm.control} rules={{ required: true }} render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger><SelectValue placeholder={t.admin.selectRole} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EVENT_MANAGER">{ROLE_LABELS.EVENT_MANAGER}</SelectItem>
+                    <SelectItem value="SELLER">{ROLE_LABELS.SELLER}</SelectItem>
+                    <SelectItem value="SCANNER">{ROLE_LABELS.SCANNER}</SelectItem>
+                  </SelectContent>
+                </Select>
+              )} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setAssigningEvent(null)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={assignMutation.isPending}>
+                {assignMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t.admin.assign}
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

@@ -32,8 +32,9 @@ import {
 import { Plus, Edit, Trash2, DoorOpen, Users, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchAllGates, deleteGate, createGate, updateGate } from "@/services/gatesService";
+import { fetchAllGates, deleteGate, createGate, updateGate, assignMemberToGate } from "@/services/gatesService";
 import { fetchAllEvents } from "@/services/eventsService";
+import { fetchMembers } from "@/services/membersService";
 import { useForm, Controller } from "react-hook-form";
 import { Gate } from "@/types/domain";
 
@@ -47,14 +48,20 @@ interface EditGateForm {
   eventId: string;
 }
 
+interface AssignmentFormValues {
+  memberId: string;
+}
+
 export default function AdminGates() {
   const { language, t } = useLanguage();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingGate, setEditingGate] = useState<Gate | null>(null);
+  const [assigningGate, setAssigningGate] = useState<Gate | null>(null);
 
   const createForm = useForm<CreateGateForm>();
   const editForm = useForm<EditGateForm>();
+  const assignForm = useForm<AssignmentFormValues>();
 
   const { data: gates = [], isLoading } = useQuery({
     queryKey: ["adminGates"],
@@ -64,6 +71,11 @@ export default function AdminGates() {
   const { data: events = [] } = useQuery({
     queryKey: ["adminEventsListForGates"],
     queryFn: () => fetchAllEvents(language),
+  });
+
+  const { data: members = [] } = useQuery({
+    queryKey: ["adminMembers"],
+    queryFn: fetchMembers,
   });
 
   const eventById = new Map(events.map((event) => [event.id, event]));
@@ -110,6 +122,18 @@ export default function AdminGates() {
     }
   });
 
+  const assignMutation = useMutation({
+    mutationFn: ({ gateId, data }: { gateId: string, data: AssignmentFormValues }) => assignMemberToGate(gateId, data),
+    onSuccess: () => {
+      toast.success(t.admin.assignmentSuccess);
+      setAssigningGate(null);
+      assignForm.reset();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || t.admin.assignmentError);
+    },
+  });
+
   const handleCreateSubmit = (data: CreateGateForm) => {
     createMutation.mutate(data);
   };
@@ -117,6 +141,11 @@ export default function AdminGates() {
   const handleEditSubmit = (data: EditGateForm) => {
     if (!editingGate) return;
     updateMutation.mutate({ id: editingGate.id, data });
+  };
+
+  const handleAssignSubmit = (data: AssignmentFormValues) => {
+    if (!assigningGate) return;
+    assignMutation.mutate({ gateId: assigningGate.id, data });
   };
 
   const startEditing = (gate: Gate) => {
@@ -211,6 +240,7 @@ export default function AdminGates() {
                         <TableCell><Badge className={gate.status === "active" ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-muted text-muted-foreground"}>{gate.status === "active" ? t.admin.active : t.admin.inactive}</Badge></TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => setAssigningGate(gate)} title={t.admin.assignScanner}><Users className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="icon" onClick={() => startEditing(gate)}><Edit className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="icon" onClick={() => { if (window.confirm(t.admin.confirmDelete || "Are you sure?")) { deleteMutation.mutate(gate.id); } }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                           </div>
@@ -254,6 +284,34 @@ export default function AdminGates() {
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setEditingGate(null)}>{t.common.cancel}</Button>
               <Button type="submit" disabled={updateMutation.isPending}>{updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t.common.save}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!assigningGate} onOpenChange={(open) => !open && setAssigningGate(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>{t.admin.assignScanner}</DialogTitle></DialogHeader>
+          <form onSubmit={assignForm.handleSubmit(handleAssignSubmit)} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>{t.admin.selectMember}</Label>
+              <Controller name="memberId" control={assignForm.control} rules={{ required: true }} render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger><SelectValue placeholder={t.admin.selectMember} /></SelectTrigger>
+                  <SelectContent>
+                    {members.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>{m.user.name || m.user.email}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setAssigningGate(null)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={assignMutation.isPending}>
+                {assignMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t.admin.assign}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

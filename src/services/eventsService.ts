@@ -457,6 +457,19 @@ export const updateEventImage = async (id: string, file: File): Promise<{ imageU
   return response.json();
 };
 
+export const assignMemberToEvent = async (
+  eventId: string,
+  data: { memberId: string; role: string }
+): Promise<void> => {
+  const config = getApiConfig();
+  if (!config) throw new Error("API configuration is missing");
+
+  await apiFetch(`/events/${encodeURIComponent(eventId)}/assignments`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
 export const filterEvents = async (filters: EventFilters, lang?: "en" | "ar"): Promise<Event[]> => {
   const activeLang = lang || getLanguage();
   const events = await fetchAllEvents(activeLang);

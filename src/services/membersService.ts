@@ -1,10 +1,20 @@
 import { apiFetch, getApiConfig, apiFetchPublic, getApiAuthConfig } from "./apiClient";
 
+export type OrganizationRole = "ORG_ADMIN" | "EVENT_MANAGER" | "SELLER" | "SCANNER" | "FINANCE";
+
+export const ROLE_LABELS: Record<OrganizationRole, string> = {
+  ORG_ADMIN: "Admin",
+  EVENT_MANAGER: "Event Manager",
+  SELLER: "Seller",
+  SCANNER: "Scanner",
+  FINANCE: "Finance",
+};
+
 export interface OrganizationMember {
   id: string;
   organizationId: string;
   userId: string;
-  role: "ADMIN" | "STAFF";
+  role: OrganizationRole;
   createdAt: string;
   user: {
     id: string;
@@ -18,7 +28,7 @@ export interface OrganizationMember {
 export interface OrganizationInvite {
   id: string;
   email: string;
-  role: "ADMIN" | "STAFF";
+  role: OrganizationRole;
   token: string;
   expiresAt: string;
   status: "PENDING" | "ACCEPTED" | "EXPIRED" | "CANCELLED";
@@ -33,7 +43,7 @@ export const fetchMembers = async (): Promise<OrganizationMember[]> => {
         id: "mem-1",
         organizationId: "org-1",
         userId: "user-1",
-        role: "ADMIN",
+        role: "ORG_ADMIN",
         createdAt: new Date().toISOString(),
         user: {
           id: "user-1",
@@ -47,7 +57,7 @@ export const fetchMembers = async (): Promise<OrganizationMember[]> => {
         id: "mem-2",
         organizationId: "org-1",
         userId: "user-2",
-        role: "STAFF",
+        role: "SELLER",
         createdAt: new Date().toISOString(),
         user: {
           id: "user-2",
@@ -68,7 +78,7 @@ export const fetchMembers = async (): Promise<OrganizationMember[]> => {
   }
 };
 
-export const createInvite = async (email: string, role: "ADMIN" | "STAFF"): Promise<OrganizationInvite> => {
+export const createInvite = async (email: string, role: OrganizationRole): Promise<OrganizationInvite> => {
   const config = getApiConfig();
   if (!config) {
     throw new Error("API not configured");
@@ -92,7 +102,7 @@ export const acceptInvite = async (token: string): Promise<{ id: string, organiz
   });
 };
 
-export const updateMemberRole = async (id: string, role: "ADMIN" | "STAFF"): Promise<OrganizationMember> => {
+export const updateMemberRole = async (id: string, role: OrganizationRole): Promise<OrganizationMember> => {
   const config = getApiConfig();
   if (!config) {
     throw new Error("API not configured");

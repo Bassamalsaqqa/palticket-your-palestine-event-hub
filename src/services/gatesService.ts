@@ -95,3 +95,16 @@ export const scanTicket = async (ticketCode: string, gateId: string, eventId: st
     body: JSON.stringify({ ticketCode, gateId, eventId }),
   });
 };
+
+export const assignMemberToGate = async (
+  gateId: string,
+  data: { memberId: string }
+): Promise<void> => {
+  const config = getApiConfig();
+  if (!config) throw new Error("API configuration is missing");
+
+  await apiFetch(`/gates/${encodeURIComponent(gateId)}/assignments`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
