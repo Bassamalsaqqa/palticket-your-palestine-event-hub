@@ -163,10 +163,12 @@ Phase 2 - Price versioning + governance (complete)
 - Admin endpoints and UI for price version management.
 - Item-level CSV export includes price snapshots.
 
-Phase 3 - Central policy enforcement
-- EventPolicyService (canSell/canScan/visibility).
-- Enforce across orders, scans, public listing.
-- Pricing policy enforcement + approvals.
+Phase 3 - Central policy enforcement (complete)
+- EventStatus expansion (DRAFT, PUBLISHED, LIVE, ENDED, CANCELLED).
+- EventPolicyService for centralized business rules.
+- Scans/Orders/Public listing respect centralized policies.
+- FINANCE role enforcement for payments and exports.
+- Expanded Audit Logging for high-risk actions.
 
 Phase 4 - Security hardening & ops readiness
 - Rate limiting for auth and exports.

@@ -13,6 +13,7 @@ import {
   PaymentMethod,
 } from '@prisma/client';
 import { randomBytes } from 'crypto';
+import { EventPolicyService } from '../events/event-policy.service';
 
 interface Inventory {
   id: string;
@@ -32,7 +33,10 @@ interface RawInventory {
 
 @Injectable()
 export class OpsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventPolicy: EventPolicyService,
+  ) {}
 
   async createPosOrder(
     organizationId: string,
@@ -61,11 +65,17 @@ export class OpsService {
       // 1. Validate Event
       const event = await tx.event.findFirst({
         where: { id: eventId, organizationId },
-        select: { id: true },
+        select: { id: true, status: true, startTime: true, endTime: true },
       });
 
       if (!event) {
         throw new NotFoundException('Event not found or access denied');
+      }
+
+      if (!this.eventPolicy.canSell(event)) {
+        throw new BadRequestException(
+          'Tickets for this event are not currently available for sale',
+        );
       }
 
       // Aggregate quantities to prevent duplicate ID bypass

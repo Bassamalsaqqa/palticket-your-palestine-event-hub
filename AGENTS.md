@@ -145,8 +145,9 @@ Prisma configuration
 Roadmap (Phased)
 - Phase 0: Inventory + POS idempotency + payment model + export audit logging (complete).
 - Phase 1: Roles expansion + EventStaffAssignment/GateAssignment + ScopeGuard + Admin UI (complete).
-- Phase 2: Price versioning + order item snapshots (complete). Pricing policy enforcement pending.
-- Phase 3: EventPolicyService enforcement + centralized status/visibility rules.
+- Phase 2: Price versioning + order item snapshots + pricing policy (complete).
+- Phase 3: EventPolicyService enforcement + EventStatus expansion + FINANCE role (complete).
+- Phase 4: Security hardening + ops readiness.
 - Phase 4: Security hardening + ops readiness.
 - Phase 5: PSP integration + buyer foundations.
 

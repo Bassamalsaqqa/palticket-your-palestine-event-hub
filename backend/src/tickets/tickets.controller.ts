@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Param,
   Query,
   UseGuards,
@@ -19,6 +20,15 @@ import type { AuthenticatedRequest } from '../common/types';
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
+
+  @Post(':id/void')
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.EVENT_MANAGER)
+  voidTicket(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.ticketsService.voidTicket(req.orgId!, id, req.memberId);
+  }
 
   @Get()
   @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments

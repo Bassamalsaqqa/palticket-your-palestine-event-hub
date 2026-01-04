@@ -42,6 +42,7 @@ enum ScanResult {
   DENIED_INVALID_EVENT
   DENIED_INVALID_TICKET
   DENIED_PAYMENT_NOT_CONFIRMED
+  DENIED_EVENT_NOT_SCANNABLE
 }
 
 enum OrderStatus {
@@ -68,6 +69,8 @@ enum PaymentMethod {
 enum EventStatus {
   DRAFT
   PUBLISHED
+  LIVE
+  ENDED
   CANCELLED
 }
 

@@ -67,7 +67,7 @@ export class TicketTypesService {
       );
     }
 
-    return this.prisma.ticketTypePriceVersion.create({
+    const version = await this.prisma.ticketTypePriceVersion.create({
       data: {
         ...data,
         ticketTypeId,
@@ -76,6 +76,23 @@ export class TicketTypesService {
         createdByMemberId,
       },
     });
+
+    await this.prisma.auditLog.create({
+      data: {
+        organizationId,
+        actorMemberId: createdByMemberId,
+        action: 'PRICE_VERSION_CREATE',
+        entityType: 'TicketTypePriceVersion',
+        entityId: version.id,
+        metadata: {
+          ticketTypeId,
+          priceCents: data.priceCents,
+          currency: data.currency,
+        },
+      },
+    });
+
+    return version;
   }
 
   async findPriceVersions(

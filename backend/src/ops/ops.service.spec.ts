@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OpsService } from './ops.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventPolicyService } from '../events/event-policy.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
@@ -16,11 +17,13 @@ import {
   Ticket,
   Payment,
   AuditLog,
+  TicketTypePriceVersion,
 } from '@prisma/client';
 
 describe('OpsService', () => {
   let service: OpsService;
   let prisma: DeepMockProxy<PrismaService>;
+  let eventPolicy: DeepMockProxy<EventPolicyService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -30,17 +33,23 @@ describe('OpsService', () => {
           provide: PrismaService,
           useValue: mockDeep<PrismaService>(),
         },
+        {
+          provide: EventPolicyService,
+          useValue: mockDeep<EventPolicyService>(),
+        },
       ],
     }).compile();
 
     service = module.get<OpsService>(OpsService);
     prisma = module.get(PrismaService);
+    eventPolicy = module.get(EventPolicyService);
 
     // Mock interactive transaction
     prisma.$transaction.mockImplementation((cb: (tx: Prisma.TransactionClient) => unknown) =>
       cb(prisma as unknown as Prisma.TransactionClient),
     );
     prisma.ticketTypePriceVersion.findMany.mockResolvedValue([]);
+    eventPolicy.canSell.mockReturnValue(true);
   });
 
   const orgId = 'org-1';

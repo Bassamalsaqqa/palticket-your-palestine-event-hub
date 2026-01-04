@@ -1,9 +1,45 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { TicketStatus } from '@prisma/client';
 
 @Injectable()
 export class TicketsService {
   constructor(private prisma: PrismaService) {}
+
+  async voidTicket(organizationId: string, id: string, actorMemberId?: string) {
+    const ticket = await this.prisma.ticket.findFirst({
+      where: { id, organizationId },
+      select: { id: true, status: true },
+    });
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    if (ticket.status !== TicketStatus.ISSUED) {
+      throw new BadRequestException(
+        `Cannot void ticket in status ${ticket.status}`,
+      );
+    }
+
+    const updated = await this.prisma.ticket.update({
+      where: { id },
+      data: { status: TicketStatus.VOID },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        organizationId,
+        actorMemberId,
+        action: 'TICKET_VOID',
+        entityType: 'Ticket',
+        entityId: id,
+        metadata: { oldStatus: ticket.status, newStatus: updated.status },
+      },
+    });
+
+    return updated;
+  }
 
   async findAll(
     organizationId: string,

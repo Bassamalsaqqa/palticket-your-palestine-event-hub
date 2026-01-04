@@ -75,7 +75,7 @@ export class MembersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateMemberRoleDto: UpdateMemberRoleDto,
   ) {
-    return this.membersService.update(req.orgId!, id, updateMemberRoleDto);
+    return this.membersService.update(req.orgId!, id, updateMemberRoleDto, req.memberId);
   }
 
   @Delete(':id')

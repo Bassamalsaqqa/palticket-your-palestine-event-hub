@@ -9,6 +9,7 @@ export class EventsService {
   constructor(
     private prisma: PrismaService,
     private storageService: StorageService,
+    private eventPolicy: EventPolicyService,
   ) {}
 
   async createAssignment(
@@ -85,7 +86,7 @@ export class EventsService {
 
   async findAll(organizationId: string, lang = 'en', skip = 0, take = 20) {
     const limit = Math.min(take, 100);
-    return this.prisma.event.findMany({
+    const events = await this.prisma.event.findMany({
       where: { organizationId },
       skip,
       take: limit,
@@ -135,6 +136,8 @@ export class EventsService {
         },
       },
     });
+
+    return events.filter((e) => this.eventPolicy.isPublicVisible(e));
   }
 
   async findOne(organizationId: string, id: string, lang = 'en') {
@@ -237,16 +240,16 @@ export class EventsService {
     });
   }
 
-  async update(organizationId: string, id: string, data: UpdateEventDto) {
+  async update(organizationId: string, id: string, data: UpdateEventDto, actorMemberId?: string) {
     const { translations, ...eventData } = data;
 
     // Verify ownership
-    await this.prisma.event.findFirstOrThrow({
+    const event = await this.prisma.event.findFirstOrThrow({
       where: { id, organizationId },
-      select: { id: true },
+      select: { id: true, status: true },
     });
 
-    return this.prisma.event.update({
+    const updated = await this.prisma.event.update({
       where: { id },
       data: {
         ...eventData,
@@ -282,6 +285,21 @@ export class EventsService {
         cityId: true,
       },
     });
+
+    if (data.status && data.status !== event.status) {
+      await this.prisma.auditLog.create({
+        data: {
+          organizationId,
+          actorMemberId,
+          action: 'EVENT_STATUS_UPDATE',
+          entityType: 'Event',
+          entityId: id,
+          metadata: { oldStatus: event.status, newStatus: updated.status },
+        },
+      });
+    }
+
+    return updated;
   }
 
   async uploadImage(

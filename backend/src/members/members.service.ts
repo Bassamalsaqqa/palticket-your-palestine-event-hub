@@ -220,13 +220,13 @@ export class MembersService {
     });
   }
 
-  async update(organizationId: string, id: string, data: UpdateMemberRoleDto) {
-    await this.prisma.organizationMember.findFirstOrThrow({
+  async update(organizationId: string, id: string, data: UpdateMemberRoleDto, actorMemberId?: string) {
+    const member = await this.prisma.organizationMember.findFirstOrThrow({
       where: { id, organizationId },
-      select: { id: true },
+      select: { id: true, role: true },
     });
 
-    return this.prisma.organizationMember.update({
+    const updated = await this.prisma.organizationMember.update({
       where: { id },
       data,
       select: {
@@ -246,5 +246,18 @@ export class MembersService {
         },
       },
     });
+
+    await this.prisma.auditLog.create({
+      data: {
+        organizationId,
+        actorMemberId,
+        action: 'MEMBER_ROLE_UPDATE',
+        entityType: 'OrganizationMember',
+        entityId: id,
+        metadata: { oldRole: member.role, newRole: updated.role },
+      },
+    });
+
+    return updated;
   }
 }

@@ -39,7 +39,7 @@ export class OpsController {
   }
 
   @Post('orders/:id/confirm-payment')
-  @Roles(OrganizationRole.ORG_ADMIN) // Restricted to ORG_ADMIN (Finance)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.FINANCE) // Restricted to ORG_ADMIN or FINANCE
   confirmPayment(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,

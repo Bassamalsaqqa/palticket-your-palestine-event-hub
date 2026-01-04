@@ -114,6 +114,6 @@ export class EventsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateEventDto: UpdateEventDto,
   ) {
-    return this.eventsService.update(req.orgId!, id, updateEventDto);
+    return this.eventsService.update(req.orgId!, id, updateEventDto, req.memberId);
   }
 }

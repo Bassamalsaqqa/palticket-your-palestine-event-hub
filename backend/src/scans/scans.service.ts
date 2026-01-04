@@ -2,10 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScanRequestDto, ScanResponseDto } from './dto/scan.dto';
 import { TicketStatus, ScanResult } from '@prisma/client';
+import { EventPolicyService } from '../events/event-policy.service';
 
 @Injectable()
 export class ScansService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventPolicy: EventPolicyService,
+  ) {}
 
   async scan(
     organizationId: string,
@@ -21,7 +25,14 @@ export class ScansService {
           code: ticketCode,
           organizationId,
         },
-        include: { ticketType: true },
+        include: { 
+          ticketType: true,
+          event: {
+            select: {
+              status: true,
+            }
+          }
+        },
       });
 
       if (!ticket) {
@@ -42,6 +53,31 @@ export class ScansService {
         },
       });
       const scannedByMemberId = scannerMember?.id;
+
+      // New Policy Check: canScan
+      if (!this.eventPolicy.canScan(ticket.event)) {
+        await tx.scanLog.create({
+          data: {
+            organizationId,
+            ticketId: ticket.id,
+            eventId: ticket.eventId,
+            gateId,
+            scannedByUserId: userId,
+            scannedByMemberId,
+            result: ScanResult.DENIED_EVENT_NOT_SCANNABLE,
+          },
+        });
+        return {
+          result: ScanResult.DENIED_EVENT_NOT_SCANNABLE,
+          message: 'Event is not currently scannable',
+          timestamp: new Date(),
+          ticket: {
+            id: ticket.id,
+            attendeeName: ticket.attendeeName,
+            ticketType: ticket.ticketType.name,
+          },
+        };
+      }
 
       // 2. Validate Event if provided
       if (eventId && ticket.eventId !== eventId) {

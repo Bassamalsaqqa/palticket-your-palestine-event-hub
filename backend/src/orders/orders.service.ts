@@ -9,6 +9,7 @@ import {
 } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { getCurrencySymbol } from '../common/currency';
+import { EventPolicyService } from '../events/event-policy.service';
 
 interface Inventory {
   id: string;
@@ -28,7 +29,10 @@ interface RawInventory {
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventPolicy: EventPolicyService,
+  ) {}
 
   async create(organizationId: string, userId: string, data: CreateOrderDto) {
     const { eventId, items, attendeeName, attendeeEmail, attendeePhone } = data;
@@ -41,11 +45,17 @@ export class OrdersService {
       // 1. Validate Event exists and belongs to the Organization
       const event = await tx.event.findFirst({
         where: { id: eventId, organizationId },
-        select: { id: true },
+        select: { id: true, status: true, startTime: true, endTime: true },
       });
 
       if (!event) {
         throw new BadRequestException('Event not found or access denied');
+      }
+
+      if (!this.eventPolicy.canSell(event)) {
+        throw new BadRequestException(
+          'Tickets for this event are not currently available for sale',
+        );
       }
 
       // Aggregate quantities

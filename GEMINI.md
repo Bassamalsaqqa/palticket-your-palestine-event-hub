@@ -93,21 +93,23 @@ Phase 2 - Price versioning + governance (complete)
 - Admin UI for managing price versions (done).
 - Item-level CSV export with price snapshots (done).
 
-Phase 3 - Central policy enforcement
-- EventPolicyService canSell/canScan/visibility + status enforcement.
-- Pricing policy enforcement + approvals.
+Phase 3 - Central policy enforcement (complete)
+- EventStatus expansion: DRAFT, PUBLISHED, LIVE, ENDED, CANCELLED (done).
+- EventPolicyService for unified canSell/canScan/visibility logic (done).
+- Enforce policies in public listings, orders, POS, and scans (done).
+- FINANCE role for payment confirmation and exports (done).
+- Audit logging expansion for roles, status changes, and voiding (done).
 
 Phase 4 - Security hardening & ops readiness
 - Rate limits for auth and exports.
 - Structured logging + dashboards.
-
-Phase 5 - PSP integration + buyer foundations
-- Payment provider integration + buyer endpoints.
+- Retention jobs + dashboards.
 
 ## Current Priorities (Next Session)
-1. Implement EventPolicyService and enforce event status rules across orders, scans, and public listing.
-2. Use FINANCE role for confirm-payment and export access where appropriate.
-3. Expand audit logging for high-risk actions (role changes, event status changes, ticket voids).
+1. Phase 4: Rate limit hardening for Auth and Exports.
+2. Structured logging implementation (Winston/Pino) with correlation IDs.
+3. Retention dashboards for audit and scan logs.
+4. Prepare Frontend for Event Status transitions (LIVE/ENDED).
 
 ## Common Pitfalls
 1.  **UUID vs Slug**: Always use UUIDs for relationships/updates and slugs for filtering/URLs.

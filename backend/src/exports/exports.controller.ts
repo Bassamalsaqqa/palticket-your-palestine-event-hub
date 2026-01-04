@@ -13,7 +13,7 @@ export class ExportsController {
   constructor(private readonly exportsService: ExportsService) {}
 
   @Get('orders.csv')
-  @Roles(OrganizationRole.ORG_ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.FINANCE)
   @Header('Content-Type', 'text/csv')
   @Header('Content-Disposition', 'attachment; filename="orders.csv"')
   async exportOrders(
@@ -24,7 +24,7 @@ export class ExportsController {
   }
 
   @Get('tickets.csv')
-  @Roles(OrganizationRole.ORG_ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.FINANCE)
   @Header('Content-Type', 'text/csv')
   @Header('Content-Disposition', 'attachment; filename="tickets.csv"')
   async exportTickets(

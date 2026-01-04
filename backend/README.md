@@ -45,7 +45,7 @@ Each domain module enforces multi-tenancy and RBAC:
 
 *   **Orders/Tickets:**
     *   **Orders:** Create + read (ticket issuance happens here). Non-POS orders create PENDING tickets until payment.
-    *   **Tickets:** Read-only (list and detail).
+    *   **Tickets:** Read-only (list and detail). Support `POST /tickets/:id/void` (Admin/EventManager).
     *   **Access:** ADMIN and STAFF can read.
     *   **Privacy:** Explicit selection of fields (no full PII exposure).
 
@@ -53,7 +53,7 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Endpoint:** `POST /scan`.
     *   **Atomicity:** Uses Prisma transactions to ensure one-time entry.
     *   **Isolation:** Strict `x-organization-id` scoping. Cross-org scans return "Not Found".
-    *   **Responses:** Uses `ScanResult` enum (GRANTED / DENIED_*).
+    *   **Responses:** Uses `ScanResult` enum (GRANTED / DENIED_*). New: `DENIED_EVENT_NOT_SCANNABLE`.
     *   **Logging:** Success/Duplicate/Void are logged in `ScanLog`. Invalid codes are not logged (ticketId FK required).
 
 *   **Invites (Member Onboarding):**
@@ -66,7 +66,8 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Endpoints:** `GET /exports/orders.csv`, `GET /exports/tickets.csv`
     *   **Filters:** Optional `eventId` query parameter to export a single event.
     *   **Orders Export:** Returns an item-level CSV (one row per order item) including `unitPriceCents`, `currency`, and `priceVersionId` snapshots.
-    *   **Access**: ADMIN only
+    *   **Orders Export:** Returns an item-level CSV (one row per order item) including `unitPriceCents`, `currency`, and `priceVersionId` snapshots.
+    *   **Access**: ORG_ADMIN or FINANCE only
 
 ## Ops Endpoints Plan (Phase 0/1)
 - `/ops/orders` (POS create, Idempotency-Key required, SELLER assignment required).
@@ -100,6 +101,14 @@ If you already have data and the initial `20260104184304_add_price_versioning` m
    - `npx prisma migrate resolve --applied 20260104184304_add_price_versioning`
 3. Apply the repair migration:
    - `npx prisma migrate deploy`
+
+## Central Policy Enforcement (Phase 3)
+- **EventStatus Expansion:** DRAFT, PUBLISHED, LIVE, ENDED, CANCELLED.
+- **EventPolicyService:** Centralizes rules for selling, scanning, and public visibility.
+- **Visibility:** Only PUBLISHED, LIVE, or ENDED events are visible to the public.
+- **Selling:** Only PUBLISHED or LIVE events can be sold.
+- **Scanning:** Only LIVE events allow ticket scanning.
+- **Audit Logging:** Expanded coverage for role updates, event status changes, ticket voiding, and price versioning.
 
 ## Next Phase Targets
 - Central EventPolicyService for event status/visibility enforcement (Phase 3).

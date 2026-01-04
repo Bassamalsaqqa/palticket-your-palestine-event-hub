@@ -1,18 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ScansService } from './scans.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
-import {
-  OrganizationMember,
-  OrganizationRole,
-  Prisma,
-  ScanResult,
-  TicketStatus,
-} from '@prisma/client';
+import { EventPolicyService } from '../events/event-policy.service';
+import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
+import { ScanResult, TicketStatus, OrganizationRole } from '@prisma/client';
 
 describe('ScansService', () => {
   let service: ScansService;
   let prisma: DeepMockProxy<PrismaService>;
+  let eventPolicy: DeepMockProxy<EventPolicyService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -22,16 +18,22 @@ describe('ScansService', () => {
           provide: PrismaService,
           useValue: mockDeep<PrismaService>(),
         },
+        {
+          provide: EventPolicyService,
+          useValue: mockDeep<EventPolicyService>(),
+        },
       ],
     }).compile();
 
     service = module.get<ScansService>(ScansService);
     prisma = module.get(PrismaService);
+    eventPolicy = module.get(EventPolicyService);
 
-    // Mock transaction to just execute the callback
+    // Default mock transaction
     prisma.$transaction.mockImplementation(
       <T>(callback: (tx: PrismaService) => Promise<T>) => callback(prisma),
     );
+    eventPolicy.canScan.mockReturnValue(true);
   });
 
   const orgId = 'org-1';
