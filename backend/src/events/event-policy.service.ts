@@ -42,4 +42,8 @@ export class EventPolicyService {
       event.status,
     );
   }
+
+  publicVisibilityStatuses(): EventStatus[] {
+    return [EventStatus.PUBLISHED, EventStatus.LIVE, EventStatus.ENDED];
+  }
 }

@@ -32,7 +32,7 @@ Each domain module enforces multi-tenancy and RBAC:
 *   **Events/Venues/Gates/TicketTypes:**
     *   **CRUD:** Full Create/Read/Update/Delete.
     *   **Endpoints:** `GET /events/slug/:slug?lang=en|ar` (Admin list, unfiltered by status)
-    *   **Public Endpoints:** `GET /public/events`, `GET /public/events/:id`, `GET /public/events/slug/:slug` (Filtered by `EventPolicyService.isPublicVisible`)
+    *   **Public Endpoints:** `GET /public/events?orgSlug=...` (optional), `GET /public/events/:id`, `GET /public/events/slug/:slug?orgSlug=...` (orgSlug required for slug lookup; filtered by `EventPolicyService.isPublicVisible`)
     *   **Price Versions:** `POST /ticket-types/:id/price-versions`, `GET /ticket-types/:id/price-versions` (Admin/EventManager).
     *   **Access:** ADMIN can write; STAFF can read.
     *   **Scope:** All queries filtered by `x-organization-id`.

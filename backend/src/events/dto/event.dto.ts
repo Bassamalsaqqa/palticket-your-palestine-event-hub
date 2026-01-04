@@ -100,6 +100,10 @@ export class UpdateEventDto {
 }
 
 export class ListEventsQueryDto {
+  @IsString()
+  @IsOptional()
+  organizationSlug?: string;
+
   @IsIn(['en', 'ar'])
   @IsOptional()
   lang?: string = 'en';
@@ -133,6 +137,10 @@ export class CreateEventAssignmentDto {
 }
 
 export class GetEventQueryDto {
+  @IsString()
+  @IsOptional()
+  organizationSlug?: string;
+
   @IsIn(['en', 'ar'])
   @IsOptional()
   lang?: string = 'en';

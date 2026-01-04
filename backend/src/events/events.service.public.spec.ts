@@ -41,26 +41,30 @@ describe('EventsService Public', () => {
   ];
 
   it('findPublicAll should only return visible events (PUBLISHED, LIVE, ENDED)', async () => {
-    // Note: findPublicAll has a where clause in prisma.findMany AND a filter after.
-    // The where clause handles the bulk, the policy service ensures correctness.
     prisma.event.findMany.mockResolvedValue(mockEvents.filter(e => ['PUBLISHED', 'LIVE', 'ENDED'].includes(e.status)) as any);
 
-    const result = await service.findPublicAll();
+    const result = await service.findPublicAll('en', 0, 20, 'pal-ticket');
 
     expect(result).toHaveLength(3);
     expect(result.map(e => e.id)).toEqual(['1', '3', '5']);
   });
 
   it('findPublicOne should throw NotFound for DRAFT event', async () => {
-    prisma.event.findUnique.mockResolvedValue(mockEvents[1] as any);
+    prisma.event.findFirst.mockResolvedValue(null);
 
     await expect(service.findPublicOne('2')).rejects.toThrow('Event not found');
   });
 
   it('findPublicOne should return event for LIVE event', async () => {
-    prisma.event.findUnique.mockResolvedValue(mockEvents[2] as any);
+    prisma.event.findFirst.mockResolvedValue(mockEvents[2] as any);
 
-    const result = await service.findPublicOne('3');
+    const result = await service.findPublicOne('3', 'en', 'pal-ticket');
     expect(result.id).toBe('3');
+  });
+
+  it('findPublicBySlug should require organizationSlug', async () => {
+    await expect(service.findPublicBySlug('event-1')).rejects.toThrow(
+      'organizationSlug is required',
+    );
   });
 });

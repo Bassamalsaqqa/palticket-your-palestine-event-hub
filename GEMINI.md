@@ -3,7 +3,7 @@
 ## Project Overview
 **PalTicket** is a bilingual (English/Arabic) event ticketing + scanning + POS platform for Palestine. It is a Single Page Application (SPA) built with React and Vite, connected to a NestJS backend.
 
-**Current State:** Phase 0-2 complete (inventory/idempotency/payments, assignments, price versioning). Phase 3 next (central policy enforcement).
+**Current State:** Phase 0-3 complete (inventory/idempotency/payments, assignments, price versioning, central policy enforcement). Phase 4 next (security hardening & ops readiness).
 *   **Frontend**: Connected to backend APIs for core domains with mock fallbacks.
 *   **Backend**: Multi-tenant foundation, inventory enforcement (POS + non-POS), idempotency, throttling, scan log retention, export audit logging.
 
@@ -93,7 +93,7 @@ Phase 2 - Price versioning + governance (complete)
 - Admin UI for managing price versions (done).
 - Item-level CSV export with price snapshots (done).
 
-Phase 3 - Central policy enforcement (in progress)
+Phase 3 - Central policy enforcement (complete)
 - EventStatus expansion: DRAFT, PUBLISHED, LIVE, ENDED, CANCELLED (done).
 - EventPolicyService for unified canSell/canScan/visibility logic (done).
 - Dedicated public events listing endpoint `/public/events` (done).

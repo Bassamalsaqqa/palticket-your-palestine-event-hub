@@ -153,15 +153,20 @@ export class EventsService {
     });
   }
 
-  async findPublicAll(lang = 'en', skip = 0, take = 20) {
+  async findPublicAll(
+    lang = 'en',
+    skip = 0,
+    take = 20,
+    organizationSlug?: string,
+  ) {
     const limit = Math.min(take, 100);
-    // Since we need to filter by policy, we might over-fetch if we filter after.
-    // But policy currently uses only 'status'.
-    const events = await this.prisma.event.findMany({
+    const visibilityStatuses = this.eventPolicy.publicVisibilityStatuses();
+    return this.prisma.event.findMany({
       where: {
-        status: {
-          in: ['PUBLISHED', 'LIVE', 'ENDED'],
-        },
+        status: { in: visibilityStatuses },
+        ...(organizationSlug
+          ? { organization: { slug: organizationSlug } }
+          : {}),
       },
       skip,
       take: limit,
@@ -211,13 +216,18 @@ export class EventsService {
         },
       },
     });
-
-    return events.filter((e) => this.eventPolicy.isPublicVisible(e));
   }
 
-  async findPublicOne(id: string, lang = 'en') {
-    const event = await this.prisma.event.findUnique({
-      where: { id },
+  async findPublicOne(id: string, lang = 'en', organizationSlug?: string) {
+    const visibilityStatuses = this.eventPolicy.publicVisibilityStatuses();
+    const event = await this.prisma.event.findFirst({
+      where: {
+        id,
+        status: { in: visibilityStatuses },
+        ...(organizationSlug
+          ? { organization: { slug: organizationSlug } }
+          : {}),
+      },
       select: {
         id: true,
         slug: true,
@@ -264,16 +274,29 @@ export class EventsService {
       },
     });
 
-    if (!event || !this.eventPolicy.isPublicVisible(event)) {
+    if (!event) {
       throw new NotFoundException('Event not found');
     }
 
     return event;
   }
 
-  async findPublicBySlug(slug: string, lang = 'en') {
+  async findPublicBySlug(
+    slug: string,
+    lang = 'en',
+    organizationSlug?: string,
+  ) {
+    if (!organizationSlug) {
+      throw new BadRequestException('organizationSlug is required');
+    }
+
+    const visibilityStatuses = this.eventPolicy.publicVisibilityStatuses();
     const event = await this.prisma.event.findFirst({
-      where: { slug },
+      where: {
+        slug,
+        status: { in: visibilityStatuses },
+        organization: { slug: organizationSlug },
+      },
       select: {
         id: true,
         slug: true,
@@ -320,7 +343,7 @@ export class EventsService {
       },
     });
 
-    if (!event || !this.eventPolicy.isPublicVisible(event)) {
+    if (!event) {
       throw new NotFoundException('Event not found');
     }
 

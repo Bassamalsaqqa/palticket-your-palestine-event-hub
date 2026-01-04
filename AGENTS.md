@@ -112,6 +112,7 @@ Backend architecture and rules
 - Global ValidationPipe enforces DTO validation (whitelist + forbidNonWhitelisted + transform)
 - Domain modules:
   - Events/Venues/Gates/TicketTypes CRUD (Events use translations; slug endpoint: `GET /events/slug/:slug?lang=en|ar`)
+  - Public events: `GET /public/events?orgSlug=...` (optional), `GET /public/events/:id`, `GET /public/events/slug/:slug?orgSlug=...` (orgSlug required for slug lookup)
   - Categories/Cities read-only (global + org-specific, localized via `?lang=en|ar`)
   - Orders create + read; Tickets read-only
   - Members: invite-by-email via `/members/invites`, accept via `/members/invites/accept` (JWT only)

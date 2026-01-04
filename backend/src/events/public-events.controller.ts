@@ -12,6 +12,7 @@ export class PublicEventsController {
       query.lang,
       query.skip,
       query.take,
+      query.organizationSlug,
     );
   }
 
@@ -20,7 +21,11 @@ export class PublicEventsController {
     @Param('slug') slug: string,
     @Query() query: GetEventQueryDto,
   ) {
-    return this.eventsService.findPublicBySlug(slug, query.lang);
+    return this.eventsService.findPublicBySlug(
+      slug,
+      query.lang,
+      query.organizationSlug,
+    );
   }
 
   @Get(':id')
@@ -28,6 +33,10 @@ export class PublicEventsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: GetEventQueryDto,
   ) {
-    return this.eventsService.findPublicOne(id, query.lang);
+    return this.eventsService.findPublicOne(
+      id,
+      query.lang,
+      query.organizationSlug,
+    );
   }
 }

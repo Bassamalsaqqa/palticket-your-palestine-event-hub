@@ -242,7 +242,12 @@ export class OrdersService {
           action: 'ORDER_CREATE',
           entityType: 'Order',
           entityId: order.id,
-          metadata: { eventId, totalCents: order.totalCents, ticketCount: ticketsToCreate.length },
+          metadata: {
+            eventId,
+            userId,
+            totalCents: order.totalCents,
+            ticketCount: ticketsToCreate.length,
+          },
         },
       });
 
