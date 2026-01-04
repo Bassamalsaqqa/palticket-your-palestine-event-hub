@@ -76,6 +76,7 @@ Phase 0 - Stabilize foundation (complete)
 - POS Idempotency-Key support with requestHash replay protection.
 - Payment model + POS Cash/Card (manual reference with confirm endpoint).
 - Export includes payment fields + audit log.
+- Rate limiting enabled (global defaults and stricter limits for orders/scans).
 
 Phase 1 - RBAC overhaul + scoped assignments (next)
 - Roles expansion.
@@ -89,7 +90,8 @@ Phase 3 - Central policy enforcement
 - EventPolicyService canSell/canScan/visibility.
 
 Phase 4 - Security hardening & ops readiness
-- Rate limits + structured logging + dashboards.
+- Rate limits for auth and exports.
+- Structured logging + dashboards.
 
 Phase 5 - PSP integration + buyer foundations
 - Payment provider integration + buyer endpoints.

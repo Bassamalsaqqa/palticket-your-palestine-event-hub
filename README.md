@@ -85,7 +85,7 @@ The frontend uses a mock authentication system for UI testing. Backend APIs can 
 The backend implements **JWT Authentication** and **RBAC**.
 *   **Endpoints:** `/auth/login`, `/auth/me`
 *   **Guards:** Global `JwtAuthGuard` and `RolesGuard` enforce security.
-*   **Multi-tenancy:** Data is scoped by `x-organization-id` header.
+*   **Multi-tenancy:** Data is scoped by `x-organization-id` header; membership is verified per request in `RolesGuard` but the header is still client-provided.
 *   **Validation:** Global `ValidationPipe` enforces DTO validation.
 *   **Pagination:** List endpoints validate `skip`/`take` (min 0) and cap results at 100.
 
@@ -144,6 +144,7 @@ Phase 0 - Stabilize foundation (done)
 - Exports include payment fields + audit log.
 - Audit log framework for critical actions (index on organizationId, createdAt).
 - Non-POS orders use inventory locks and issue PENDING tickets until payment.
+- Rate limiting is enabled (global defaults and stricter limits for orders/scans).
 
 Phase 1 - RBAC overhaul + scoped assignments (next)
 - Expand roles enum.
@@ -160,7 +161,7 @@ Phase 3 - Central policy enforcement
 - Enforce across orders, scans, public listing.
 
 Phase 4 - Security hardening & ops readiness
-- Rate limiting for auth/scans/orders.
+- Rate limiting for auth and exports.
 - Structured logging + correlation IDs.
 - Retention jobs + dashboards.
 
