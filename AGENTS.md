@@ -103,7 +103,9 @@ Backend architecture and rules
 - Backend runtime: http://localhost:3001
 - Database: PostgreSQL via Prisma (classic workflow)
 - Tenant boundary: Organization
-- Current RBAC: OrganizationMember roles ADMIN/STAFF (phase 1 expands roles).
+- RBAC: OrganizationRole (ORG_ADMIN, EVENT_MANAGER, SELLER, SCANNER, FINANCE)
+  - Migration Mapping: ADMIN -> ORG_ADMIN, STAFF -> SELLER.
+  - Compatibility Note: SELLER temporarily retains staff/scanner access until Phase-1 ScopeGuard/assignments.
 - Money fields use integer cents; no floats/decimals
 - Ticket scan-once enforced by Ticket.status and ScanLog
 - All tenant-owned tables include organizationId or link to Event with organizationId; prefer explicit organizationId and indexes

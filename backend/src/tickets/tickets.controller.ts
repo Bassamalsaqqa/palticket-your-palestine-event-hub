@@ -21,7 +21,7 @@ export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
 
   @Get()
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findAll(
     @Req() req: AuthenticatedRequest,
     @Query() query: ListTicketsQueryDto,
@@ -29,7 +29,6 @@ export class TicketsController {
     return this.ticketsService.findAll(
       req.orgId!,
       query.eventId,
-      query.orderId,
       query.userId,
       query.skip,
       query.take,
@@ -37,7 +36,7 @@ export class TicketsController {
   }
 
   @Get(':id')
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findOne(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,

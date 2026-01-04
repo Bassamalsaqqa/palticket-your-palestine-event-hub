@@ -29,7 +29,7 @@ export class UsersController {
 
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Patch(':id')
-  @Roles(OrganizationRole.ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN)
   async update(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,

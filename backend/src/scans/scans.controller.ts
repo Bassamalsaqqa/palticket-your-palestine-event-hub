@@ -22,14 +22,14 @@ export class ScansController {
   constructor(private readonly scansService: ScansService) {}
 
   @Post()
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   scan(@Req() req: AuthenticatedRequest, @Body() body: ScanRequestDto) {
     return this.scansService.scan(req.orgId!, req.user.id, body);
   }
 
   @Get('logs')
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findLogs(
     @Req() req: AuthenticatedRequest,
     @Query() query: ListScanLogsQueryDto,

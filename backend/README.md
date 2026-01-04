@@ -7,7 +7,9 @@
 - Runtime: NestJS on http://localhost:3001
 - Database: Postgres via Prisma
 - Multi-tenant boundary: Organization
-- RBAC: OrganizationMember (ADMIN/STAFF today; Phase 1 expands roles)
+- RBAC: OrganizationRole (ORG_ADMIN, EVENT_MANAGER, SELLER, SCANNER, FINANCE)
+  - ADMIN -> ORG_ADMIN
+  - STAFF -> SELLER (compatibility: retains staff access until ScopeGuard)
 - DTO validation: Global ValidationPipe enabled
 
 ## Production Intent (Shipping Gate)

@@ -28,7 +28,7 @@ export class GatesController {
   constructor(private readonly gatesService: GatesService) {}
 
   @Post()
-  @Roles(OrganizationRole.ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN)
   create(
     @Req() req: AuthenticatedRequest,
     @Body() createGateDto: CreateGateDto,
@@ -37,7 +37,7 @@ export class GatesController {
   }
 
   @Get()
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findAll(@Req() req: AuthenticatedRequest, @Query() query: ListGatesQueryDto) {
     return this.gatesService.findAll(
       req.orgId!,
@@ -48,7 +48,7 @@ export class GatesController {
   }
 
   @Get(':id')
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findOne(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
@@ -57,7 +57,7 @@ export class GatesController {
   }
 
   @Put(':id')
-  @Roles(OrganizationRole.ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN) // temporary compatibility until Phase-1 ScopeGuard/assignments
   update(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,

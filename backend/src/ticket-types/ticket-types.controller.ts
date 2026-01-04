@@ -28,7 +28,7 @@ export class TicketTypesController {
   constructor(private readonly ticketTypesService: TicketTypesService) {}
 
   @Post()
-  @Roles(OrganizationRole.ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN)
   create(
     @Req() req: AuthenticatedRequest,
     @Body() createTicketTypeDto: CreateTicketTypeDto,
@@ -37,7 +37,7 @@ export class TicketTypesController {
   }
 
   @Get()
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findAll(
     @Req() req: AuthenticatedRequest,
     @Query() query: ListTicketTypesQueryDto,
@@ -51,7 +51,7 @@ export class TicketTypesController {
   }
 
   @Get(':id')
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findOne(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
@@ -59,8 +59,8 @@ export class TicketTypesController {
     return this.ticketTypesService.findOne(req.orgId!, id);
   }
 
-  @Put(':id')
-  @Roles(OrganizationRole.ADMIN)
+  @Patch(':id')
+  @Roles(OrganizationRole.ORG_ADMIN)
   update(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,

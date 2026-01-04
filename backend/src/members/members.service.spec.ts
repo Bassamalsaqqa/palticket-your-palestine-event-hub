@@ -32,7 +32,7 @@ describe('MembersService', () => {
     it('should successfully create an invite', async () => {
       const dto: CreateInviteDto = {
         email: 'test@example.com',
-        role: OrganizationRole.STAFF,
+        role: OrganizationRole.SELLER,
       };
 
       prisma.organizationMember.findFirst.mockResolvedValue(null);
@@ -55,7 +55,7 @@ describe('MembersService', () => {
     it('should throw ConflictException if user is already a member', async () => {
       const dto: CreateInviteDto = {
         email: 'test@example.com',
-        role: OrganizationRole.STAFF,
+        role: OrganizationRole.SELLER,
       };
 
       prisma.organizationMember.findFirst.mockResolvedValue({

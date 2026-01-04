@@ -60,7 +60,7 @@ describe('ScansService', () => {
     id: 'member-1',
     organizationId: orgId,
     userId,
-    role: OrganizationRole.STAFF,
+    role: OrganizationRole.SELLER,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

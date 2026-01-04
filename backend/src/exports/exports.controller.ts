@@ -13,32 +13,24 @@ export class ExportsController {
   constructor(private readonly exportsService: ExportsService) {}
 
   @Get('orders.csv')
-  @Roles(OrganizationRole.ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN)
   @Header('Content-Type', 'text/csv')
   @Header('Content-Disposition', 'attachment; filename="orders.csv"')
   async exportOrders(
     @Req() req: AuthenticatedRequest,
     @Query() query: ExportQueryDto,
   ) {
-    return await this.exportsService.exportOrders(
-      req.orgId!,
-      req.memberId!,
-      query.eventId,
-    );
+    return await this.exportsService.exportOrders(req.orgId!, req.memberId!, query.eventId);
   }
 
   @Get('tickets.csv')
-  @Roles(OrganizationRole.ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN)
   @Header('Content-Type', 'text/csv')
   @Header('Content-Disposition', 'attachment; filename="tickets.csv"')
   async exportTickets(
     @Req() req: AuthenticatedRequest,
     @Query() query: ExportQueryDto,
   ) {
-    return await this.exportsService.exportTickets(
-      req.orgId!,
-      req.memberId!,
-      query.eventId,
-    );
+    return await this.exportsService.exportTickets(req.orgId!, req.memberId!, query.eventId);
   }
 }

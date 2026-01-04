@@ -29,7 +29,7 @@ export class VenuesController {
   constructor(private readonly venuesService: VenuesService) {}
 
   @Post()
-  @Roles(OrganizationRole.ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN)
   create(
     @Req() req: AuthenticatedRequest,
     @Body() createVenueDto: CreateVenueDto,
@@ -38,7 +38,7 @@ export class VenuesController {
   }
 
   @Get()
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findAll(
     @Req() req: AuthenticatedRequest,
     @Query() query: ListVenuesQueryDto,
@@ -52,7 +52,7 @@ export class VenuesController {
   }
 
   @Get(':id')
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findOne(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
@@ -62,7 +62,7 @@ export class VenuesController {
   }
 
   @Put(':id')
-  @Roles(OrganizationRole.ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN)
   update(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,

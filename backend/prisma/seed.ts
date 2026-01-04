@@ -127,11 +127,11 @@ const run = async () => {
         userId: user.id,
       },
     },
-    update: { role: OrganizationRole.ADMIN },
+    update: { role: OrganizationRole.ORG_ADMIN },
     create: {
       organizationId: organization.id,
       userId: user.id,
-      role: OrganizationRole.ADMIN,
+      role: OrganizationRole.ORG_ADMIN,
     },
   });
 

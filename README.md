@@ -81,6 +81,11 @@ The frontend uses a mock authentication system for UI testing. Backend APIs can 
 *   **Staff:** `staff@palticket.com` (Scanner access)
 *   **User:** `user@example.com` (Public access)
 
+### Role Migration (Phase 1)
+The `OrganizationRole` enum has been migrated:
+*   `ADMIN` -> `ORG_ADMIN`
+*   `STAFF` -> `SELLER` (temporarily retains scanner/staff access until Phase-1 ScopeGuard/assignments land)
+
 ### Backend (Real)
 The backend implements **JWT Authentication** and **RBAC**.
 *   **Endpoints:** `/auth/login`, `/auth/me`

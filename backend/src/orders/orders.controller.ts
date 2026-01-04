@@ -27,7 +27,7 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   @UseInterceptors(IdempotencyInterceptor)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   create(
@@ -38,7 +38,7 @@ export class OrdersController {
   }
 
   @Get()
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findAll(
     @Req() req: AuthenticatedRequest,
     @Query() query: ListOrdersQueryDto,
@@ -53,7 +53,7 @@ export class OrdersController {
   }
 
   @Get(':id')
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findOne(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,

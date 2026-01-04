@@ -24,7 +24,7 @@ export class OpsController {
   constructor(private readonly opsService: OpsService) {}
 
   @Post('orders')
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF) // SELLER later
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   @UseInterceptors(IdempotencyInterceptor)
   createOrder(
     @Req() req: AuthenticatedRequest,
@@ -37,7 +37,7 @@ export class OpsController {
   }
 
   @Post('orders/:id/confirm-payment')
-  @Roles(OrganizationRole.ADMIN) // Restricted to ADMIN (Finance)
+  @Roles(OrganizationRole.ORG_ADMIN) // Restricted to ORG_ADMIN (Finance)
   confirmPayment(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,

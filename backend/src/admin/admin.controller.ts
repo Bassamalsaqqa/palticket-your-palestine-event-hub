@@ -12,7 +12,7 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('stats')
-  @Roles(OrganizationRole.ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN)
   getStats(@Req() req: AuthenticatedRequest) {
     return this.adminService.getStats(req.orgId!);
   }

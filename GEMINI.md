@@ -49,6 +49,7 @@
 ## Operating Model (Target)
 - **Platform roles**: PLATFORM_SUPERADMIN, PLATFORM_SUPPORT.
 - **Org roles**: ORG_ADMIN, EVENT_MANAGER, SELLER, SCANNER, FINANCE.
+  - Role Migration: ADMIN -> ORG_ADMIN, STAFF -> SELLER (compatibility mode).
 - **Scope enforcement**: Role + org scope + EventStaffAssignment + optional GateAssignment.
 - **Defaults**: SELLER restricted to assigned events; ORG_ADMIN can view all but scanning still requires assignment.
 

@@ -35,7 +35,7 @@ export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Post()
-  @Roles(OrganizationRole.ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN)
   create(
     @Req() req: AuthenticatedRequest,
     @Body() createEventDto: CreateEventDto,
@@ -44,7 +44,7 @@ export class EventsController {
   }
 
   @Post(':id/image')
-  @Roles(OrganizationRole.ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN)
   @UseInterceptors(FileInterceptor('image'))
   uploadImage(
     @Req() req: AuthenticatedRequest,
@@ -63,7 +63,7 @@ export class EventsController {
   }
 
   @Get()
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findAll(
     @Req() req: AuthenticatedRequest,
     @Query() query: ListEventsQueryDto,
@@ -77,7 +77,7 @@ export class EventsController {
   }
 
   @Get('slug/:slug')
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findBySlug(
     @Req() req: AuthenticatedRequest,
     @Param('slug') slug: string,
@@ -87,7 +87,7 @@ export class EventsController {
   }
 
   @Get(':id')
-  @Roles(OrganizationRole.ADMIN, OrganizationRole.STAFF)
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
   findOne(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
@@ -97,7 +97,7 @@ export class EventsController {
   }
 
   @Put(':id')
-  @Roles(OrganizationRole.ADMIN)
+  @Roles(OrganizationRole.ORG_ADMIN)
   update(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
