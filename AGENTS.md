@@ -154,7 +154,7 @@ Open items and conventions
 - Avoid re-exporting hooks from component files to keep react-refresh clean.
 - Use ASCII by default in new files unless existing file already uses Unicode.
 - Keep future changes aligned with the service layer and React Query for data access.
-- Pending follow-ups: Phase 1 RBAC + assignment scoping, pricing versioning.
+- Pending follow-ups: Phase 1 frontend assignment UI + scope-aware UX, pricing versioning.
 
 Common access for admin panel (mock)
 - Use /en/login or /ar/login and sign in with admin email:
