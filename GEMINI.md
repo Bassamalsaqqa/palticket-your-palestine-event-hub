@@ -108,3 +108,4 @@ Phase 5 - PSP integration + buyer foundations
 1.  **UUID vs Slug**: Always use UUIDs for relationships/updates and slugs for filtering/URLs.
 2.  **Camera Lifecycle**: Ensure all media tracks are stopped (`track.stop()`) on component unmount or step change.
 3.  **Mock Sync**: When updating domain types, ensure `mockEvents.ts` reflects new fields (e.g., `imageUrl`, `categorySlug`).
+4.  **Scan Requests**: `POST /scan` now requires `eventId` in the body for assignment enforcement.

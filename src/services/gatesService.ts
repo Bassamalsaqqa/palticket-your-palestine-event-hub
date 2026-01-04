@@ -73,7 +73,7 @@ export type ScanResponse = {
   };
 };
 
-export const scanTicket = async (ticketCode: string, gateId: string, eventId?: string): Promise<ScanResponse> => {
+export const scanTicket = async (ticketCode: string, gateId: string, eventId: string): Promise<ScanResponse> => {
   const config = getApiConfig();
   if (!config) {
     // Fake logic for mock

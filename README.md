@@ -221,6 +221,7 @@ The project adheres to strict **ESLint** rules. The root lint configuration cove
 - Access `/scan`. The camera requires **HTTPS** (or `localhost`) to function.
 - Select your event and gate.
 - Scan the QR code from the customer's account.
+- `POST /scan` now requires `eventId` in the request body (assignment enforcement relies on it).
 
 ## API Configuration Precedence
 The application resolves its data source in the following order:

@@ -99,7 +99,7 @@ Each domain module enforces multi-tenancy and RBAC:
    - `POST /orders` (non-POS creates PENDING tickets).
    - `POST /ops/orders` (POS creates PAID tickets for CASH).
    - `POST /ops/orders/:id/confirm-payment` for manual card flow.
-   - `POST /scan` with `ticketCode` from a PAID/ISSUED ticket and `gateId`.
+   - `POST /scan` with `ticketCode`, `eventId`, and (optional) `gateId`.
 
 ## Environment Variables
 

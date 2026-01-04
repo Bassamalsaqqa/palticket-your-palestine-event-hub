@@ -128,6 +128,7 @@ Backend architecture and rules
 - Scan endpoint: `POST /scan` with atomic update + ScanLog; invalid codes are not logged (ticketId FK required).
 - Orders: `POST /orders` creates Order + OrderItems + Tickets in a transaction; tickets get unique codes.
 - Non-POS orders issue PENDING tickets until payment is confirmed.
+- Scan requests must include `eventId` in the body (required for assignment enforcement).
 - Currency: Order currency derived from TicketTypes; helper `backend/src/common/currency.ts` maps currency to symbol.
 - Seed data: `backend/prisma/seed.ts` contains an embedded demo list and creates a demo org/user plus venues, cities, events, and ticket types.
 - Admin UI: Event, Ticket Type, and Gate creation forms are wired to backend APIs.
