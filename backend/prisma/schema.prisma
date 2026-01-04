@@ -15,8 +15,11 @@ datasource db {
 // -----------------------------------------------------------------------------
 
 enum OrganizationRole {
-  ADMIN
-  STAFF
+  ORG_ADMIN
+  EVENT_MANAGER
+  SELLER
+  SCANNER
+  FINANCE
 }
 
 enum InviteStatus {
@@ -116,6 +119,8 @@ model Organization {
   ticketInventories  TicketTypeInventory[]
   payments           Payment[]
   auditLogs          AuditLog[]
+  eventStaffAssignments EventStaffAssignment[]
+  gateAssignments    GateAssignment[]
 
   @@index([slug])
 }
@@ -133,6 +138,8 @@ model OrganizationMember {
   scanLogs     ScanLog[]
   auditLogs    AuditLog[]
   createdPayments Payment[]
+  eventStaffAssignments EventStaffAssignment[]
+  gateAssignments       GateAssignment[]
 
   @@unique([organizationId, userId])
   @@index([organizationId])
@@ -275,6 +282,7 @@ model Event {
   tickets            Ticket[]
   scanLogs           ScanLog[]
   commissionPolicies CommissionPolicy[]
+  staffAssignments   EventStaffAssignment[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -311,6 +319,7 @@ model Gate {
   organization Organization @relation(fields: [organizationId], references: [id])
   event        Event        @relation(fields: [eventId], references: [id])
   scanLogs     ScanLog[]
+  gateAssignments GateAssignment[]
 
   @@index([organizationId])
   @@index([eventId])
@@ -561,3 +570,33 @@ model IdempotencyKey {
   @@index([createdAt])
 }
 
+model EventStaffAssignment {
+  id             String   @id @default(uuid())
+  organizationId String
+  eventId        String
+  memberId       String
+  role           OrganizationRole
+  createdAt      DateTime @default(now())
+
+  organization Organization       @relation(fields: [organizationId], references: [id])
+  event        Event              @relation(fields: [eventId], references: [id])
+  member       OrganizationMember @relation(fields: [memberId], references: [id])
+
+  @@unique([memberId, eventId])
+  @@index([organizationId, eventId])
+}
+
+model GateAssignment {
+  id             String   @id @default(uuid())
+  organizationId String
+  gateId         String
+  memberId       String
+  createdAt      DateTime @default(now())
+
+  organization Organization       @relation(fields: [organizationId], references: [id])
+  gate         Gate               @relation(fields: [gateId], references: [id])
+  member       OrganizationMember @relation(fields: [memberId], references: [id])
+
+  @@unique([memberId, gateId])
+  @@index([organizationId, gateId])
+}
