@@ -99,10 +99,10 @@ export default function AdminTicketTypes() {
     mutationFn: (id: string) => deleteTicketType(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminTicketTypes"] });
-      toast.success("Ticket type deleted");
+      toast.success(t.admin.ticketTypeDeleted);
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to delete ticket type");
+      toast.error(error.message || t.admin.ticketTypeDeleteError);
     }
   });
 
@@ -110,12 +110,12 @@ export default function AdminTicketTypes() {
     mutationFn: (data: Parameters<typeof createTicketType>[0]) => createTicketType(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminTicketTypes"] });
-      toast.success("Ticket type created successfully");
+      toast.success(t.admin.ticketTypeCreated);
       setIsCreateOpen(false);
       createForm.reset();
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to create ticket type");
+      toast.error(error.message || t.admin.ticketTypeCreateError);
     }
   });
 
@@ -123,12 +123,12 @@ export default function AdminTicketTypes() {
     mutationFn: ({ id, data }: { id: string, data: Parameters<typeof updateTicketType>[1] }) => updateTicketType(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminTicketTypes"] });
-      toast.success("Ticket type updated successfully");
+      toast.success(t.admin.ticketTypeUpdated);
       setEditingTicketType(null);
       editForm.reset();
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to update ticket type");
+      toast.error(error.message || t.admin.ticketTypeUpdateError);
     },
   });
 
@@ -220,7 +220,7 @@ export default function AdminTicketTypes() {
             </DialogHeader>
             <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Event</Label>
+                <Label>{t.admin.event}</Label>
                 <Controller
                   name="eventId"
                   control={createForm.control}
@@ -228,7 +228,7 @@ export default function AdminTicketTypes() {
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select an event" />
+                        <SelectValue placeholder={t.admin.selectEvent} />
                       </SelectTrigger>
                       <SelectContent>
                         {events.map((event) => (
@@ -243,28 +243,28 @@ export default function AdminTicketTypes() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="name">Tier Name</Label>
-                <Input id="name" {...createForm.register("name", { required: true })} placeholder="Regular, VIP, etc." />
+                <Label htmlFor="name">{t.admin.tierName}</Label>
+                <Input id="name" {...createForm.register("name", { required: true })} placeholder={t.admin.tierNamePlaceholder} />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="sellPrice">Sell Price</Label>
+                  <Label htmlFor="sellPrice">{t.admin.sellPrice}</Label>
                   <Input id="sellPrice" type="number" step="0.01" {...createForm.register("sellPrice", { required: true, valueAsNumber: true })} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="partnerPrice">Partner Price</Label>
+                  <Label htmlFor="partnerPrice">{t.admin.partnerPrice}</Label>
                   <Input id="partnerPrice" type="number" step="0.01" {...createForm.register("partnerPrice", { required: true, valueAsNumber: true })} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="currency">Currency</Label>
-                  <Input id="currency" {...createForm.register("currency", { required: true })} placeholder="ILS, USD, etc." />
+                  <Label htmlFor="currency">{t.admin.currency}</Label>
+                  <Input id="currency" {...createForm.register("currency", { required: true })} placeholder={t.admin.currencyPlaceholder} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="quantity">Quantity</Label>
+                  <Label htmlFor="quantity">{t.admin.quantity}</Label>
                   <Input id="quantity" type="number" {...createForm.register("quantity", { required: true, valueAsNumber: true })} />
                 </div>
               </div>
@@ -370,33 +370,33 @@ export default function AdminTicketTypes() {
           </DialogHeader>
           <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Event</Label>
+              <Label>{t.admin.event}</Label>
               <Input value={getLocalizedText(events.find(e => e.id === editingTicketType?.eventId)?.title, language, editingTicketType?.eventId || "")} disabled />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Tier Name</Label>
+              <Label htmlFor="edit-name">{t.admin.tierName}</Label>
               <Input id="edit-name" {...editForm.register("name", { required: true })} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-sellPrice">Sell Price</Label>
+                <Label htmlFor="edit-sellPrice">{t.admin.sellPrice}</Label>
                 <Input id="edit-sellPrice" type="number" step="0.01" {...editForm.register("sellPrice", { required: true, valueAsNumber: true })} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-partnerPrice">Partner Price</Label>
+                <Label htmlFor="edit-partnerPrice">{t.admin.partnerPrice}</Label>
                 <Input id="edit-partnerPrice" type="number" step="0.01" {...editForm.register("partnerPrice", { required: true, valueAsNumber: true })} />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-currency">Currency</Label>
+                <Label htmlFor="edit-currency">{t.admin.currency}</Label>
                 <Input id="edit-currency" {...editForm.register("currency", { required: true })} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-quantity">Quantity</Label>
+                <Label htmlFor="edit-quantity">{t.admin.quantity}</Label>
                 <Input id="edit-quantity" type="number" {...editForm.register("quantity", { required: true, valueAsNumber: true })} />
               </div>
             </div>
