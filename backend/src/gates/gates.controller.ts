@@ -15,6 +15,7 @@ import {
   CreateGateDto,
   UpdateGateDto,
   ListGatesQueryDto,
+  CreateGateAssignmentDto,
 } from './dto/gate.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
@@ -26,6 +27,16 @@ import type { AuthenticatedRequest } from '../common/types';
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class GatesController {
   constructor(private readonly gatesService: GatesService) {}
+
+  @Post(':id/assignments')
+  @Roles(OrganizationRole.ORG_ADMIN)
+  createAssignment(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateGateAssignmentDto,
+  ) {
+    return this.gatesService.createAssignment(req.orgId!, id, dto);
+  }
 
   @Post()
   @Roles(OrganizationRole.ORG_ADMIN)

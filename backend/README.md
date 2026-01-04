@@ -67,10 +67,12 @@ Each domain module enforces multi-tenancy and RBAC:
     *   **Access**: ADMIN only
 
 ## Ops Endpoints Plan (Phase 0/1)
-- `/ops/orders` (POS create, Idempotency-Key required, SELLER assignment).
+- `/ops/orders` (POS create, Idempotency-Key required, SELLER assignment required).
 - `/ops/scans` (SCANNER assignment required).
 - `/ops/exports/sold-tickets` (FINANCE/ORG_ADMIN, audit logged).
 - `/ops/orders/:id/confirm-payment` (FINANCE/ORG_ADMIN only, audited).
+- `/events/:id/assignments` (ORG_ADMIN only).
+- `/gates/:id/assignments` (ORG_ADMIN only).
 
 ## Recent Hardening (Phase 0 complete)
 - **Inventory:** Orders enforce ticket type capacity with row locks (POS + non-POS).
@@ -82,9 +84,7 @@ Each domain module enforces multi-tenancy and RBAC:
 - **Exports:** Orders export includes payment + seller fields; audit logged.
 
 ## Next Phase Targets
-- Roles enum expansion and assignments.
-- ScopeGuard enforcement for scans/orders/exports.
-- EventStaffAssignment/GateAssignment admin flows.
+- UI integration for assignments (Admin).
 - Price versioning + OrderItem snapshots.
 
 ## Admin/Staff Testing (E2E)

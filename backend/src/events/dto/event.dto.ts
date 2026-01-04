@@ -117,6 +117,18 @@ export class ListEventsQueryDto {
   take?: number;
 }
 
+import { OrganizationRole } from '@prisma/client';
+
+export class CreateEventAssignmentDto {
+  @IsUUID()
+  @IsNotEmpty()
+  memberId: string;
+
+  @IsEnum(OrganizationRole)
+  @IsNotEmpty()
+  role: OrganizationRole;
+}
+
 export class GetEventQueryDto {
   @IsIn(['en', 'ar'])
   @IsOptional()

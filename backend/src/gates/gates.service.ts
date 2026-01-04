@@ -1,10 +1,53 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateGateDto, UpdateGateDto } from './dto/gate.dto';
+import { CreateGateDto, UpdateGateDto, CreateGateAssignmentDto } from './dto/gate.dto';
 
 @Injectable()
 export class GatesService {
   constructor(private prisma: PrismaService) {}
+
+  async createAssignment(
+    organizationId: string,
+    gateId: string,
+    data: CreateGateAssignmentDto,
+  ) {
+    // Verify gate exists and belongs to org
+    await this.prisma.gate.findFirstOrThrow({
+      where: { id: gateId, organizationId },
+    });
+
+    // Verify member exists and belongs to org
+    await this.prisma.organizationMember.findFirstOrThrow({
+      where: { id: data.memberId, organizationId },
+    });
+
+    const existing = await this.prisma.gateAssignment.findUnique({
+      where: {
+        memberId_gateId: {
+          memberId: data.memberId,
+          gateId,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (existing) {
+      throw new ConflictException('Member is already assigned to this gate');
+    }
+
+    return this.prisma.gateAssignment.create({
+      data: {
+        organizationId,
+        gateId,
+        memberId: data.memberId,
+      },
+      select: {
+        id: true,
+        gateId: true,
+        memberId: true,
+      },
+    });
+  }
 
   async create(organizationId: string, data: CreateGateDto) {
     await this.prisma.event.findFirstOrThrow({

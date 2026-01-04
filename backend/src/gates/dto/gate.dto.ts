@@ -28,6 +28,12 @@ export class UpdateGateDto {
   eventId?: string;
 }
 
+export class CreateGateAssignmentDto {
+  @IsUUID()
+  @IsNotEmpty()
+  memberId: string;
+}
+
 export class ListGatesQueryDto {
   @IsUUID()
   @IsOptional()

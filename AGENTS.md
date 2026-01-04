@@ -115,6 +115,7 @@ Backend architecture and rules
   - Categories/Cities read-only (global + org-specific, localized via `?lang=en|ar`)
   - Orders create + read; Tickets read-only
   - Members: invite-by-email via `/members/invites`, accept via `/members/invites/accept` (JWT only)
+  - Assignments: `POST /events/:id/assignments`, `POST /gates/:id/assignments` (ORG_ADMIN only)
   - Scan logs: `GET /scan/logs` (admin/staff), `POST /scan`
   - Exports: `GET /exports/orders.csv`, `GET /exports/tickets.csv`
 - **Services MUST use explicit Prisma `select`** to avoid over-fetching and leaking PII.
@@ -135,13 +136,14 @@ Backend architecture and rules
 - Image upload: `POST /events/:id/image` with storage settings in backend `.env`.
 - Storage config: `STORAGE_DRIVER`, `STORAGE_LOCAL_ROOT`, `STORAGE_PUBLIC_URL` (local disk default).
 - Exports: `/exports/orders.csv` and `/exports/tickets.csv` support optional `eventId` filtering.
+- **ScopeGuard:** Enforced on `/ops/orders` (Event assignment required) and `/scan` (Event + Gate assignment required). ORG_ADMIN bypasses.
 
 Prisma configuration
 - Prisma config lives in `backend/prisma.config.ts` and loads env vars via `dotenv/config` (uses `@prisma/config` devDependency).
 
 Roadmap (Phased)
 - Phase 0: Inventory + POS idempotency + payment model + export audit logging (complete).
-- Phase 1: Roles expansion + EventStaffAssignment/GateAssignment + ScopeGuard.
+- Phase 1: Roles expansion + EventStaffAssignment/GateAssignment + ScopeGuard (Backend done; UI pending).
 - Phase 2: Price versioning + order item snapshots + pricing policy.
 - Phase 3: EventPolicyService enforcement.
 - Phase 4: Security hardening + ops readiness.

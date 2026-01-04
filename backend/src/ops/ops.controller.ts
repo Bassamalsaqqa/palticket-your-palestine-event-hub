@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
+import { ScopeGuard } from '../auth/scope.guard';
 import { Roles } from '../auth/roles.decorator';
 import { OrganizationRole } from '@prisma/client';
 import { OpsService } from './ops.service';
@@ -24,7 +25,8 @@ export class OpsController {
   constructor(private readonly opsService: OpsService) {}
 
   @Post('orders')
-  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER) // temporary compatibility until Phase-1 ScopeGuard/assignments
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.SELLER, OrganizationRole.EVENT_MANAGER)
+  @UseGuards(ScopeGuard)
   @UseInterceptors(IdempotencyInterceptor)
   createOrder(
     @Req() req: AuthenticatedRequest,

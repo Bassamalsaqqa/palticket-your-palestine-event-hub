@@ -1,7 +1,8 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
+import { CreateEventDto, UpdateEventDto, CreateEventAssignmentDto } from './dto/event.dto';
 import { StorageService } from '../common/storage.service';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class EventsService {
@@ -9,6 +10,51 @@ export class EventsService {
     private prisma: PrismaService,
     private storageService: StorageService,
   ) {}
+
+  async createAssignment(
+    organizationId: string,
+    eventId: string,
+    data: CreateEventAssignmentDto,
+  ) {
+    // Verify event exists and belongs to org
+    await this.prisma.event.findFirstOrThrow({
+      where: { id: eventId, organizationId },
+    });
+
+    // Verify member exists and belongs to org
+    await this.prisma.organizationMember.findFirstOrThrow({
+      where: { id: data.memberId, organizationId },
+    });
+
+    const existing = await this.prisma.eventStaffAssignment.findUnique({
+      where: {
+        memberId_eventId: {
+          memberId: data.memberId,
+          eventId,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (existing) {
+      throw new ConflictException('Member is already assigned to this event');
+    }
+
+    return this.prisma.eventStaffAssignment.create({
+      data: {
+        organizationId,
+        eventId,
+        memberId: data.memberId,
+        role: data.role,
+      },
+      select: {
+        id: true,
+        eventId: true,
+        memberId: true,
+        role: true,
+      },
+    });
+  }
 
   async create(organizationId: string, data: CreateEventDto) {
     const { translations, ...eventData } = data;

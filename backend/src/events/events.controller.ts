@@ -22,6 +22,7 @@ import {
   UpdateEventDto,
   ListEventsQueryDto,
   GetEventQueryDto,
+  CreateEventAssignmentDto,
 } from './dto/event.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
@@ -33,6 +34,16 @@ import type { AuthenticatedRequest } from '../common/types';
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
+
+  @Post(':id/assignments')
+  @Roles(OrganizationRole.ORG_ADMIN)
+  createAssignment(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateEventAssignmentDto,
+  ) {
+    return this.eventsService.createAssignment(req.orgId!, id, dto);
+  }
 
   @Post()
   @Roles(OrganizationRole.ORG_ADMIN)
