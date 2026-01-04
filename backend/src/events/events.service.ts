@@ -9,7 +9,6 @@ export class EventsService {
   constructor(
     private prisma: PrismaService,
     private storageService: StorageService,
-    private eventPolicy: EventPolicyService,
   ) {}
 
   async createAssignment(
@@ -86,7 +85,7 @@ export class EventsService {
 
   async findAll(organizationId: string, lang = 'en', skip = 0, take = 20) {
     const limit = Math.min(take, 100);
-    const events = await this.prisma.event.findMany({
+    return this.prisma.event.findMany({
       where: { organizationId },
       skip,
       take: limit,
@@ -136,8 +135,6 @@ export class EventsService {
         },
       },
     });
-
-    return events.filter((e) => this.eventPolicy.isPublicVisible(e));
   }
 
   async findOne(organizationId: string, id: string, lang = 'en') {
@@ -340,3 +337,5 @@ export class EventsService {
     });
   }
 }
+
+
