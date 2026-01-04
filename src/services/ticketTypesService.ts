@@ -86,3 +86,37 @@ export const updateTicketType = async (id: string, data: {
     body: JSON.stringify(data),
   });
 };
+
+export interface TicketTypePriceVersion {
+  id: string;
+  ticketTypeId: string;
+  currency: string;
+  priceCents: number;
+  startsAt: string | null;
+  endsAt: string | null;
+  reason: string | null;
+  createdAt: string;
+}
+
+export const fetchPriceVersions = async (ticketTypeId: string): Promise<TicketTypePriceVersion[]> => {
+  const config = getApiConfig();
+  if (!config) return [];
+
+  return await apiFetch<TicketTypePriceVersion[]>(`/ticket-types/${encodeURIComponent(ticketTypeId)}/price-versions?skip=0&take=100`);
+};
+
+export const createPriceVersion = async (ticketTypeId: string, data: {
+  currency: string;
+  priceCents: number;
+  startsAt?: string;
+  endsAt?: string;
+  reason?: string;
+}): Promise<TicketTypePriceVersion> => {
+  const config = getApiConfig();
+  if (!config) throw new Error("API not configured");
+
+  return await apiFetch<TicketTypePriceVersion>(`/ticket-types/${encodeURIComponent(ticketTypeId)}/price-versions`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};

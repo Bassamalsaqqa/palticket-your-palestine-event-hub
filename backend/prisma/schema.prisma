@@ -340,12 +340,31 @@ model TicketType {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  event      Event       @relation(fields: [eventId], references: [id])
-  orderItems OrderItem[]
-  tickets    Ticket[]
-  inventory  TicketTypeInventory?
+  event        Event                  @relation(fields: [eventId], references: [id])
+  orderItems   OrderItem[]
+  tickets      Ticket[]
+  inventory    TicketTypeInventory?
+  priceVersions TicketTypePriceVersion[]
 
   @@index([eventId])
+}
+
+model TicketTypePriceVersion {
+  id                String   @id @default(uuid())
+  ticketTypeId      String
+  currency          String
+  priceCents        Int
+  startsAt          DateTime?
+  endsAt            DateTime?
+  createdByMemberId String?
+  reason            String?
+  createdAt         DateTime @default(now())
+
+  ticketType TicketType  @relation(fields: [ticketTypeId], references: [id])
+  orderItems OrderItem[]
+
+  @@index([ticketTypeId, createdAt])
+  @@index([ticketTypeId, currency])
 }
 
 model TicketTypeInventory {
@@ -395,14 +414,18 @@ model Order {
 }
 
 model OrderItem {
-  id           String @id @default(uuid())
-  orderId      String
-  ticketTypeId String
-  quantity     Int
-  priceCents   Int
+  id             String  @id @default(uuid())
+  orderId        String
+  ticketTypeId   String
+  quantity       Int
+  priceCents     Int // Legacy field, matches unitPriceCents usually
+  unitPriceCents Int
+  currency       String
+  priceVersionId String?
 
-  order      Order      @relation(fields: [orderId], references: [id])
-  ticketType TicketType @relation(fields: [ticketTypeId], references: [id])
+  order        Order                   @relation(fields: [orderId], references: [id])
+  ticketType   TicketType              @relation(fields: [ticketTypeId], references: [id])
+  priceVersion TicketTypePriceVersion? @relation(fields: [priceVersionId], references: [id])
 
   @@index([orderId])
 }

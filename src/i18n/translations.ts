@@ -446,6 +446,16 @@ export const translations = {
       assign: "Assign",
       assignmentSuccess: "Staff assigned successfully",
       assignmentError: "Failed to assign staff",
+      priceVersions: "Price Versions",
+      managePrices: "Manage Prices",
+      addPriceVersion: "Add Price Version",
+      priceCents: "Price (Cents)",
+      startsAt: "Starts At",
+      endsAt: "Ends At",
+      reason: "Reason",
+      scheduled: "Scheduled",
+      expired: "Expired",
+      noPriceVersions: "No price versions configured.",
     },
     
     // Scanner
@@ -1182,6 +1192,16 @@ export const translations = {
       assign: "تعيين",
       assignmentSuccess: "تم تعيين الموظف بنجاح",
       assignmentError: "فشل في تعيين الموظف",
+      priceVersions: "نسخ الأسعار",
+      managePrices: "إدارة الأسعار",
+      addPriceVersion: "إضافة نسخة سعر",
+      priceCents: "السعر (قرش)",
+      startsAt: "يبدأ في",
+      endsAt: "ينتهي في",
+      reason: "السبب",
+      scheduled: "مجدول",
+      expired: "منتهي",
+      noPriceVersions: "لا توجد نسخ أسعار مكونة.",
     },
     
     // Scanner

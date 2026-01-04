@@ -29,6 +29,7 @@ export class TicketsController {
     return this.ticketsService.findAll(
       req.orgId!,
       query.eventId,
+      undefined,
       query.userId,
       query.skip,
       query.take,

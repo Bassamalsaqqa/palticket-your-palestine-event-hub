@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ExportsService } from './exports.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
+import { AuditLog } from '@prisma/client';
 
 describe('ExportsService', () => {
   let service: ExportsService;
@@ -32,18 +33,27 @@ describe('ExportsService', () => {
   >[number];
 
   describe('exportOrders', () => {
-    it('should return CSV with payment details and log audit', async () => {
+    it('should return CSV with item-level details and price snapshots', async () => {
       const mockOrder = {
         id: 'ord-1',
         totalCents: 1000,
         currency: 'ILS',
         status: 'PAID',
-        paymentStatus: 'SUCCEEDED',
         attendeeName: 'Test Attendee',
         attendeeEmail: 'test@example.com',
         createdAt: new Date('2026-01-01'),
         event: { translations: [{ name: 'Event 1' }] },
         user: { email: 'user@example.com', name: 'User' },
+        items: [
+          {
+            id: 'item-1',
+            quantity: 1,
+            unitPriceCents: 1000,
+            currency: 'ILS',
+            priceVersionId: 'pv-1',
+            ticketType: { name: 'VIP' },
+          },
+        ],
         payments: [
           {
             method: 'CARD',
@@ -58,19 +68,17 @@ describe('ExportsService', () => {
       } as unknown as OrderRecord;
 
       prisma.order.findMany.mockResolvedValue([mockOrder]);
-      prisma.auditLog.create.mockResolvedValue({ id: 'log-1' });
+      prisma.auditLog.create.mockResolvedValue({ id: 'log-1' } as AuditLog);
 
       const csv = await service.exportOrders(orgId, memberId);
 
-      expect(csv).toContain('totalCents');
-      expect(csv).toContain('1000'); // 1000 cents, not 10
-      expect(csv).toContain('paymentMethod');
-      expect(csv).toContain('providerReference');
-      expect(csv).toContain('capturedAt');
-      expect(csv).toContain('sellerMemberId');
-      expect(csv).toContain('sellerName');
+      expect(csv).toContain('orderId');
+      expect(csv).toContain('unitPriceCents');
+      expect(csv).toContain('priceVersionId');
+      expect(csv).toContain('1000');
+      expect(csv).toContain('pv-1');
+      expect(csv).toContain('VIP');
       expect(csv).toContain('CARD');
-      expect(csv).toContain('ref-123');
       expect(csv).toContain('Seller');
 
       expect(prisma.auditLog.create).toHaveBeenCalledWith(

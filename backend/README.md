@@ -32,6 +32,7 @@ Each domain module enforces multi-tenancy and RBAC:
 *   **Events/Venues/Gates/TicketTypes:**
     *   **CRUD:** Full Create/Read/Update/Delete.
     *   **Endpoints:** `GET /events/slug/:slug?lang=en|ar`
+    *   **Price Versions:** `POST /ticket-types/:id/price-versions`, `GET /ticket-types/:id/price-versions` (Admin/EventManager).
     *   **Access:** ADMIN can write; STAFF can read.
     *   **Scope:** All queries filtered by `x-organization-id`.
     *   **Localization:** Events and Venues support multi-locale translations (e.g., "en", "ar") via separate translation tables. Use `?lang=en|ar` (default: `en`) on read endpoints to retrieve localized content, with English fallback when missing.
@@ -64,6 +65,7 @@ Each domain module enforces multi-tenancy and RBAC:
 *   **Exports:**
     *   **Endpoints:** `GET /exports/orders.csv`, `GET /exports/tickets.csv`
     *   **Filters:** Optional `eventId` query parameter to export a single event.
+    *   **Orders Export:** Returns an item-level CSV (one row per order item) including `unitPriceCents`, `currency`, and `priceVersionId` snapshots.
     *   **Access**: ADMIN only
 
 ## Ops Endpoints Plan (Phase 0/1)
@@ -78,6 +80,13 @@ Each domain module enforces multi-tenancy and RBAC:
 - **Implemented hardening:** inventory enforcement (POS + non-POS), idempotency, throttling, ScanLog retention + composite index, CSV injection protection.
 - **RBAC & Assignments (Phase 1):** Scoped scanning and POS sales via `EventStaffAssignment` and `GateAssignment`. Mandatory `eventId` for scanning. Admin UI for assignments.
 - **Auditability:** export audit logs + audit log model.
+
+## Pricing Governance (Phase 2)
+PalTicket implements price immutability via versioning and snapshotting:
+- **Price Versions:** `TicketTypePriceVersion` allows scheduling price changes for a specific `TicketType` and `currency`.
+- **Selection Logic:** The system automatically selects the most recent active price version (matching currency, `startsAt <= now`, and `endsAt` is null or `> now`).
+- **Snapshots:** When an order is created, `unitPriceCents`, `currency`, and the applied `priceVersionId` are snapshotted into each `OrderItem`. This ensures that subsequent price changes do not affect existing orders and provides a historical audit trail.
+- **Consistency:** Both public orders (`POST /orders`) and POS orders (`POST /ops/orders`) follow the same pricing selection and snapshotting rules.
 
 ## Next Phase Targets
 - Price versioning + OrderItem snapshots (Phase 2).

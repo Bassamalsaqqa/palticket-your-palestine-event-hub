@@ -61,6 +61,11 @@ export class ExportsService {
             translations: { where: { locale: 'en' }, select: { name: true } },
           },
         },
+        items: {
+          include: {
+            ticketType: { select: { name: true } },
+          },
+        },
         payments: {
           include: {
             createdBy: {
@@ -73,25 +78,26 @@ export class ExportsService {
       },
     });
 
-    const flatOrders = orders.map((o) => {
+    const flatItems = orders.flatMap((o) => {
       const payment = o.payments[0]; // Assuming primary payment for now
-      return {
-        id: o.id,
+      return o.items.map((item) => ({
+        orderId: o.id,
         customerName: o.attendeeName || o.user.name || '',
         customerEmail: o.attendeeEmail || o.user.email || '',
         eventName: o.event.translations[0]?.name || '',
-        totalCents: o.totalCents,
-        currency: o.currency,
-        status: o.status,
-        paymentStatus: payment?.status || o.paymentStatus || '',
+        ticketType: item.ticketType.name,
+        quantity: item.quantity,
+        unitPriceCents: item.unitPriceCents,
+        currency: item.currency,
+        priceVersionId: item.priceVersionId || '',
+        orderStatus: o.status,
+        paymentStatus: payment?.status || '',
         paymentMethod: payment?.method || '',
         providerReference: payment?.providerReference || '',
         capturedAt: payment?.capturedAt?.toISOString() || '',
-        sellerMemberId: payment?.createdBy?.id || '',
         sellerName: payment?.createdBy?.user.name || '',
-        sellerEmail: payment?.createdBy?.user.email || '',
         createdAt: o.createdAt.toISOString(),
-      };
+      }));
     });
 
     await this.prisma.auditLog.create({
@@ -104,7 +110,7 @@ export class ExportsService {
       },
     });
 
-    return this.toCsv(flatOrders);
+    return this.toCsv(flatItems);
   }
 
   async exportTickets(

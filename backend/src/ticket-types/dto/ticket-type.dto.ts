@@ -6,6 +6,7 @@ import {
   IsOptional,
   Length,
   IsUUID,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -66,6 +67,42 @@ export class ListTicketTypesQueryDto {
   @IsOptional()
   eventId?: string;
 
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  skip?: number;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  take?: number;
+}
+
+export class CreatePriceVersionDto {
+  @IsString()
+  @Length(3, 3)
+  currency: string;
+
+  @IsInt()
+  @Min(0)
+  priceCents: number;
+
+  @IsDateString()
+  @IsOptional()
+  startsAt?: string;
+
+  @IsDateString()
+  @IsOptional()
+  endsAt?: string;
+
+  @IsString()
+  @IsOptional()
+  reason?: string;
+}
+
+export class ListPriceVersionsQueryDto {
   @IsInt()
   @Min(0)
   @IsOptional()

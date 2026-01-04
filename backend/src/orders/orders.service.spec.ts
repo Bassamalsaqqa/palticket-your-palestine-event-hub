@@ -32,6 +32,7 @@ describe('OrdersService', () => {
     prisma.$transaction.mockImplementation(
       <T>(callback: (tx: PrismaService) => Promise<T>) => callback(prisma),
     );
+    prisma.ticketTypePriceVersion.findMany.mockResolvedValue([]);
   });
 
   const orgId = 'org-1';
@@ -142,6 +143,43 @@ describe('OrdersService', () => {
     const ticketData = ticketCreateArgs?.data;
     const firstTicket = Array.isArray(ticketData) ? ticketData[0] : ticketData;
     expect(firstTicket?.status).toBe(TicketStatus.PENDING);
+  });
+
+  it('should use active price version and snapshot pricing into OrderItem', async () => {
+    const createDto = {
+      eventId,
+      items: [{ ticketTypeId, quantity: 1 }],
+    };
+
+    const mockPriceVersion = {
+      id: 'pv-1',
+      ticketTypeId,
+      currency: 'ILS',
+      priceCents: 1500, // Different from base price 1000
+      startsAt: new Date(Date.now() - 10000),
+      endsAt: null,
+    };
+
+    prisma.event.findFirst.mockResolvedValue(mockEvent);
+    prisma.$queryRaw.mockResolvedValue([
+      { id: 'inv-1', ticketTypeId, capacity: 10, sold: 0, reserved: 0 },
+    ]);
+    prisma.ticketType.findMany.mockResolvedValue([mockTicketType]);
+    prisma.ticketTypePriceVersion.findMany.mockResolvedValue([
+      mockPriceVersion as unknown as TicketTypePriceVersion,
+    ]);
+    prisma.order.create.mockResolvedValue({ ...mockOrder, totalCents: 1500 });
+    prisma.ticket.findMany.mockResolvedValue([mockTickets[0]]);
+
+    await service.create(orgId, userId, createDto);
+
+    const orderCreateArgs = prisma.order.create.mock.calls[0][0];
+    const orderItems = orderCreateArgs?.data.items?.create;
+    const firstItem = Array.isArray(orderItems) ? orderItems[0] : orderItems;
+
+    expect(firstItem.unitPriceCents).toBe(1500);
+    expect(firstItem.currency).toBe('ILS');
+    expect(firstItem.priceVersionId).toBe('pv-1');
   });
 
   it('should throw BadRequestException if items array is empty', async () => {

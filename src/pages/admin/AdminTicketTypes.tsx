@@ -29,12 +29,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, History, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchAllTicketTypes, deleteTicketType, createTicketType, updateTicketType, type UI_TicketType } from "@/services/ticketTypesService";
+import { fetchAllTicketTypes, deleteTicketType, createTicketType, updateTicketType, fetchPriceVersions, createPriceVersion, type UI_TicketType, type TicketTypePriceVersion } from "@/services/ticketTypesService";
 import { fetchAllEvents } from "@/services/eventsService";
 import { useForm, Controller } from "react-hook-form";
+import { format } from "date-fns";
 
 interface TicketTypeFormValues {
   eventId: string;
@@ -45,11 +46,21 @@ interface TicketTypeFormValues {
   quantity: number;
 }
 
+interface PriceVersionFormValues {
+  currency: string;
+  priceCents: number;
+  startsAt?: string;
+  endsAt?: string;
+  reason?: string;
+}
+
 export default function AdminTicketTypes() {
   const { language, t } = useLanguage();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTicketType, setEditingTicketType] = useState<UI_TicketType | null>(null);
+  const [managingPriceVersions, setManagingPriceVersions] = useState<UI_TicketType | null>(null);
+  const [isAddPriceVersionOpen, setIsAddPriceVersionOpen] = useState(false);
 
   const createForm = useForm<TicketTypeFormValues>({
     defaultValues: {
@@ -59,6 +70,7 @@ export default function AdminTicketTypes() {
   });
 
   const editForm = useForm<TicketTypeFormValues>();
+  const priceVersionForm = useForm<PriceVersionFormValues>();
 
   const { data: ticketTypes = [], isLoading } = useQuery({
     queryKey: ["adminTicketTypes"],
@@ -68,6 +80,12 @@ export default function AdminTicketTypes() {
   const { data: events = [] } = useQuery({
     queryKey: ["adminEventsList"],
     queryFn: () => fetchAllEvents(language),
+  });
+
+  const { data: priceVersions = [], isLoading: isLoadingVersions } = useQuery({
+    queryKey: ["priceVersions", managingPriceVersions?.id],
+    queryFn: () => managingPriceVersions ? fetchPriceVersions(managingPriceVersions.id) : Promise.resolve([]),
+    enabled: !!managingPriceVersions,
   });
 
   const eventById = new Map(events.map((event) => [event.id, event]));
@@ -114,6 +132,24 @@ export default function AdminTicketTypes() {
     },
   });
 
+  const addPriceVersionMutation = useMutation({
+    mutationFn: (data: PriceVersionFormValues) => 
+      managingPriceVersions ? createPriceVersion(managingPriceVersions.id, {
+        ...data,
+        startsAt: data.startsAt ? new Date(data.startsAt).toISOString() : undefined,
+        endsAt: data.endsAt ? new Date(data.endsAt).toISOString() : undefined,
+      }) : Promise.reject(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["priceVersions", managingPriceVersions?.id] });
+      toast.success("Price version added");
+      setIsAddPriceVersionOpen(false);
+      priceVersionForm.reset();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to add price version");
+    }
+  });
+
   const handleCreateSubmit = (data: TicketTypeFormValues) => {
     createMutation.mutate({
       eventId: data.eventId,
@@ -139,6 +175,10 @@ export default function AdminTicketTypes() {
     });
   };
 
+  const handleAddPriceVersionSubmit = (data: PriceVersionFormValues) => {
+    addPriceVersionMutation.mutate(data);
+  };
+
   const startEditing = (type: UI_TicketType) => {
     setEditingTicketType(type);
     editForm.reset({
@@ -148,6 +188,14 @@ export default function AdminTicketTypes() {
       partnerPrice: type.partnerPrice,
       currency: type.currency,
       quantity: type.quantity
+    });
+  };
+
+  const startManagingPrices = (type: UI_TicketType) => {
+    setManagingPriceVersions(type);
+    priceVersionForm.reset({
+      currency: type.currency,
+      priceCents: type.price * 100,
     });
   };
 
@@ -280,6 +328,14 @@ export default function AdminTicketTypes() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={() => startManagingPrices(type)}
+                              title={t.admin.managePrices}
+                            >
+                              <History className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => startEditing(type)}
                             >
                               <Edit className="h-4 w-4" />
@@ -349,6 +405,114 @@ export default function AdminTicketTypes() {
               <Button type="button" variant="ghost" onClick={() => setEditingTicketType(null)}>{t.common.cancel}</Button>
               <Button type="submit" disabled={updateMutation.isPending}>
                 {updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t.common.save}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!managingPriceVersions} onOpenChange={(open) => !open && setManagingPriceVersions(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t.admin.priceVersions}: {managingPriceVersions?.name}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">{t.admin.priceVersions}</h3>
+              <Button onClick={() => setIsAddPriceVersionOpen(true)} size="sm">
+                <Plus className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                {t.admin.addPriceVersion}
+              </Button>
+            </div>
+
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t.admin.price}</TableHead>
+                    <TableHead>{t.admin.startsAt}</TableHead>
+                    <TableHead>{t.admin.endsAt}</TableHead>
+                    <TableHead>{t.admin.status}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoadingVersions ? (
+                    <TableRow><TableCell colSpan={4} className="text-center py-4"><Loader2 className="h-4 w-4 animate-spin inline ltr:mr-2 rtl:ml-2" />{t.common.loading}</TableCell></TableRow>
+                  ) : priceVersions.length === 0 ? (
+                    <TableRow><TableCell colSpan={4} className="text-center py-4">{t.admin.noPriceVersions}</TableCell></TableRow>
+                  ) : (
+                    priceVersions.map((pv) => {
+                      const now = new Date();
+                      const start = pv.startsAt ? new Date(pv.startsAt) : null;
+                      const end = pv.endsAt ? new Date(pv.endsAt) : null;
+                      let status = "active";
+                      if (start && start > now) status = "scheduled";
+                      if (end && end < now) status = "expired";
+
+                      return (
+                        <TableRow key={pv.id}>
+                          <TableCell className="font-medium">{pv.priceCents / 100} {pv.currency}</TableCell>
+                          <TableCell className="text-sm">{pv.startsAt ? format(new Date(pv.startsAt), "PPp") : "-"}</TableCell>
+                          <TableCell className="text-sm">{pv.endsAt ? format(new Date(pv.endsAt), "PPp") : "-"}</TableCell>
+                          <TableCell>
+                            <Badge className={
+                              status === "active" ? "bg-green-500/10 text-green-600 border-green-500/20" :
+                              status === "scheduled" ? "bg-blue-500/10 text-blue-600 border-blue-500/20" :
+                              "bg-muted text-muted-foreground"
+                            }>
+                              {status === "active" ? t.admin.active : status === "scheduled" ? t.admin.scheduled : t.admin.expired}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setManagingPriceVersions(null)}>{t.common.close}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAddPriceVersionOpen} onOpenChange={setIsAddPriceVersionOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.admin.addPriceVersion}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={priceVersionForm.handleSubmit(handleAddPriceVersionSubmit)} className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t.admin.currency}</Label>
+                <Input {...priceVersionForm.register("currency", { required: true })} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t.admin.priceCents}</Label>
+                <Input type="number" {...priceVersionForm.register("priceCents", { required: true, valueAsNumber: true })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t.admin.startsAt}</Label>
+                <Input type="datetime-local" {...priceVersionForm.register("startsAt")} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t.admin.endsAt}</Label>
+                <Input type="datetime-local" {...priceVersionForm.register("endsAt")} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t.admin.reason}</Label>
+              <Input {...priceVersionForm.register("reason")} placeholder="e.g. Early bird discount" />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setIsAddPriceVersionOpen(false)}>{t.common.cancel}</Button>
+              <Button type="submit" disabled={addPriceVersionMutation.isPending}>
+                {addPriceVersionMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t.common.save}
               </Button>
             </DialogFooter>

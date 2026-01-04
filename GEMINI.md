@@ -86,8 +86,12 @@ Phase 1 - RBAC overhaul + scoped assignments (complete)
 - ScopeGuard for scans/orders/exports (done).
 - UI integration for assignments (done).
 
-Phase 2 - Price versioning + governance
-- TicketTypePriceVersion + OrderItem snapshots.
+Phase 2 - Price versioning + governance (complete)
+- TicketTypePriceVersion model + OrderItem snapshots (done).
+- Automated price selection logic in Orders and POS (done).
+- Admin endpoints for price versions (done).
+- Admin UI for managing price versions (done).
+- Item-level CSV export with price snapshots (done).
 
 Phase 3 - Central policy enforcement
 - EventPolicyService canSell/canScan/visibility.

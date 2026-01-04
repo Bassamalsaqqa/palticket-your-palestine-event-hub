@@ -16,6 +16,8 @@ import {
   CreateTicketTypeDto,
   UpdateTicketTypeDto,
   ListTicketTypesQueryDto,
+  CreatePriceVersionDto,
+  ListPriceVersionsQueryDto,
 } from './dto/ticket-type.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
@@ -27,6 +29,36 @@ import type { AuthenticatedRequest } from '../common/types';
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class TicketTypesController {
   constructor(private readonly ticketTypesService: TicketTypesService) {}
+
+  @Post(':id/price-versions')
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.EVENT_MANAGER)
+  createPriceVersion(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreatePriceVersionDto,
+  ) {
+    return this.ticketTypesService.createPriceVersion(
+      req.orgId!,
+      id,
+      dto,
+      req.memberId,
+    );
+  }
+
+  @Get(':id/price-versions')
+  @Roles(OrganizationRole.ORG_ADMIN, OrganizationRole.EVENT_MANAGER)
+  findPriceVersions(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: ListPriceVersionsQueryDto,
+  ) {
+    return this.ticketTypesService.findPriceVersions(
+      req.orgId!,
+      id,
+      query.skip,
+      query.take,
+    );
+  }
 
   @Post()
   @Roles(OrganizationRole.ORG_ADMIN)

@@ -40,6 +40,7 @@ describe('OpsService', () => {
     prisma.$transaction.mockImplementation((cb: (tx: Prisma.TransactionClient) => unknown) =>
       cb(prisma as unknown as Prisma.TransactionClient),
     );
+    prisma.ticketTypePriceVersion.findMany.mockResolvedValue([]);
   });
 
   const orgId = 'org-1';
@@ -105,6 +106,54 @@ describe('OpsService', () => {
       });
       expect(result.order.status).toBe(OrderStatus.PAID);
       expect(result.payment.status).toBe(PaymentStatus.SUCCEEDED);
+    });
+
+    it('should use active price version and snapshot pricing into OrderItem', async () => {
+      prisma.organizationMember.findUnique.mockResolvedValue({
+        id: 'mem-1',
+      } as unknown as OrganizationMember);
+      prisma.event.findFirst.mockResolvedValue({
+        id: eventId,
+      } as unknown as Event);
+      prisma.$queryRaw.mockResolvedValue([
+        { id: 'inv-1', ticketTypeId, capacity: 10, sold: 0, reserved: 0 },
+      ]);
+      prisma.ticketType.findMany.mockResolvedValue([
+        { id: ticketTypeId, sellPriceCents: 1000, currency: 'ILS', eventId },
+      ] as unknown as TicketType[]);
+
+      const mockPriceVersion = {
+        id: 'pv-1',
+        ticketTypeId,
+        currency: 'ILS',
+        priceCents: 1500, // Different
+        startsAt: new Date(Date.now() - 10000),
+        endsAt: null,
+      };
+      prisma.ticketTypePriceVersion.findMany.mockResolvedValue([
+        mockPriceVersion as unknown as TicketTypePriceVersion,
+      ]);
+
+      prisma.order.create.mockResolvedValue({
+        id: 'order-1',
+        totalCents: 3000, // 1500 * 2
+        currency: 'ILS',
+        status: OrderStatus.PAID,
+      } as unknown as Order);
+      prisma.ticket.findMany.mockResolvedValue([
+        { id: 't-1', status: TicketStatus.ISSUED },
+      ] as unknown as Ticket[]);
+
+      const result = await service.createPosOrder(orgId, userId, mockDto);
+
+      const orderCreateArgs = prisma.order.create.mock.calls[0][0];
+      const orderItems = orderCreateArgs?.data.items?.create;
+      const firstItem = Array.isArray(orderItems) ? orderItems[0] : orderItems;
+
+      expect(firstItem.unitPriceCents).toBe(1500);
+      expect(firstItem.currency).toBe('ILS');
+      expect(firstItem.priceVersionId).toBe('pv-1');
+      expect(result.payment.amountCents).toBe(3000);
     });
 
     it('should aggregate duplicate items and prevent oversell', async () => {

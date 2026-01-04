@@ -108,12 +108,27 @@ export class OrdersService {
         );
       }
 
+      // 3.5 Fetch active price versions
+      const now = new Date();
+      const priceVersions = await tx.ticketTypePriceVersion.findMany({
+        where: {
+          ticketTypeId: { in: requestedTicketTypeIds },
+          currency: orderCurrency,
+          startsAt: { lte: now },
+          OR: [{ endsAt: null }, { endsAt: { gt: now } }],
+        },
+        orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
+      });
+
       // 4. Check Capacity & Increment Sold
       let totalCents = 0;
       const orderItemsData: {
         ticketTypeId: string;
         quantity: number;
         priceCents: number;
+        unitPriceCents: number;
+        currency: string;
+        priceVersionId: string | null;
       }[] = [];
 
       for (const typeId of requestedTicketTypeIds) {
@@ -139,11 +154,22 @@ export class OrdersService {
           data: { sold: { increment: qty } },
         });
 
-        totalCents += typeInfo.sellPriceCents * qty;
+        // Determine active price version
+        const activeVersion = priceVersions.find(
+          (v) => v.ticketTypeId === typeId,
+        );
+        const unitPrice = activeVersion
+          ? activeVersion.priceCents
+          : typeInfo.sellPriceCents;
+
+        totalCents += unitPrice * qty;
         orderItemsData.push({
           ticketTypeId: typeId,
           quantity: qty,
-          priceCents: typeInfo.sellPriceCents,
+          priceCents: unitPrice,
+          unitPriceCents: unitPrice,
+          currency: orderCurrency,
+          priceVersionId: activeVersion?.id || null,
         });
       }
 
@@ -250,6 +276,9 @@ export class OrdersService {
             ticketTypeId: true,
             quantity: true,
             priceCents: true,
+            unitPriceCents: true,
+            currency: true,
+            priceVersionId: true,
           },
         },
       },
@@ -279,6 +308,9 @@ export class OrdersService {
             ticketTypeId: true,
             quantity: true,
             priceCents: true,
+            unitPriceCents: true,
+            currency: true,
+            priceVersionId: true,
           },
         },
         tickets: {
