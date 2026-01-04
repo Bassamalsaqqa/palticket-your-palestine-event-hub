@@ -1,14 +1,20 @@
-/*
-  Warnings:
-
-  - Added the required column `currency` to the `OrderItem` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `unitPriceCents` to the `OrderItem` table without a default value. This is not possible if the table is not empty.
-
-*/
 -- AlterTable
-ALTER TABLE "OrderItem" ADD COLUMN     "currency" TEXT NOT NULL,
-ADD COLUMN     "priceVersionId" TEXT,
-ADD COLUMN     "unitPriceCents" INTEGER NOT NULL;
+ALTER TABLE "OrderItem" ADD COLUMN "currency" TEXT;
+ALTER TABLE "OrderItem" ADD COLUMN "unitPriceCents" INTEGER;
+ALTER TABLE "OrderItem" ADD COLUMN "priceVersionId" TEXT;
+
+-- Backfill unitPriceCents from priceCents
+UPDATE "OrderItem" SET "unitPriceCents" = "priceCents";
+
+-- Backfill currency from TicketType
+UPDATE "OrderItem"
+SET "currency" = "TicketType"."currency"
+FROM "TicketType"
+WHERE "OrderItem"."ticketTypeId" = "TicketType"."id";
+
+-- Set NOT NULL now that data is backfilled
+ALTER TABLE "OrderItem" ALTER COLUMN "currency" SET NOT NULL;
+ALTER TABLE "OrderItem" ALTER COLUMN "unitPriceCents" SET NOT NULL;
 
 -- CreateTable
 CREATE TABLE "TicketTypePriceVersion" (

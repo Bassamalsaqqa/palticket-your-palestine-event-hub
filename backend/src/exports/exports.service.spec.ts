@@ -75,11 +75,14 @@ describe('ExportsService', () => {
       expect(csv).toContain('orderId');
       expect(csv).toContain('unitPriceCents');
       expect(csv).toContain('priceVersionId');
+      expect(csv).toContain('sellerMemberId');
+      expect(csv).toContain('sellerEmail');
       expect(csv).toContain('1000');
       expect(csv).toContain('pv-1');
       expect(csv).toContain('VIP');
       expect(csv).toContain('CARD');
       expect(csv).toContain('Seller');
+      expect(csv).toContain('seller@example.com');
 
       expect(prisma.auditLog.create).toHaveBeenCalledWith(
         expect.objectContaining({

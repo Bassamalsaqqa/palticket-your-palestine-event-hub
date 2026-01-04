@@ -141,12 +141,12 @@ export default function AdminTicketTypes() {
       }) : Promise.reject(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["priceVersions", managingPriceVersions?.id] });
-      toast.success("Price version added");
+      toast.success(t.admin.priceVersionSuccess);
       setIsAddPriceVersionOpen(false);
       priceVersionForm.reset();
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to add price version");
+      toast.error(error.message || t.admin.priceVersionError);
     }
   });
 
@@ -507,7 +507,7 @@ export default function AdminTicketTypes() {
             </div>
             <div className="space-y-2">
               <Label>{t.admin.reason}</Label>
-              <Input {...priceVersionForm.register("reason")} placeholder="e.g. Early bird discount" />
+              <Input {...priceVersionForm.register("reason")} placeholder={t.admin.reasonPlaceholder} />
             </div>
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setIsAddPriceVersionOpen(false)}>{t.common.cancel}</Button>

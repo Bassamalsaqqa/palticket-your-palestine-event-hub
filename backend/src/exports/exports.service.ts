@@ -95,7 +95,9 @@ export class ExportsService {
         paymentMethod: payment?.method || '',
         providerReference: payment?.providerReference || '',
         capturedAt: payment?.capturedAt?.toISOString() || '',
+        sellerMemberId: payment?.createdBy?.id || '',
         sellerName: payment?.createdBy?.user.name || '',
+        sellerEmail: payment?.createdBy?.user.email || '',
         createdAt: o.createdAt.toISOString(),
       }));
     });
