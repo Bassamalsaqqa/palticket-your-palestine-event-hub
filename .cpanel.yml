@@ -1,6 +1,0 @@
----
-deployment:
-  tasks:
-    - export DEPLOYPATH=/home/gaza5045/staging.gazaairport.com/
-    - /bin/mkdir -p $DEPLOYPATH
-    - /bin/cp -R release/. $DEPLOYPATH
