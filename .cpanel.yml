@@ -1,6 +1,6 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/gaza5045/git-deploy-test/
+    - export DEPLOYPATH=/home/gaza5045/staging.gazaairport.com/
     - /bin/mkdir -p $DEPLOYPATH
-    - /bin/cp deploy-test.txt $DEPLOYPATH
+    - /bin/cp -R release/. $DEPLOYPATH
