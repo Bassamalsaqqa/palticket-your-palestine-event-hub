@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/gaza5045/git-deploy-test/
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/cp deploy-test.txt $DEPLOYPATH
